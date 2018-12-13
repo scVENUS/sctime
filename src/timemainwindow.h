@@ -111,6 +111,7 @@ public:
     void displayLastLogEntry();
     void resume(); // APM event
     void suspend(); // APM event
+    void overtimeModeSwitched(bool enabled);
 
   signals:        
     /** Wird ausgeloest, falls sich die Gesamtzeit geaendert hat. Uebergeben wird die neue Gesamtzahl der Sekunden. */

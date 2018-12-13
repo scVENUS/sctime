@@ -293,6 +293,11 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   fastAbzurMinusAction = new QAction(QIcon(":/hi22_action_2downarrow_half" ),
                                        tr("Decrease accountable time fast"), this);
 
+  QAction* overtimeModeAction = new QAction(tr("Toggle &Overtime Mode"), this);
+  overtimeModeAction->setCheckable(true);
+
+  connect(overtimeModeAction, SIGNAL(toggled(bool)), this, SLOT(overtimeModeSwitched(bool)));
+
   connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
 
   connect(min5PlusAction, SIGNAL(triggered()), this, SLOT(addTimeInc()));
@@ -332,6 +337,7 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   kontomenu->addAction(pauseAction);
   kontomenu->addAction(pauseAbzurAction);
   kontomenu->addAction(specialRemunAction);
+  kontomenu->addAction(overtimeModeAction);
   kontomenu->addSeparator();
   kontomenu->addAction(findKontoAction);
   kontomenu->addAction(jumpAction);
@@ -1298,6 +1304,22 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
   QString oldabt, oldko, olduk;
   int oldidx;
   abtList->getAktiv(oldabt, oldko, olduk,oldidx);
+
+  if (abtList->overTimeModeActive()) {
+    UnterKontoEintrag entry;
+    abtList->getEintrag(entry,abt,ko,uko,idx);
+    QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
+    QString otmSR = abtList->getOverTimeModeSpecialRemuneration();
+    if (!existingRS.contains(otmSR)) {
+       int idx=abtList->insertEintrag(abt,ko,uko);
+       entry.sekunden=0;
+       entry.sekundenAbzur=0;
+       existingRS.insert(otmSR);
+       entry.setAchievedSpecialRemunSet(existingRS);
+       abtList->setEintrag(abt, ko, uko, idx, entry);
+       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+    }
+  }
   abtList->setAsAktiv(abt,ko,uko,idx);
   kontoTree->refreshItem(oldabt,oldko,olduk,oldidx);
   kontoTree->refreshItem(abt,ko,uko,idx);
@@ -1551,3 +1573,30 @@ void TimeMainWindow::callAdditionalLicenseDialog() {
   dialog->browser()->setSource(QUrl::fromLocalFile(additionalLicensesFile));
 }
 
+void TimeMainWindow::overtimeModeSwitched(bool enabled) {
+  // fixme
+  QString otmSR = "sc_angeordnete_arbeit_werktags_20-6:30";
+  abtList->setOverTimeModeSpecialRemuneration(otmSR);
+  abtList->setOverTimeModeActive(enabled);
+  QString abt, ko, uko;
+  int oldidx;
+  abtList->getAktiv(abt, ko, uko,oldidx);
+  UnterKontoEintrag entry;
+  abtList->getEintrag(entry,abt,ko,uko,oldidx);
+  QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
+  if (existingRS.contains(otmSR)!=enabled) {
+    int newidx=abtList->insertEintrag(abt,ko,uko);
+    entry.sekunden=0;
+    entry.sekundenAbzur=0;
+    if (enabled) {
+      existingRS.insert(otmSR);
+    } else {
+      existingRS.remove(otmSR);
+    }
+    entry.setAchievedSpecialRemunSet(existingRS);
+    abtList->setEintrag(abt, ko, uko, newidx, entry);
+    abtList->setAsAktiv(abt,ko,uko,newidx);
+    kontoTree->refreshItem(abt,ko,uko,oldidx);
+    kontoTree->refreshItem(abt,ko,uko,newidx);
+  }
+}

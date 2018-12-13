@@ -172,6 +172,14 @@ class AbteilungsListe: public std::map<QString,KontoListe>
     const SpecialRemunTypeMap& getSpecialRemunTypeMap() const;
     
     void setSpecialRemunTypeMap(const SpecialRemunTypeMap& srtm);
+
+    bool overTimeModeActive();
+
+    void setOverTimeModeActive(bool active);
+
+    QString getOverTimeModeSpecialRemuneration();
+
+    void setOverTimeModeSpecialRemuneration(QString srname);
     
 
   private:
@@ -183,6 +191,8 @@ class AbteilungsListe: public std::map<QString,KontoListe>
     int zeitDifferenz;
     bool checkedIn;
     QDate datum;
+    QString m_overTimeModeSpecialRemuneration;
+    bool m_overTimeModeActive;
 
 };
 

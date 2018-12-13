@@ -1005,3 +1005,22 @@ void AbteilungsListe::setSpecialRemunTypeMap(const SpecialRemunTypeMap& srtm)
       m_specialRemunTypeMap=srtm;
 }
 
+bool AbteilungsListe::overTimeModeActive()
+{
+      return m_overTimeModeActive;
+}
+
+void AbteilungsListe::setOverTimeModeActive(bool active)
+{
+      m_overTimeModeActive=active;
+}
+
+QString AbteilungsListe::getOverTimeModeSpecialRemuneration()
+{
+      return m_overTimeModeSpecialRemuneration;
+}
+
+void AbteilungsListe::setOverTimeModeSpecialRemuneration(QString srname)
+{
+      m_overTimeModeSpecialRemuneration=srname;
+}
