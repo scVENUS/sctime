@@ -1311,12 +1311,14 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
     QString otmSR = abtList->getOverTimeModeSpecialRemuneration();
     if (!existingRS.contains(otmSR)) {
-       int idx=abtList->insertEintrag(abt,ko,uko);
-       entry.sekunden=0;
-       entry.sekundenAbzur=0;
        existingRS.insert(otmSR);
-       entry.setAchievedSpecialRemunSet(existingRS);
-       abtList->setEintrag(abt, ko, uko, idx, entry);
+       if (!checkAndChangeSREntry(idx,abt,ko,uko,existingRS)) {
+          idx=abtList->insertEintrag(abt,ko,uko);
+          entry.sekunden=0;
+          entry.sekundenAbzur=0;
+          entry.setAchievedSpecialRemunSet(existingRS);
+          abtList->setEintrag(abt, ko, uko, idx, entry);
+       }
        kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
     }
   }
@@ -1573,6 +1575,31 @@ void TimeMainWindow::callAdditionalLicenseDialog() {
   dialog->browser()->setSource(QUrl::fromLocalFile(additionalLicensesFile));
 }
 
+bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns) {
+  UnterKontoEintrag entry;
+  abtList->getEintrag(entry,abt,ko,uko,idx);
+
+  if (entry.getAchievedSpecialRemunSet()!=specialRemuns) {
+     int correctidx=idx;
+     EintragsListe::iterator itEt;
+     EintragsListe* entrylist;
+  
+     if (abtList->findEntryWithSpecialRemunsAndComment(itEt, entrylist, correctidx, abt, ko, uko, entry.kommentar, specialRemuns)) {
+        int result=QMessageBox::question(
+                  this, tr("sctime: wrong special remunerations"),
+                  tr("There is another entry with the same comment and the correct special remunerations. Do you want to switch to this entry? "
+                     "Otherwise a new entry will be created."),
+                  QMessageBox::Yes, QMessageBox::No);
+        if (result==QMessageBox::Yes) {
+          idx=correctidx;
+          return true;
+        }
+     }
+     return false;
+  }
+  return true;
+}
+
 void TimeMainWindow::overtimeModeSwitched(bool enabled) {
   // fixme
   QString otmSR = "sc_angeordnete_arbeit_werktags_20-6:30";
@@ -1585,18 +1612,24 @@ void TimeMainWindow::overtimeModeSwitched(bool enabled) {
   abtList->getEintrag(entry,abt,ko,uko,oldidx);
   QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
   if (existingRS.contains(otmSR)!=enabled) {
-    int newidx=abtList->insertEintrag(abt,ko,uko);
-    entry.sekunden=0;
-    entry.sekundenAbzur=0;
+    QSet<QString> desiredRemuns = existingRS;
     if (enabled) {
-      existingRS.insert(otmSR);
+       desiredRemuns.insert(otmSR);
     } else {
-      existingRS.remove(otmSR);
+       desiredRemuns.remove(otmSR);
     }
-    entry.setAchievedSpecialRemunSet(existingRS);
-    abtList->setEintrag(abt, ko, uko, newidx, entry);
+    int newidx=oldidx;
+    if (!checkAndChangeSREntry(newidx,abt,ko,uko,desiredRemuns)) {
+      newidx=abtList->insertEintrag(abt,ko,uko);
+      entry.sekunden=0;
+      entry.sekundenAbzur=0;
+      
+      entry.setAchievedSpecialRemunSet(desiredRemuns);
+      abtList->setEintrag(abt, ko, uko, newidx, entry);
+    }
     abtList->setAsAktiv(abt,ko,uko,newidx);
-    kontoTree->refreshItem(abt,ko,uko,oldidx);
-    kontoTree->refreshItem(abt,ko,uko,newidx);
+    /*kontoTree->refreshItem(abt,ko,uko,oldidx);
+    kontoTree->refreshItem(abt,ko,uko,newidx);*/
+    kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
   }
 }

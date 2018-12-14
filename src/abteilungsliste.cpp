@@ -101,7 +101,8 @@ AbteilungsListe::AbteilungsListe(const QDate& _datum, AbteilungsListe* abtlist):
   * zurueckgegebene unterkontoliste gueltig ist.
   * Der return-Wert ist genau dann true, falls das Konto gefunden wurde.
   */
-bool AbteilungsListe::findEintrag(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, const QString& abteilung, const QString& konto, const QString& unterkonto, int idx)
+bool AbteilungsListe::findEintrag(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, 
+                                  const QString& abteilung, const QString& konto, const QString& unterkonto, int idx)
 {
 
   UnterKontoListe *unterkontoliste;
@@ -120,6 +121,32 @@ bool AbteilungsListe::findEintrag(EintragsListe::iterator& itEt, EintragsListe* 
   if (itEt==eintragsliste->end())
     return false;
   return true;
+}
+
+bool AbteilungsListe::findEntryWithSpecialRemunsAndComment(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, int &idx, 
+                                                const QString& abteilung, const QString& konto, 
+                                                const QString& unterkonto, const QString& comment, const QSet<QString>& specialRemuns)
+{
+
+  UnterKontoListe *unterkontoliste;
+  UnterKontoListe::iterator itUk;
+
+  eintragsliste=NULL;
+
+  if (!findUnterKonto(itUk,unterkontoliste,abteilung,konto,unterkonto)) return false;
+
+  if (itUk==unterkontoliste->end())
+    return false;
+
+  eintragsliste=&(itUk->second);
+
+  for (itEt=eintragsliste->begin(); itEt!=eintragsliste->end(); ++itEt) {
+    if ((itEt->second.getAchievedSpecialRemunSet()==specialRemuns)&&(comment==itEt->second.kommentar)) {
+      idx=itEt->first;
+      return true;
+    }
+  }
+  return false;
 }
 
 

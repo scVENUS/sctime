@@ -167,6 +167,7 @@ public:
     void closeEvent(QCloseEvent * event);
     void refreshAfterColorChange(QString&, QString&, QString&);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
+    bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
     KontoTreeView* kontoTree;
     UnterKontoDialog* unterKontoDialog;
     QAction* editUnterKontoAction;
