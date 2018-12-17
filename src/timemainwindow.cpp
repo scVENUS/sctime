@@ -1313,9 +1313,11 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     if (!existingRS.contains(otmSR)) {
        existingRS.insert(otmSR);
        if (!checkAndChangeSREntry(idx,abt,ko,uko,existingRS)) {
-          idx=abtList->insertEintrag(abt,ko,uko);
-          entry.sekunden=0;
-          entry.sekundenAbzur=0;
+          if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
+            idx=abtList->insertEintrag(abt,ko,uko);
+            entry.sekunden=0;
+            entry.sekundenAbzur=0;
+          }
           entry.setAchievedSpecialRemunSet(existingRS);
           abtList->setEintrag(abt, ko, uko, idx, entry);
        }
@@ -1620,9 +1622,11 @@ void TimeMainWindow::overtimeModeSwitched(bool enabled) {
     }
     int newidx=oldidx;
     if (!checkAndChangeSREntry(newidx,abt,ko,uko,desiredRemuns)) {
-      newidx=abtList->insertEintrag(abt,ko,uko);
-      entry.sekunden=0;
-      entry.sekundenAbzur=0;
+      if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
+        newidx=abtList->insertEintrag(abt,ko,uko);
+        entry.sekunden=0;
+        entry.sekundenAbzur=0;
+      }
       
       entry.setAchievedSpecialRemunSet(desiredRemuns);
       abtList->setEintrag(abt, ko, uko, newidx, entry);
