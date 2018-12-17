@@ -293,10 +293,21 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   fastAbzurMinusAction = new QAction(QIcon(":/hi22_action_2downarrow_half" ),
                                        tr("Decrease accountable time fast"), this);
 
-  QAction* overtimeModeAction = new QAction(tr("Toggle &Overtime Mode"), this);
-  overtimeModeAction->setCheckable(true);
+  overtimeRegulatedModeAction = new QAction(tr("Toggle regulated overtime Mode"), this);
+  overtimeRegulatedModeAction->setCheckable(true);
+  connect(overtimeRegulatedModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeRegulatedMode(bool)));
 
-  connect(overtimeModeAction, SIGNAL(toggled(bool)), this, SLOT(overtimeModeSwitched(bool)));
+  overtimeOtherModeAction = new QAction(tr("Toggle other overtime Mode"), this);
+  overtimeOtherModeAction->setCheckable(true);
+  connect(overtimeOtherModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeOtherMode(bool)));
+
+  QAction* nightModeAction = new QAction(tr("Toggle night Mode"), this);
+  nightModeAction->setCheckable(true);
+  connect(nightModeAction, SIGNAL(toggled(bool)), this, SLOT(switchNightMode(bool)));
+
+  QAction* publicHolidayModeAction = new QAction(tr("Toggle public holiday Mode"), this);
+  publicHolidayModeAction->setCheckable(true);
+  connect(publicHolidayModeAction, SIGNAL(toggled(bool)), this, SLOT(switchPublicHolidayMode(bool)));
 
   connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
 
@@ -337,7 +348,10 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   kontomenu->addAction(pauseAction);
   kontomenu->addAction(pauseAbzurAction);
   kontomenu->addAction(specialRemunAction);
-  kontomenu->addAction(overtimeModeAction);
+  kontomenu->addAction(overtimeRegulatedModeAction);
+  kontomenu->addAction(overtimeOtherModeAction);
+  kontomenu->addAction(nightModeAction);
+  kontomenu->addAction(publicHolidayModeAction);
   kontomenu->addSeparator();
   kontomenu->addAction(findKontoAction);
   kontomenu->addAction(jumpAction);
@@ -1602,9 +1616,7 @@ bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const Q
   return true;
 }
 
-void TimeMainWindow::overtimeModeSwitched(bool enabled) {
-  // fixme
-  QString otmSR = "sc_angeordnete_arbeit_werktags_20-6:30";
+void TimeMainWindow::switchOvertimeMode(bool enabled, QString otmSR) {
   abtList->setOverTimeModeSpecialRemuneration(otmSR);
   abtList->setOverTimeModeActive(enabled);
   QString abt, ko, uko;
@@ -1636,4 +1648,28 @@ void TimeMainWindow::overtimeModeSwitched(bool enabled) {
     kontoTree->refreshItem(abt,ko,uko,newidx);*/
     kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
   }
+}
+
+void TimeMainWindow::switchOvertimeRegulatedMode(bool enabled) {
+    settings->setOvertimeRegulatedModeActive(enabled);
+    settings->setOvertimeOtherModeActive(!enabled);
+    overtimeOtherModeAction->setChecked(!enabled);
+    switchOvertimeMode(enabled, settings->overtimeRegulatedSR());
+}
+
+void TimeMainWindow::switchOvertimeOtherMode(bool enabled) {
+    settings->setOvertimeOtherModeActive(enabled);
+    settings->setOvertimeRegulatedModeActive(!enabled);
+    overtimeRegulatedModeAction->setChecked(!enabled);
+    switchOvertimeMode(enabled, settings->overtimeOtherSR());
+}
+
+void TimeMainWindow::switchPublicHolidayMode(bool enabled) {
+    settings->setPublicHolidayModeActive(enabled);
+    switchOvertimeMode(enabled, settings->publicHolidaySR());
+}
+
+void TimeMainWindow::switchNightMode(bool enabled) {
+    settings->setNightModeActive(enabled);
+    switchOvertimeMode(enabled, settings->nightSR());
 }

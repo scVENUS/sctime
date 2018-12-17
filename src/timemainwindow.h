@@ -111,7 +111,11 @@ public:
     void displayLastLogEntry();
     void resume(); // APM event
     void suspend(); // APM event
-    void overtimeModeSwitched(bool enabled);
+    void switchOvertimeRegulatedMode(bool enabled);
+    void switchOvertimeOtherMode(bool enabled);
+    void switchPublicHolidayMode(bool enabled);
+    void switchNightMode(bool enabled);
+
 
   signals:        
     /** Wird ausgeloest, falls sich die Gesamtzeit geaendert hat. Uebergeben wird die neue Gesamtzahl der Sekunden. */
@@ -168,6 +172,7 @@ public:
     void refreshAfterColorChange(QString&, QString&, QString&);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
     bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
+    void switchOvertimeMode(bool enabled, QString otmSR);
     KontoTreeView* kontoTree;
     UnterKontoDialog* unterKontoDialog;
     QAction* editUnterKontoAction;
@@ -182,6 +187,8 @@ public:
     QAction* bgColorRemoveAction;
     QAction* jumpAction;
     QAction* specialRemunAction;
+    QAction* overtimeRegulatedModeAction;
+    QAction* overtimeOtherModeAction;
     QDateTime startTime;
     QDateTime lastMinuteTick;
     QFont qtDefaultFont;
