@@ -59,6 +59,7 @@ public:
     void callUnterKontoDialog(QTreeWidgetItem * item);
     void callDateDialog();
     void callAboutBox();
+    void callNightTimeDialog(bool isnight);
     void minuteHochzaehlen();
     void pause();
     void pauseAbzur(bool on);
@@ -189,6 +190,7 @@ public:
     QAction* specialRemunAction;
     QAction* overtimeRegulatedModeAction;
     QAction* overtimeOtherModeAction;
+    QAction* nightModeAction;
     QDateTime startTime;
     QDateTime lastMinuteTick;
     QFont qtDefaultFont;

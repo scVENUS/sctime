@@ -301,7 +301,7 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   overtimeOtherModeAction->setCheckable(true);
   connect(overtimeOtherModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeOtherMode(bool)));
 
-  QAction* nightModeAction = new QAction(tr("Toggle night Mode"), this);
+  nightModeAction = new QAction(tr("Toggle night Mode"), this);
   nightModeAction->setCheckable(true);
   connect(nightModeAction, SIGNAL(toggled(bool)), this, SLOT(switchNightMode(bool)));
 
@@ -687,28 +687,42 @@ void TimeMainWindow::addDeltaToZeit(int delta, bool abzurOnly)
  */
 void TimeMainWindow::zeitChanged()
 {
-  static int last=0;
-  int zeitAbzur, zeit;
+  static int lastworkedtime=0;
+  static QTime lastclocktime = QTime::currentTime();
+  int zeitAbzur, workedtime;
   int max_working_time=settings->maxWorkingTime();
-  abtList->getGesamtZeit(zeit, zeitAbzur);
+  QTime clocktime = QTime::currentTime();
+  abtList->getGesamtZeit(workedtime, zeitAbzur);
   statusBar->setDiff(abtList->getZeitDifferenz());
-  emit gesamtZeitChanged(zeit);
+  emit gesamtZeitChanged(workedtime);
   emit gesamtZeitAbzurChanged(zeitAbzur);
+
+  // remember the last workedtime for the next call, which might happen while
+  // we do further stuff inside this function. Also remember the old lastworkedtime
+  // in the local variable oldlast
+  int oldlastworkedtime=lastworkedtime;
+  lastworkedtime=workedtime;
+
+  // do the same for clocktime
+  QTime oldlastclocktime = lastclocktime;
+  lastclocktime = clocktime;
+
   // Beim ersten ueberschreiten von MAX_WORKTIME
-  if ((zeit>max_working_time)&&(last<=max_working_time)) {
-    // last muss _vor_ dem oeffnen der Messagebox gesetzt werden,
-    // da es andernfalls erst nach dem Schliessen der Box gesetzt wird, was bedeuten wuerde,
-    // dass (falls der user nicht sofort reagiert), jede Minute eine neue Box aufpoppt
-    // => nix gut am naechsten morgen, wenn man das ausloggen vergisst :-)
-    last=zeit;
+  if ((workedtime>max_working_time)&&(oldlastworkedtime<=max_working_time)) {
     // OK, QTimer erwartet nun, dass der letzte aufruf zurueckgekehrt ist, bevor
     // der nächste kommen kann. Da wir ueber einen QTimer aufgerufen wurden,
     // und wir weiter Tick-Events bekommen muessen, muessen wir den Arbeitszeitdialog asynchron starten.
     // Das tun wir ueber einen weiteren QTimer (das klappt, weil wir hier einen Wegwerftimer benutzen.
     QTimer::singleShot(0, this, SLOT(showArbeitszeitwarning()));
   }
-  else
-    last=zeit;
+  if ((clocktime>settings->nightModeBegin())&&(oldlastclocktime<=settings->nightModeBegin())) {
+    QTimer::singleShot(0, [this](){callNightTimeDialog(true);});
+  }
+  if ((clocktime>settings->nightModeEnd())&&(oldlastclocktime<=settings->nightModeEnd())) {
+    QTimer::singleShot(0, [this](){callNightTimeDialog(false);});
+  }
+
+  
     
 #ifdef WIN32
 	updateTaskbarTitle(zeit);
@@ -1617,13 +1631,13 @@ bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const Q
 }
 
 void TimeMainWindow::switchOvertimeMode(bool enabled, QString otmSR) {
-  abtList->setOverTimeModeSpecialRemuneration(otmSR);
-  abtList->setOverTimeModeActive(enabled);
+  abtListToday->setOverTimeModeSpecialRemuneration(otmSR);
+  abtListToday->setOverTimeModeActive(enabled);
   QString abt, ko, uko;
   int oldidx;
-  abtList->getAktiv(abt, ko, uko,oldidx);
+  abtListToday->getAktiv(abt, ko, uko,oldidx);
   UnterKontoEintrag entry;
-  abtList->getEintrag(entry,abt,ko,uko,oldidx);
+  abtListToday->getEintrag(entry,abt,ko,uko,oldidx);
   QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
   if (existingRS.contains(otmSR)!=enabled) {
     QSet<QString> desiredRemuns = existingRS;
@@ -1641,9 +1655,9 @@ void TimeMainWindow::switchOvertimeMode(bool enabled, QString otmSR) {
       }
       
       entry.setAchievedSpecialRemunSet(desiredRemuns);
-      abtList->setEintrag(abt, ko, uko, newidx, entry);
+      abtListToday->setEintrag(abt, ko, uko, newidx, entry);
     }
-    abtList->setAsAktiv(abt,ko,uko,newidx);
+    abtListToday->setAsAktiv(abt,ko,uko,newidx);
     /*kontoTree->refreshItem(abt,ko,uko,oldidx);
     kontoTree->refreshItem(abt,ko,uko,newidx);*/
     kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
@@ -1672,4 +1686,53 @@ void TimeMainWindow::switchPublicHolidayMode(bool enabled) {
 void TimeMainWindow::switchNightMode(bool enabled) {
     settings->setNightModeActive(enabled);
     switchOvertimeMode(enabled, settings->nightSR());
+}
+
+void TimeMainWindow::callNightTimeDialog(bool isnight) 
+{
+    if (isnight==settings->nightModeActive()) {
+      return;
+    }
+    QDateTime beforeOpen=QDateTime::currentDateTime();
+    bool shouldswitch=false;
+    if (isnight) {
+       int result=QMessageBox::question(
+            this, tr("sctime: switch nightmode on?"),
+                  tr("It is late. Should I switch to night mode, so you get special "
+                  "remuneration for working late? Please also check your companies "
+                  "regulations before enabling nightmode"),
+                  QMessageBox::Yes, QMessageBox::No);
+       shouldswitch = (result==QMessageBox::Yes);
+    } else {
+       int result=QMessageBox::question(
+            this, tr("sctime: switch nightmode off?"),
+                  tr("Night has passed. Should I switch night mode off? "
+                  "Otherwise you apply for further special remuneration. Please also check your companies "
+                  "regulations when keeping nightmode enabled."),
+                  QMessageBox::Yes, QMessageBox::No);
+       shouldswitch = (result==QMessageBox::Yes);
+    }
+    if (shouldswitch) {
+        QString abt, ko, uko;
+        int oldidx;
+        abtListToday->getAktiv(abt, ko, uko,oldidx);
+        // this might change the current entry as a side effect
+        nightModeAction->setChecked(isnight);
+        int newidx;
+        abtListToday->getAktiv(abt, ko, uko,newidx);
+        // its probable that the user noticed the previous dialog only after some minutes.
+        // we give him a chance to move the accrued times to the correct entry
+        auto delta=beforeOpen.secsTo(QDateTime::currentDateTime());
+        if ((!paused)&&(newidx!=oldidx)&&(delta>=60)) {
+          int result=QMessageBox::question(
+            this, tr("sctime: move worked time to new entry"),
+                  tr("Should %1 minutes be moved to the new selected entry?").arg(int(delta/60)),
+                  QMessageBox::Yes, QMessageBox::No);
+          if (result==QMessageBox::Yes) {
+            abtListToday->changeZeit(abt, ko, uko, oldidx, -delta, pausedAbzur);
+            abtListToday->changeZeit(abt, ko, uko, newidx, delta, pausedAbzur);
+            kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+          }
+        }
+    }
 }
