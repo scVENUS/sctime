@@ -1337,9 +1337,9 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     UnterKontoEintrag entry;
     abtList->getEintrag(entry,abt,ko,uko,idx);
     QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
-    QString otmSR = abtList->getOverTimeModeSpecialRemuneration();
-    if (!existingRS.contains(otmSR)) {
-       existingRS.insert(otmSR);
+    QSet<QString> otmRS = abtList->getActiveOverTimeModes();
+    if (!existingRS.contains(otmRS)) {
+       existingRS.unite(otmRS);
        if (!checkAndChangeSREntry(idx,abt,ko,uko,existingRS)) {
           if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
             idx=abtList->insertEintrag(abt,ko,uko);
@@ -1630,26 +1630,25 @@ bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const Q
   return true;
 }
 
-void TimeMainWindow::switchOvertimeMode(bool enabled, QString otmSR) {
-  abtListToday->setOverTimeModeSpecialRemuneration(otmSR);
-  abtListToday->setOverTimeModeActive(enabled);
+void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
+  abtListToday->setOverTimeModeState(enabled,specialremun);
   QString abt, ko, uko;
   int oldidx;
   abtListToday->getAktiv(abt, ko, uko,oldidx);
   UnterKontoEintrag entry;
   abtListToday->getEintrag(entry,abt,ko,uko,oldidx);
   QSet<QString> existingRS = entry.getAchievedSpecialRemunSet();
-  if (existingRS.contains(otmSR)!=enabled) {
+  if (existingRS.contains(specialremun)!=enabled) {
     QSet<QString> desiredRemuns = existingRS;
     if (enabled) {
-       desiredRemuns.insert(otmSR);
+       desiredRemuns.insert(specialremun);
     } else {
-       desiredRemuns.remove(otmSR);
+       desiredRemuns.remove(specialremun);
     }
     int newidx=oldidx;
     if (!checkAndChangeSREntry(newidx,abt,ko,uko,desiredRemuns)) {
       if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
-        newidx=abtList->insertEintrag(abt,ko,uko);
+        newidx=abtListToday->insertEintrag(abt,ko,uko);
         entry.sekunden=0;
         entry.sekundenAbzur=0;
       }

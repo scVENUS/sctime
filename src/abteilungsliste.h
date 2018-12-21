@@ -177,11 +177,11 @@ class AbteilungsListe: public std::map<QString,KontoListe>
 
     bool overTimeModeActive();
 
-    void setOverTimeModeActive(bool active);
+    void setOverTimeModeState(bool active, const QString& srname);
 
-    QString getOverTimeModeSpecialRemuneration();
-
-    void setOverTimeModeSpecialRemuneration(QString srname);
+    bool overTimeModeState(const QString& srname);
+    
+    QSet<QString> getActiveOverTimeModes();
     
 
   private:
@@ -193,8 +193,7 @@ class AbteilungsListe: public std::map<QString,KontoListe>
     int zeitDifferenz;
     bool checkedIn;
     QDate datum;
-    QString m_overTimeModeSpecialRemuneration;
-    bool m_overTimeModeActive;
+    QSet<QString> m_activeOverTimeModes;
 
 };
 

@@ -1034,20 +1034,24 @@ void AbteilungsListe::setSpecialRemunTypeMap(const SpecialRemunTypeMap& srtm)
 
 bool AbteilungsListe::overTimeModeActive()
 {
-      return m_overTimeModeActive;
+      return !m_activeOverTimeModes.isEmpty();
 }
 
-void AbteilungsListe::setOverTimeModeActive(bool active)
+void AbteilungsListe::setOverTimeModeState(bool active, const QString& srname)
 {
-      m_overTimeModeActive=active;
+      if (active) {
+        m_activeOverTimeModes.insert(srname);
+      } else {
+        m_activeOverTimeModes.remove(srname);
+      }  
 }
 
-QString AbteilungsListe::getOverTimeModeSpecialRemuneration()
+bool AbteilungsListe::overTimeModeState(const QString& srname)
 {
-      return m_overTimeModeSpecialRemuneration;
+      return m_activeOverTimeModes.contains(srname);
 }
 
-void AbteilungsListe::setOverTimeModeSpecialRemuneration(QString srname)
+QSet<QString> AbteilungsListe::getActiveOverTimeModes()
 {
-      m_overTimeModeSpecialRemuneration=srname;
+      return m_activeOverTimeModes;
 }
