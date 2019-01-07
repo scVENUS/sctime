@@ -295,18 +295,29 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   overtimeRegulatedModeAction = new QAction(tr("Toggle regulated overtime Mode"), this);
   overtimeRegulatedModeAction->setCheckable(true);
   connect(overtimeRegulatedModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeRegulatedMode(bool)));
-
   overtimeOtherModeAction = new QAction(tr("Toggle other overtime Mode"), this);
   overtimeOtherModeAction->setCheckable(true);
   connect(overtimeOtherModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeOtherMode(bool)));
+  if (settings->overtimeRegulatedModeActive()) {
+    overtimeRegulatedModeAction->setChecked(true);
+  }
+  if (settings->overtimeOtherModeActive()) {
+    overtimeOtherModeAction->setChecked(true);
+  }
 
   nightModeAction = new QAction(tr("Toggle night Mode"), this);
   nightModeAction->setCheckable(true);
   connect(nightModeAction, SIGNAL(toggled(bool)), this, SLOT(switchNightMode(bool)));
+  if (settings->nightModeActive()) {
+    nightModeAction->setChecked(true);
+  }
 
   QAction* publicHolidayModeAction = new QAction(tr("Toggle public holiday Mode"), this);
   publicHolidayModeAction->setCheckable(true);
   connect(publicHolidayModeAction, SIGNAL(toggled(bool)), this, SLOT(switchPublicHolidayMode(bool)));
+  if (settings->publicHolidayModeActive()) {
+    publicHolidayModeAction->setChecked(true);
+  }
 
   connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
 
