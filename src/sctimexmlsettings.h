@@ -50,6 +50,7 @@ public:
       m_singleClickActivation = false;
       m_maxWorkingTime=MAX_WORKTIME_DEFAULT;
       m_persoenlicheKontensumme=false;
+      m_lastRecordedTimestamp=QDateTime();
       defaultcommentfiles.clear();
       defaultcommentfiles.push_back("defaultcomments.xml");
       columnwidth.clear();
@@ -344,6 +345,14 @@ public:
     QTime nightModeBegin() {
         return m_nightModeBegin;
     }
+
+    QDateTime lastRecordedTimestamp() {
+        return m_lastRecordedTimestamp;
+    }
+
+    void setLastRecordedTimestamp(const QDateTime& timestamp) {
+        m_lastRecordedTimestamp = timestamp;
+    }
     
     QList<QTime> nightModeAdditionalDialogTimes()
     {
@@ -354,6 +363,10 @@ public:
     QTime nightModeEnd() {
         return m_nightModeEnd;
     };
+
+    QString timestampFormat() {
+        return "yyyy-MM-dd HH:mm:ss";
+    }
 
 
     QString backends;
@@ -386,6 +399,8 @@ public:
 
     std::vector<QString> defaultcommentfiles;
     std::vector<int> columnwidth;
+
+    QDateTime m_lastRecordedTimestamp;
 
     bool alwaysSaveEintrag;
     bool m_powerUserView;

@@ -117,6 +117,8 @@ public:
     void switchPublicHolidayMode(bool enabled);
     void switchNightMode(bool enabled);
 
+    void updateSpecialModesAfterPause();
+
 
   signals:        
     /** Wird ausgeloest, falls sich die Gesamtzeit geaendert hat. Uebergeben wird die neue Gesamtzahl der Sekunden. */
@@ -191,6 +193,7 @@ public:
     QAction* overtimeRegulatedModeAction;
     QAction* overtimeOtherModeAction;
     QAction* nightModeAction;
+    QAction* publicHolidayModeAction;
     QDateTime startTime;
     QDateTime lastMinuteTick;
     QFont qtDefaultFont;

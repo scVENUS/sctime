@@ -298,26 +298,14 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   overtimeOtherModeAction = new QAction(tr("Toggle other overtime Mode"), this);
   overtimeOtherModeAction->setCheckable(true);
   connect(overtimeOtherModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeOtherMode(bool)));
-  if (settings->overtimeRegulatedModeActive()) {
-    overtimeRegulatedModeAction->setChecked(true);
-  }
-  if (settings->overtimeOtherModeActive()) {
-    overtimeOtherModeAction->setChecked(true);
-  }
 
   nightModeAction = new QAction(tr("Toggle night Mode"), this);
   nightModeAction->setCheckable(true);
   connect(nightModeAction, SIGNAL(toggled(bool)), this, SLOT(switchNightMode(bool)));
-  if (settings->nightModeActive()) {
-    nightModeAction->setChecked(true);
-  }
 
-  QAction* publicHolidayModeAction = new QAction(tr("Toggle public holiday Mode"), this);
+  publicHolidayModeAction = new QAction(tr("Toggle public holiday Mode"), this);
   publicHolidayModeAction->setCheckable(true);
   connect(publicHolidayModeAction, SIGNAL(toggled(bool)), this, SLOT(switchPublicHolidayMode(bool)));
-  if (settings->publicHolidayModeActive()) {
-    publicHolidayModeAction->setChecked(true);
-  }
 
   connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
 
@@ -338,6 +326,8 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   connect(this,SIGNAL(unterkontoSelected(bool)), bereitschaftsAction, SLOT(setEnabled(bool)));
 
   connect(this,SIGNAL(aktivierbarerEintragSelected(bool)), eintragActivateAction, SLOT(setEnabled(bool)));
+
+  updateSpecialModesAfterPause();
 
   toolBar->addAction(editUnterKontoAction);
   toolBar->addAction(saveAction);
@@ -783,6 +773,7 @@ void TimeMainWindow::pause() {
         trace(tr("ERROR: seconds since tick: %1").arg(secSinceTick));
         secSinceTick = 60;
     }
+    settings->setLastRecordedTimestamp(lastMinuteTick);
     QMessageBox::warning(this, tr("sctime: Pause"), tr("Accounting has been stopped. Resume work with OK."));
     paused = false;
     QDateTime now = QDateTime::currentDateTime();
@@ -794,6 +785,7 @@ void TimeMainWindow::pause() {
     startTime = now.addSecs(-secSinceTick);
     lastMinuteTick = startTime;
     tageswechsel();
+    updateSpecialModesAfterPause();
 }
 
 
@@ -815,6 +807,7 @@ void TimeMainWindow::save()
   std::vector<int> columnwidthlist;
   kontoTree->getColumnWidthList(columnwidthlist);
   settings->setColumnWidthList(columnwidthlist);
+  settings->setLastRecordedTimestamp(lastMinuteTick);
   checkLock();
   settings->setMainWindowGeometry(pos(),size());
   settings->writeSettings(abtListToday);
@@ -1676,15 +1669,19 @@ void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
 
 void TimeMainWindow::switchOvertimeRegulatedMode(bool enabled) {
     settings->setOvertimeRegulatedModeActive(enabled);
-    settings->setOvertimeOtherModeActive(!enabled);
-    overtimeOtherModeAction->setChecked(!enabled);
+    if (enabled) {
+      settings->setOvertimeOtherModeActive(false);
+      overtimeOtherModeAction->setChecked(false);
+    }
     switchOvertimeMode(enabled, settings->overtimeRegulatedSR());
 }
 
 void TimeMainWindow::switchOvertimeOtherMode(bool enabled) {
     settings->setOvertimeOtherModeActive(enabled);
-    settings->setOvertimeRegulatedModeActive(!enabled);
-    overtimeRegulatedModeAction->setChecked(!enabled);
+    if (enabled) {
+      settings->setOvertimeRegulatedModeActive(false);
+      overtimeRegulatedModeAction->setChecked(false);
+    }
     switchOvertimeMode(enabled, settings->overtimeOtherSR());
 }
 
@@ -1745,4 +1742,22 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
           }
         }
     }
+}
+
+void TimeMainWindow::updateSpecialModesAfterPause() {
+  QDateTime timestamp = QDateTime::currentDateTime();
+  QDateTime lastts = settings->lastRecordedTimestamp();
+  if (lastts.isValid()) {
+    bool sameday=(lastts.date()==timestamp.date());
+    settings->setOvertimeOtherModeActive(settings->overtimeOtherModeActive() && sameday);
+    settings->setOvertimeRegulatedModeActive(settings->overtimeRegulatedModeActive() && sameday);
+    if ((lastts.secsTo(timestamp)>60*60*12)) {
+      settings->setNightModeActive(false);
+    }
+    overtimeRegulatedModeAction->setChecked(settings->overtimeRegulatedModeActive());
+    overtimeOtherModeAction->setChecked(settings->overtimeOtherModeActive());
+    publicHolidayModeAction->setChecked(settings->publicHolidayModeActive() && sameday);
+    nightModeAction->setChecked(settings->nightModeActive());
+  }
+  callNightTimeDialog(timestamp.time()>settings->nightModeBegin()||timestamp.time()<settings->nightModeEnd());
 }
