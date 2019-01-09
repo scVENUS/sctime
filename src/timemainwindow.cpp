@@ -1766,8 +1766,9 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
               mutex.unlock();
               return;
             }
-            abtListToday->changeZeit(abt, ko, uko, oldidx, -delta, pausedAbzur);
-            abtListToday->changeZeit(abt, ko, uko, newidx, delta, pausedAbzur);
+            abtListToday->changeZeit(abt, ko, uko, oldidx, -delta, false, true, pausedAbzur);
+            abtListToday->changeZeit(abt, ko, uko, newidx, delta, false, true, pausedAbzur);
+            
             kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
           }
         }
