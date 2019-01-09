@@ -176,6 +176,7 @@ public:
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
     bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
     void switchOvertimeMode(bool enabled, QString otmSR);
+    void cantMoveTimeDialog(int delta);
     KontoTreeView* kontoTree;
     UnterKontoDialog* unterKontoDialog;
     QAction* editUnterKontoAction;
