@@ -720,7 +720,15 @@ void TimeMainWindow::zeitChanged()
   }
   if ((clocktime>settings->nightModeBegin())&&(oldlastclocktime<=settings->nightModeBegin())) {
     QTimer::singleShot(0, [this](){callNightTimeDialog(true);});
+  } else {
+    foreach (QTime t, settings->nightModeAdditionalDialogTimes()) {
+      if ((clocktime>t) && (oldlastclocktime<=t)) {
+        QTimer::singleShot(0, [this](){callNightTimeDialog(true);});
+        break;
+      }
+    }
   }
+
   if ((clocktime>settings->nightModeEnd())&&(oldlastclocktime<=settings->nightModeEnd())) {
     QTimer::singleShot(0, [this](){callNightTimeDialog(false);});
   }
