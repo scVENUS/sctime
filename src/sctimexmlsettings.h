@@ -34,6 +34,7 @@ class QTextStream;
 class SCTimeXMLSettings
 {
 public:
+    enum DefCommentDisplayModeEnum{DM_BOLD,DM_NOTUSEDBOLD,DM_NOTBOLD};
 
     SCTimeXMLSettings():backupSettingsXml(true)
     {
@@ -67,6 +68,7 @@ public:
       backends = defaultbackends;
       databaseserver = defaultdatabaseserver;
       database = defaultdatabase;
+      m_defCommentDisplayMode = DM_BOLD;
       // databaseuser - empty means "use system username"
       // databasepassword - empty means "try to read from file"
 
@@ -253,6 +255,15 @@ public:
       m_useDefaultCommentIfUnique=useDefaultCommentIfUnique;
     }
     
+    DefCommentDisplayModeEnum defCommentDisplayMode()
+    {
+        return m_defCommentDisplayMode;
+    }
+
+    void setDefCommentDisplayMode(DefCommentDisplayModeEnum defCommentDisplayMode)
+    {
+        m_defCommentDisplayMode=defCommentDisplayMode;
+    }
 
     bool dragNDrop()
     {
@@ -416,6 +427,7 @@ public:
     QString m_customFont;
     int m_customFontSize;
     bool backupSettingsXml; // nur beim ersten Speichern ein  Backup von settings.xml erstellen
+    DefCommentDisplayModeEnum m_defCommentDisplayMode;
     QPoint unterKontoWindowPosition;
     QSize unterKontoWindowSize;
     QString defaultbackends;
