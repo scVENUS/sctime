@@ -143,6 +143,7 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
 
   QMenu * kontomenu = menuBar()->addMenu(tr("&Account"));
   QMenu * zeitmenu = menuBar()->addMenu(tr("&Time"));
+  QMenu * remunmenu = menuBar()->addMenu(tr("&Remuneration"));
   QMenu * settingsmenu = menuBar()->addMenu(tr("&Settings"));
   QMenu * hilfemenu = menuBar()->addMenu(tr("&Help"));
 
@@ -349,11 +350,11 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   kontomenu->addAction(pauseAction);
   kontomenu->addAction(pauseAbzurAction);
   kontomenu->addAction(inPersKontAction);
-  kontomenu->addAction(specialRemunAction);
-  kontomenu->addAction(overtimeRegulatedModeAction);
-  kontomenu->addAction(overtimeOtherModeAction);
-  kontomenu->addAction(nightModeAction);
-  kontomenu->addAction(publicHolidayModeAction);
+  remunmenu->addAction(specialRemunAction);
+  remunmenu->addAction(overtimeRegulatedModeAction);
+  remunmenu->addAction(overtimeOtherModeAction);
+  remunmenu->addAction(nightModeAction);
+  remunmenu->addAction(publicHolidayModeAction);
   kontomenu->addSeparator();
   kontomenu->addAction(findKontoAction);
   kontomenu->addAction(jumpAction);
@@ -719,18 +720,18 @@ void TimeMainWindow::zeitChanged()
     QTimer::singleShot(0, this, SLOT(showArbeitszeitwarning()));
   }
   if ((clocktime>settings->nightModeBegin())&&(oldlastclocktime<=settings->nightModeBegin())) {
-    QTimer::singleShot(0, [this](){callNightTimeDialog(true);});
+    QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
   } else {
     foreach (QTime t, settings->nightModeAdditionalDialogTimes()) {
       if ((clocktime>t) && (oldlastclocktime<=t)) {
-        QTimer::singleShot(0, [this](){callNightTimeDialog(true);});
+        QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
         break;
       }
     }
   }
 
   if ((clocktime>settings->nightModeEnd())&&(oldlastclocktime<=settings->nightModeEnd())) {
-    QTimer::singleShot(0, [this](){callNightTimeDialog(false);});
+    QTimer::singleShot(0, this, SLOT(callNightTimeEndDialog()));
   }
 
   
@@ -1688,7 +1689,9 @@ void TimeMainWindow::switchOvertimeRegulatedMode(bool enabled) {
     if (enabled) {
       settings->setOvertimeOtherModeActive(false);
       overtimeOtherModeAction->setChecked(false);
+      statusBar->setMode(tr("Unregulated OT"),false);
     }
+    statusBar->setMode(tr("Regulated OT"),enabled);
     switchOvertimeMode(enabled, settings->overtimeRegulatedSR());
 }
 
@@ -1697,17 +1700,21 @@ void TimeMainWindow::switchOvertimeOtherMode(bool enabled) {
     if (enabled) {
       settings->setOvertimeRegulatedModeActive(false);
       overtimeRegulatedModeAction->setChecked(false);
+      statusBar->setMode(tr("Regulated OT"),false);
     }
+    statusBar->setMode(tr("Unregulated OT"),enabled);
     switchOvertimeMode(enabled, settings->overtimeOtherSR());
 }
 
 void TimeMainWindow::switchPublicHolidayMode(bool enabled) {
     settings->setPublicHolidayModeActive(enabled);
+    statusBar->setMode(tr("Holiday"),enabled);
     switchOvertimeMode(enabled, settings->publicHolidaySR());
 }
 
 void TimeMainWindow::switchNightMode(bool enabled) {
     settings->setNightModeActive(enabled);
+    statusBar->setMode(tr("Night"),enabled);
     switchOvertimeMode(enabled, settings->nightSR());
 }
 
@@ -1715,7 +1722,7 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
 {
     static QMutex mutex;
     // we only want one instamnce of this dialog
-    if (!mutex.try_lock()) {
+    if (!mutex.tryLock()) {
       return;
     }
     if (isnight==settings->nightModeActive()) {
@@ -1806,4 +1813,12 @@ void TimeMainWindow::updateSpecialModesAfterPause() {
     nightModeAction->setChecked(settings->nightModeActive());
   }
   callNightTimeDialog(timestamp.time()>settings->nightModeBegin()||timestamp.time()<settings->nightModeEnd());
+}
+
+void TimeMainWindow::callNightTimeBeginDialog(){
+  callNightTimeDialog(true);
+}
+
+void TimeMainWindow::callNightTimeEndDialog(){
+  callNightTimeDialog(false);
 }

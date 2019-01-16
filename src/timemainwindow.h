@@ -166,6 +166,8 @@ public:
     void commitBereit(DSResult data);
     void commitSpecialRemun(DSResult);
     void driftKorrektur();
+    void callNightTimeBeginDialog();
+    void callNightTimeEndDialog();
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
