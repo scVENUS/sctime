@@ -1282,7 +1282,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <location filename="timemainwindow.cpp" line="1737"/>
         <source>It is %1. Should I switch to night mode, so you get special remuneration for working late? Please also check your companies regulations before enabling nightmode.</source>
         <oldsource>It is late. Should I switch to night mode, so you get special remuneration for working late? Please also check your companies regulations before enabling nightmode</oldsource>
-        <translation>Es ist %1. Soll ich den Nachtmodus einschalten, und damit Vergütung für Sonderzeit beantragen? Bitte prüfen Sie auch die gültingen Regelungen des Unternehmens, bevor Sie den Nachtmodus aktiveren.</translation>
+        <translation type="unfinished">Es ist %1. Soll ich den Nachtmodus einschalten, und damit Vergütung für Sonderzeit beantragen? Bitte prüfen Sie auch die gültigen Regelungen des Unternehmens, bevor Sie den Nachtmodus aktiveren.</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="1744"/>
@@ -1293,7 +1293,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <location filename="timemainwindow.cpp" line="1745"/>
         <source>It is %1. Should I switch night mode off? Otherwise you apply for further special remuneration. Please also check your companies regulations when keeping nightmode enabled.</source>
         <oldsource>Night has passed. Should I switch night mode off? Otherwise you apply for further special remuneration. Please also check your companies regulations when keeping nightmode enabled.</oldsource>
-        <translation>It is %1. Soll der Nachtmodus abgeschaltet werden? Andernfalls wird weiterhin Vergütung für Sonderzeit beantragt. Bitte prüfen Sie auch die gültingen Regelungen des Unternehmens, wenn Sie den Nachtmodus aktiv lassen.</translation>
+        <translation type="unfinished">It is %1. Soll der Nachtmodus abgeschaltet werden? Andernfalls wird weiterhin Vergütung für Sonderzeit beantragt. Bitte prüfen Sie auch die gültigen Regelungen des Unternehmens, wenn Sie den Nachtmodus aktiv lassen.</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="1770"/>
@@ -1303,7 +1303,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
     <message>
         <location filename="timemainwindow.cpp" line="1771"/>
         <source>Should %1 minutes be moved to the new selected entry?</source>
-        <translation>Sollen %1 mitunten zum neu ausgewählten Zeitrag verschoben werden?</translation>
+        <translation>Sollen %1 Minuten zum neu ausgewählten Zeitrag verschoben werden?</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="1792"/>
