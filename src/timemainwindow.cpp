@@ -294,18 +294,18 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   fastAbzurMinusAction = new QAction(QIcon(":/hi22_action_2downarrow_half" ),
                                        tr("Decrease accountable time fast"), this);
 
-  overtimeRegulatedModeAction = new QAction(tr("Toggle regulated overtime Mode"), this);
+  overtimeRegulatedModeAction = new QAction(tr("Toggle regulated overtime mode"), this);
   overtimeRegulatedModeAction->setCheckable(true);
   connect(overtimeRegulatedModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeRegulatedMode(bool)));
-  overtimeOtherModeAction = new QAction(tr("Toggle other overtime Mode"), this);
+  overtimeOtherModeAction = new QAction(tr("Toggle other overtime mode"), this);
   overtimeOtherModeAction->setCheckable(true);
   connect(overtimeOtherModeAction, SIGNAL(toggled(bool)), this, SLOT(switchOvertimeOtherMode(bool)));
 
-  nightModeAction = new QAction(tr("Toggle night Mode"), this);
+  nightModeAction = new QAction(tr("Toggle night mode"), this);
   nightModeAction->setCheckable(true);
   connect(nightModeAction, SIGNAL(toggled(bool)), this, SLOT(switchNightMode(bool)));
 
-  publicHolidayModeAction = new QAction(tr("Toggle public holiday Mode"), this);
+  publicHolidayModeAction = new QAction(tr("Toggle public holiday mode"), this);
   publicHolidayModeAction->setCheckable(true);
   connect(publicHolidayModeAction, SIGNAL(toggled(bool)), this, SLOT(switchPublicHolidayMode(bool)));
 
@@ -363,8 +363,8 @@ TimeMainWindow::TimeMainWindow():QMainWindow(), startTime(QDateTime::currentDate
   kontomenu->addSeparator();
   kontomenu->addAction(bgColorChooseAction);
   kontomenu->addAction(bgColorRemoveAction);
-  kontomenu->addSeparator();
-  kontomenu->addAction(bereitschaftsAction);
+  remunmenu->addSeparator();
+  remunmenu->addAction(bereitschaftsAction);
   kontomenu->addSeparator();
   kontomenu->addAction(quitAction);
   zeitmenu->addAction(changeDateAction);
@@ -1734,17 +1734,17 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
     if (isnight) {
        int result=QMessageBox::question(
             this, tr("sctime: switch nightmode on?"),
-                  tr("It is late. Should I switch to night mode, so you get special "
+                  tr("It is %1. Should I switch to night mode, so you get special "
                   "remuneration for working late? Please also check your companies "
-                  "regulations before enabling nightmode"),
+                  "regulations before enabling nightmode.").arg(beforeOpen.time().toString("hh:mm")),
                   QMessageBox::Yes, QMessageBox::No);
        shouldswitch = (result==QMessageBox::Yes);
     } else {
        int result=QMessageBox::question(
             this, tr("sctime: switch nightmode off?"),
-                  tr("Night has passed. Should I switch night mode off? "
+                  tr("It is %1. Should I switch night mode off? "
                   "Otherwise you apply for further special remuneration. Please also check your companies "
-                  "regulations when keeping nightmode enabled."),
+                  "regulations when keeping nightmode enabled.").arg(beforeOpen.time().toString("hh:mm")),
                   QMessageBox::Yes, QMessageBox::No);
        shouldswitch = (result==QMessageBox::Yes);
     }
