@@ -1626,6 +1626,10 @@ void TimeMainWindow::callAdditionalLicenseDialog() {
   dialog->browser()->setSource(QUrl::fromLocalFile(additionalLicensesFile));
 }
 
+/** checks if a new time entry should be generated for the given set of special remunerations.
+ * this functions potentially asks the user what to do, and returns true iff an existing entry can be
+ * recycled (in this case the index of this entry is also returned in the parameter idx)
+  */
 bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns) {
   UnterKontoEintrag entry;
   abtListToday->getEintrag(entry,abt,ko,uko,idx);
@@ -1651,6 +1655,8 @@ bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const Q
   return true;
 }
 
+/**
+ * switches the overtimemode identified by the given special remun to the given state*/
 void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
   abtListToday->setOverTimeModeState(enabled,specialremun);
   QString abt, ko, uko;
@@ -1684,6 +1690,8 @@ void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
   }
 }
 
+/**
+ * switches the regulated overtime mode to the given state*/
 void TimeMainWindow::switchOvertimeRegulatedMode(bool enabled) {
     settings->setOvertimeRegulatedModeActive(enabled);
     if (enabled) {
@@ -1695,6 +1703,8 @@ void TimeMainWindow::switchOvertimeRegulatedMode(bool enabled) {
     switchOvertimeMode(enabled, settings->overtimeRegulatedSR());
 }
 
+/**
+ * switches the other overtime mode to the given state*/
 void TimeMainWindow::switchOvertimeOtherMode(bool enabled) {
     settings->setOvertimeOtherModeActive(enabled);
     if (enabled) {
@@ -1706,18 +1716,26 @@ void TimeMainWindow::switchOvertimeOtherMode(bool enabled) {
     switchOvertimeMode(enabled, settings->overtimeOtherSR());
 }
 
+/**
+ * switches the public holiday mode to the given state*/
 void TimeMainWindow::switchPublicHolidayMode(bool enabled) {
     settings->setPublicHolidayModeActive(enabled);
     statusBar->setMode(tr("Holiday"),enabled);
     switchOvertimeMode(enabled, settings->publicHolidaySR());
 }
 
+/**
+ * switches the night mode to the given state*/
 void TimeMainWindow::switchNightMode(bool enabled) {
     settings->setNightModeActive(enabled);
     statusBar->setMode(tr("Night"),enabled);
     switchOvertimeMode(enabled, settings->nightSR());
 }
 
+/**
+ * opens a dialog asking if nightmode should be switched on, or off, depending
+ * on the given parameter and the current state of the mode (isnight=true means
+ * nighttime should be enabled, if that is not already the case)*/
 void TimeMainWindow::callNightTimeDialog(bool isnight) 
 {
     static QMutex mutex;
@@ -1786,6 +1804,7 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
     mutex.unlock();
 }
 
+/** shows an error message if worked times could not be moved to another entry */
 void TimeMainWindow::cantMoveTimeDialog(int delta)
 {
   int result=QMessageBox::warning(
@@ -1794,6 +1813,8 @@ void TimeMainWindow::cantMoveTimeDialog(int delta)
                   QMessageBox::Ok);
 }
 
+/**
+ * checks and updates overtime modes after a pause (they might not be valid anymore)*/
 void TimeMainWindow::updateSpecialModesAfterPause() {
   QDateTime timestamp = QDateTime::currentDateTime();
   QDateTime lastts = settings->lastRecordedTimestamp();
@@ -1815,10 +1836,14 @@ void TimeMainWindow::updateSpecialModesAfterPause() {
   callNightTimeDialog(timestamp.time()>settings->nightModeBegin()||timestamp.time()<settings->nightModeEnd());
 }
 
+/**
+ * slot to open a dialog asking to switch nightmode on, if necessary */
 void TimeMainWindow::callNightTimeBeginDialog(){
   callNightTimeDialog(true);
 }
 
+/**
+ * slot to open a dialog asking to switch nightmode off, if necessary */
 void TimeMainWindow::callNightTimeEndDialog(){
   callNightTimeDialog(false);
 }

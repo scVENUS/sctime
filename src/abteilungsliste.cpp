@@ -123,6 +123,8 @@ bool AbteilungsListe::findEintrag(EintragsListe::iterator& itEt, EintragsListe* 
   return true;
 }
 
+/** looks for an entry with the given special remuneration categories and comment.
+*/
 bool AbteilungsListe::findEntryWithSpecialRemunsAndComment(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, int &idx, 
                                                 const QString& abteilung, const QString& konto, 
                                                 const QString& unterkonto, const QString& comment, const QSet<QString>& specialRemuns)
@@ -1034,11 +1036,13 @@ void AbteilungsListe::setSpecialRemunTypeMap(const SpecialRemunTypeMap& srtm)
       m_specialRemunTypeMap=srtm;
 }
 
+/** returns true if any overtime mode is active, false otherwise */
 bool AbteilungsListe::overTimeModeActive()
 {
       return !m_activeOverTimeModes.isEmpty();
 }
 
+/** sets the state of overtimemode identified by the string*/
 void AbteilungsListe::setOverTimeModeState(bool active, const QString& srname)
 {
       if (active) {
@@ -1048,11 +1052,13 @@ void AbteilungsListe::setOverTimeModeState(bool active, const QString& srname)
       }  
 }
 
+/** returns the state of overtimemode identified by the string. A return value of true means active.*/
 bool AbteilungsListe::overTimeModeState(const QString& srname)
 {
       return m_activeOverTimeModes.contains(srname);
 }
 
+/** returns the set of active overtime modes*/
 QSet<QString> AbteilungsListe::getActiveOverTimeModes()
 {
       return m_activeOverTimeModes;

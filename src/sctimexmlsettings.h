@@ -297,84 +297,101 @@ public:
         m_zeitKontenKommando=command;
     }
 
+    /** returns true, if the night mode is active */
     bool nightModeActive()
     {
         return m_nightModeActive;
     }
 
+    /** sets the night mode active/inactive) */
     void setNightModeActive(bool active)
     {
         m_nightModeActive=active;
     }
 
+    /** returns true, if the regulated overtime mode is active */
     bool overtimeRegulatedModeActive()
     {
         return m_overtimeRegulatedModeActive;
     }
 
+    /** sets the regulated overtime mode active/inactive) */
     void setOvertimeRegulatedModeActive(bool active)
     {
         m_overtimeRegulatedModeActive=active;
     }
 
+    /** returns true, if the other overtime mode is active */
     bool overtimeOtherModeActive()
     {
         return m_overtimeOtherModeActive;
     }
 
+    /** sets the other overtime mode active/inactive) */
     void setOvertimeOtherModeActive(bool active)
     {
         m_overtimeOtherModeActive=active;
     }
 
+    /** returns true, if the public holiday mode is active */
     bool publicHolidayModeActive()
     {
         return m_publicHolidayModeActive;
     }
 
+    /** sets the public holiday mode active/inactive) */
     void setPublicHolidayModeActive(bool active)
     {
         m_publicHolidayModeActive=active;
     }
 
+    /* returns the global identification string for regulated overtime special remunerations */
     QString overtimeRegulatedSR() {
         return m_overtimeRegulatedSR;
     }
 
+    /* returns the global identification string for other overtime special remunerations */
     QString overtimeOtherSR() {
         return m_overtimeOtherSR;
     }
 
+    /* returns the global identification string for other overtime special remunerations */
     QString publicHolidaySR() {
         return m_publicHolidaySR;
     }
 
+    /* returns the global identification string for night time special remunerations */
     QString nightSR() {
         return m_nightSR;
     }
 
+    /* returns the time when night mode should start */
     QTime nightModeBegin() {
         return m_nightModeBegin;
     }
 
+    /* returns the last time stamp sctime has registered (possibly in a previous run) */
     QDateTime lastRecordedTimestamp() {
         return m_lastRecordedTimestamp;
     }
 
+    /* sets the last time stamp sctime has registered */
     void setLastRecordedTimestamp(const QDateTime& timestamp) {
         m_lastRecordedTimestamp = timestamp;
     }
     
+    /* additional times when the night mode dialog should be shown */
     QList<QTime> nightModeAdditionalDialogTimes()
     {
         return m_nightModeAdditionalDialogTimes;
     }
 
-
+    /* returns the time when night mode should end */
     QTime nightModeEnd() {
         return m_nightModeEnd;
     };
 
+    /* the format in which timestamps are written into the configuration file */
     QString timestampFormat() {
         return "yyyy-MM-dd HH:mm:ss";
     }
