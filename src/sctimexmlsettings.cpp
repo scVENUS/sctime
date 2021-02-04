@@ -925,14 +925,18 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
 #ifndef WIN32
   // unter Windows funktioniert kein "rename", wenn es den Zielnamen schon gibt.
   // Doch unter UNIX kann ich damit Dateien atomar ersetzen.
-  if (!rename(fnew.fileName().toLocal8Bit(), filename.toLocal8Bit())) return;
-  QMessageBox::information(NULL, QObject::tr("sctime: saving settings"),
+  if (!rename(fnew.fileName().toLocal8Bit(), filename.toLocal8Bit())) {
+      QMessageBox::information(NULL, QObject::tr("sctime: saving settings"),
                         QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, strerror(errno)));
+      return false;
+  }
 #endif
   fcurrent.remove();
-  if (!fnew.rename(filename))
+  if (!fnew.rename(filename)) {
     QMessageBox::critical(NULL, QObject::tr("sctime: saving settings"),
                          QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, fnew.errorString()));
+    return false;
+  }
 
   #endif
   if (!global) {
