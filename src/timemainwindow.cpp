@@ -859,6 +859,7 @@ void TimeMainWindow::callCantSaveDialog() {
     QMessageBox* msg = new QMessageBox();
     cantSaveDialog=msg;
     msg->setText(tr("An error occured when saving data. Please try again."));
+    qDebug() << tr("An error occured when saving data.");
     msg->exec();
     delete cantSaveDialog;
     cantSaveDialog = NULL;
@@ -1020,9 +1021,17 @@ void TimeMainWindow::changeDate(const QDate &datum)
         settings->setColumnWidthList(columnwidthlist);
         if (abtListToday != abtList)
         {
-            settings->writeSettings(abtListToday);
+            if (!(settings->writeSettings(abtListToday) &&
+                 settings->writeSettings(abtList)
+                 )) {
+                   QMessageBox msg;
+                   QString msgtext = tr("Could not switch day due to problems with saving.");
+                   msg.setText(msgtext);
+                   qDebug() << msgtext;
+                   msg.exec();
+                   return;
+                 }
             settings->writeShellSkript(abtListToday);
-            settings->writeSettings(abtList);
             settings->writeShellSkript(abtList);
             delete abtList;
             abtList = NULL;
