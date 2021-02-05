@@ -1004,6 +1004,14 @@ void TimeMainWindow::eintragEntfernen()
   zeitChanged();
 }
 
+void TimeMainWindow::callSwitchDateErrorDialog()
+{
+    QMessageBox msg;
+    QString msgtext = tr("Could not switch day due to problems with saving.");
+    msg.setText(msgtext);
+    qDebug() << msgtext;
+    msg.exec();
+}
 
 /**
  * Aendert das Datum: dazu werden zuerst die aktuellen Zeiten und Einstellungen gespeichert,
@@ -1024,11 +1032,7 @@ void TimeMainWindow::changeDate(const QDate &datum)
             if (!(settings->writeSettings(abtListToday) &&
                  settings->writeSettings(abtList)
                  )) {
-                   QMessageBox msg;
-                   QString msgtext = tr("Could not switch day due to problems with saving.");
-                   msg.setText(msgtext);
-                   qDebug() << msgtext;
-                   msg.exec();
+                   callSwitchDateErrorDialog();
                    return;
                  }
             settings->writeShellSkript(abtListToday);
@@ -1075,6 +1079,8 @@ void TimeMainWindow::changeDate(const QDate &datum)
                 statusBar->appendWarning(!currentDateSel, tr(" -- This day has already been checked in!"));
             }
         }
+    } else {
+      callSwitchDateErrorDialog();
     }
 }
 

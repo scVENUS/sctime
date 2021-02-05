@@ -1275,7 +1275,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
     <message>
         <location filename="timemainwindow.cpp" line="861"/>
         <source>An error occured when saving data. Please try again.</source>
-        <translation>Ein Fehler trat beim Speichern auf. Biutte versuchen Sie es erneut.</translation>
+        <translation>Ein Fehler trat beim Speichern auf. Bitte versuchen Sie es erneut.</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="880"/>
