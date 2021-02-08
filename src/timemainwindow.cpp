@@ -1007,7 +1007,7 @@ void TimeMainWindow::eintragEntfernen()
 void TimeMainWindow::callSwitchDateErrorDialog()
 {
     QMessageBox msg;
-    QString msgtext = tr("Could not switch day due to problems with saving.");
+    QString msgtext = tr("Could not switch day due to problems with saving. ATTENTION: that also means that the clock might be running on the wrong day. Please fix the problem with saving and switch manually to the current date afterwards.");
     msg.setText(msgtext);
     qDebug() << msgtext;
     msg.exec();
