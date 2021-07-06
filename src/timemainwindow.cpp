@@ -1049,7 +1049,6 @@ void TimeMainWindow::changeDate(const QDate &datum)
             if (!(settings->writeSettings(abtListToday) &&
                  settings->writeSettings(abtList)
                  )) {
-                   callSwitchDateErrorDialog();
                    return;
                  }
             settings->writeShellSkript(abtListToday);
@@ -1059,16 +1058,22 @@ void TimeMainWindow::changeDate(const QDate &datum)
         }
         else
         {
-            settings->writeSettings(abtList);
+            if (!settings->writeSettings(abtList)) {
+                return;
+            }
             settings->writeShellSkript(abtList);
+        }
+        if (abtListToday->getDatum() != datum)
+        {
+            abtListToday->setDatum(datum);
+            if (abtListToday != abtList) {
+                abtListToday->clearKonten();
+                settings->readSettings(abtListToday);
+            }
         }
         if (currentDateSel)
         {
             abtList = abtListToday;
-            if (abtListToday->getDatum() != datum)
-            {
-                abtListToday->setDatum(datum);
-            }
         }
         else
         {
