@@ -1039,7 +1039,8 @@ void TimeMainWindow::changeDate(const QDate &datum)
     if (checkConfigDir())
     {
         checkLock();
-        bool currentDateSel = (datum == QDate::currentDate());
+        QDate currentDate = QDate::currentDate();
+        bool currentDateSel = (datum == currentDate);
         kontoTree->flagClosedPersoenlicheItems();
         std::vector<int> columnwidthlist;
         kontoTree->getColumnWidthList(columnwidthlist);
@@ -1063,9 +1064,9 @@ void TimeMainWindow::changeDate(const QDate &datum)
             }
             settings->writeShellSkript(abtList);
         }
-        if (abtListToday->getDatum() != datum)
+        if (abtListToday->getDatum() != currentDate)
         {
-            abtListToday->setDatum(datum);
+            abtListToday->setDatum(currentDate);
             if (abtListToday != abtList) {
                 abtListToday->clearKonten();
                 settings->readSettings(abtListToday);
