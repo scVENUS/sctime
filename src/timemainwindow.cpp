@@ -351,7 +351,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
 
   connect(this,SIGNAL(aktivierbarerEintragSelected(bool)), eintragActivateAction, SLOT(setEnabled(bool)));
 
-  updateSpecialModesAfterPause();
+  updateSpecialModes(true);
 
   toolBar->addAction(editUnterKontoAction);
   toolBar->addAction(saveAction);
@@ -825,7 +825,7 @@ void TimeMainWindow::pause() {
     startTime = now.addSecs(-secSinceTick);
     lastMinuteTick = startTime;
     tageswechsel();
-    updateSpecialModesAfterPause();
+    updateSpecialModes(true);
 }
 
 
@@ -1039,7 +1039,8 @@ void TimeMainWindow::changeDate(const QDate &datum)
     if (checkConfigDir())
     {
         checkLock();
-        bool currentDateSel = (datum == QDate::currentDate());
+        QDate currentDate = QDate::currentDate();
+        bool currentDateSel = (datum == currentDate);
         kontoTree->flagClosedPersoenlicheItems();
         std::vector<int> columnwidthlist;
         kontoTree->getColumnWidthList(columnwidthlist);
@@ -1049,7 +1050,6 @@ void TimeMainWindow::changeDate(const QDate &datum)
             if (!(settings->writeSettings(abtListToday) &&
                  settings->writeSettings(abtList)
                  )) {
-                   callSwitchDateErrorDialog();
                    return;
                  }
             settings->writeShellSkript(abtListToday);
@@ -1059,16 +1059,22 @@ void TimeMainWindow::changeDate(const QDate &datum)
         }
         else
         {
-            settings->writeSettings(abtList);
+            if (!settings->writeSettings(abtList)) {
+                return;
+            }
             settings->writeShellSkript(abtList);
+        }
+        if (abtListToday->getDatum() != currentDate)
+        {
+            abtListToday->setDatum(currentDate);
+            if (abtListToday != abtList) {
+                abtListToday->clearKonten();
+                settings->readSettings(abtListToday);
+            }
         }
         if (currentDateSel)
         {
             abtList = abtListToday;
-            if (abtListToday->getDatum() != datum)
-            {
-                abtListToday->setDatum(datum);
-            }
         }
         else
         {
@@ -1082,7 +1088,7 @@ void TimeMainWindow::changeDate(const QDate &datum)
         kontoTree->showAktivesProjekt();
         if (currentDateSel)
         {
-            updateSpecialModesAfterPause();
+            updateSpecialModes(false);
         }
         zeitChanged();
         emit(currentDateSelected(currentDateSel));
@@ -1917,7 +1923,7 @@ void TimeMainWindow::cantMoveTimeDialog(int delta)
 
 /**
  * checks and updates overtime modes after a pause (they might not be valid anymore)*/
-void TimeMainWindow::updateSpecialModesAfterPause() {
+void TimeMainWindow::updateSpecialModes(bool afterPause) {
   QDateTime timestamp = QDateTime::currentDateTime();
   QDateTime lastts = settings->lastRecordedTimestamp();
   if (lastts.isValid()) {
@@ -1936,7 +1942,13 @@ void TimeMainWindow::updateSpecialModesAfterPause() {
     nightModeAction->setChecked(settings->nightModeActive());
   }
   if (!settings->nightModeBegin().isNull() && !settings->nightModeEnd().isNull()) {
-    callNightTimeDialog(timestamp.time()>settings->nightModeBegin()||timestamp.time()<settings->nightModeEnd());
+    if (afterPause) {
+        if (timestamp.time()>settings->nightModeBegin()||timestamp.time()<settings->nightModeEnd()) {
+           QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
+        } else {
+           QTimer::singleShot(0, this, SLOT(callNightTimeEndDialog()));
+        }
+    }
   }
 }
 
