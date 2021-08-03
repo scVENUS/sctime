@@ -901,7 +901,7 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
   QString filename(configDir.filePath(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml"));
   QFile fnew(filename + ".tmp");
   QDateTime filemod = QFileInfo(filename).lastModified();
-  if (!global && m_lastSave.isValid() && filemod.isValid() && filemod>m_lastSave.addSecs(1)) {
+  if (!global && m_lastSave.isValid() && filemod.isValid() && filemod>m_lastSave.addSecs(30)) {
       QMessageBox::StandardButton answer = QMessageBox::question(NULL, QObject::tr("sctime: saving settings"), QObject::tr("%1 has been modified since the last changes done by this sctime instance. Do you wanto to overwrite theses changes?").arg(fnew.fileName()));
       if (answer!=QMessageBox::Yes) {
          return false;
