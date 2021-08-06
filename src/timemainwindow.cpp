@@ -95,6 +95,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   }
   m_lock = lock;
   paused = false;
+  entryBeingEdited = false;
   sekunden = 0;
   setObjectName(tr("sctime"));
   std::vector<QString> xmlfilelist;
@@ -1045,7 +1046,13 @@ void TimeMainWindow::changeDate(const QDate &datum)
         std::vector<int> columnwidthlist;
         kontoTree->getColumnWidthList(columnwidthlist);
         settings->setColumnWidthList(columnwidthlist);
-        if (abtListToday != abtList)
+
+        QString abt,ko,uko;
+        int idx;
+
+        abtListToday->getAktiv(abt,ko,uko,idx);
+
+        if ((abtListToday != abtList)||(entryBeingEdited))
         {
             if (!(settings->writeSettings(abtListToday) &&
                  settings->writeSettings(abtList)
@@ -1054,8 +1061,11 @@ void TimeMainWindow::changeDate(const QDate &datum)
                  }
             settings->writeShellSkript(abtListToday);
             settings->writeShellSkript(abtList);
-            delete abtList;
-            abtList = NULL;
+            if (!entryBeingEdited) {
+              // dont change abtlist, while it is being edited
+              delete abtList;
+              abtList = NULL;
+            }
         }
         else
         {
@@ -1064,24 +1074,34 @@ void TimeMainWindow::changeDate(const QDate &datum)
             }
             settings->writeShellSkript(abtList);
         }
+
+        if (!entryBeingEdited) {
+          if (currentDateSel)
+          {
+            abtList = abtListToday;
+          }
+          else
+          {
+            abtList = new AbteilungsListe(datum, abtListToday);
+          }
+        } else if (abtListToday==abtList) {
+            // we need a new abtListToday, because the old one has to live on as abtList, because we cant give up the old one, as it is still open
+            abtListToday = new AbteilungsListe(datum, abtListToday);
+        }
+
         if (abtListToday->getDatum() != currentDate)
         {
             abtListToday->setDatum(currentDate);
             if (abtListToday != abtList) {
-                abtListToday->clearKonten();
-                settings->readSettings(abtListToday);
+              abtListToday->clearKonten();
+              settings->readSettings(abtListToday);
             }
         }
-        if (currentDateSel)
-        {
-            abtList = abtListToday;
-        }
-        else
-        {
-            abtList = new AbteilungsListe(datum, abtListToday);
-        }
+        
         abtList->clearKonten();
         settings->readSettings(abtList);
+
+        abtListToday->setAsAktiv(abt,ko,uko,idx);
 
         kontoTree->load(abtList);
         kontoTree->closeFlaggedPersoenlicheItems();
@@ -1093,7 +1113,7 @@ void TimeMainWindow::changeDate(const QDate &datum)
         zeitChanged();
         emit(currentDateSelected(currentDateSel));
         trace(tr("Day set to: ") + datum.toString());
-        statusBar->dateWarning(!currentDateSel, datum);
+        statusBar->dateWarning((abtList!=abtListToday), abtList->getDatum());
         //Append Warning if current file is checked in
         if (!currentDateSel)
         {
@@ -1291,6 +1311,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
 {
   if ((!kontoTree->isEintragsItem(item)))
     return;
+  entryBeingEdited = true;
 
   QString top,uko,ko,abt;
 
@@ -1321,6 +1342,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
   unterKontoDialog->disconnect();
   QObject::disconnect(timerconn);
   delete unterKontoDialog;
+  entryBeingEdited = false;
 }
 
 /**
