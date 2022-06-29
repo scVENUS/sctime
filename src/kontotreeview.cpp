@@ -325,7 +325,7 @@ KontoTreeItem* KontoTreeView::sucheKommentarItem(const QString& tops, const QStr
   ukoi = sucheUnterKontoItem(tops, abts, kos, ukos);
   if (ukoi==NULL) return NULL;
 
-  for (komi=(KontoTreeItem*)ukoi->child(0); (komi!=NULL)&&(komi->text(5)!=koms); komi=(KontoTreeItem*)komi->nextSibling());
+  for (komi=(KontoTreeItem*)ukoi->child(0); (komi!=NULL)&&(komi->text(KontoTreeItem::COL_COMMENT)!=koms); komi=(KontoTreeItem*)komi->nextSibling());
   return komi;
 }
 
