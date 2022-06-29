@@ -273,19 +273,19 @@ bool KontoTreeView::sucheItem(const QString& tops, const QString& abts, const QS
 {
   topi=abti=koi=ukoi=eti=NULL;
 
-  for (topi=(KontoTreeItem*)topLevelItem(0); (topi!=NULL)&&(topi->text(0)!=tops); topi=(KontoTreeItem*)(topi->nextSibling())) ;
+  for (topi=(KontoTreeItem*)topLevelItem(0); (topi!=NULL)&&(topi->text(KontoTreeItem::COL_ACCOUNTS)!=tops); topi=(KontoTreeItem*)(topi->nextSibling())) ;
   if (topi==NULL) return false;
 
-  for (abti=(KontoTreeItem*)(topi->child(0)); (abti!=NULL)&&(abti->text(0)!=abts); abti=(KontoTreeItem*)(abti->nextSibling())) ;
+  for (abti=(KontoTreeItem*)(topi->child(0)); (abti!=NULL)&&(abti->text(KontoTreeItem::COL_ACCOUNTS)!=abts); abti=(KontoTreeItem*)(abti->nextSibling())) ;
   if (abti==NULL) return false;
 
-  for (koi=(KontoTreeItem*)(abti->child(0)); (koi!=NULL)&&(koi->text(0)!=kos); koi=(KontoTreeItem*)(koi->nextSibling())) ;
+  for (koi=(KontoTreeItem*)(abti->child(0)); (koi!=NULL)&&(koi->text(KontoTreeItem::COL_ACCOUNTS)!=kos); koi=(KontoTreeItem*)(koi->nextSibling())) ;
   if (koi==NULL) return false;
 
-  for (ukoi=(KontoTreeItem*)(koi->child(0)); (ukoi!=NULL)&&(ukoi->text(0)!=ukos); ukoi=(KontoTreeItem*)(ukoi->nextSibling())) ;
+  for (ukoi=(KontoTreeItem*)(koi->child(0)); (ukoi!=NULL)&&(ukoi->text(KontoTreeItem::COL_ACCOUNTS)!=ukos); ukoi=(KontoTreeItem*)(ukoi->nextSibling())) ;
   if (ukoi==NULL) return false;
 
-  for (eti=(KontoTreeItem*)(ukoi->child(0)); (eti!=NULL)&&(eti->text(0).toInt()!=idx); eti=(KontoTreeItem*)(eti->nextSibling())) ;
+  for (eti=(KontoTreeItem*)(ukoi->child(0)); (eti!=NULL)&&(eti->text(KontoTreeItem::COL_ACCOUNTS).toInt()!=idx); eti=(KontoTreeItem*)(eti->nextSibling())) ;
   //if ((eti==NULL)&&(idx!=0)) return false;
 
   return true;
@@ -296,13 +296,13 @@ KontoTreeItem* KontoTreeView::sucheKontoItem(const QString& tops, const QString&
 {
   KontoTreeItem *topi,*abti,*koi;
 
-  for (topi=(KontoTreeItem*)topLevelItem(0); (topi!=NULL)&&(topi->text(0)!=tops); topi=(KontoTreeItem*)topi->nextSibling()) ;
+  for (topi=(KontoTreeItem*)topLevelItem(0); (topi!=NULL)&&(topi->text(KontoTreeItem::COL_ACCOUNTS)!=tops); topi=(KontoTreeItem*)topi->nextSibling()) ;
   if (topi==NULL) return NULL;
 
-  for (abti=(KontoTreeItem*)topi->child(0); (abti!=NULL)&&(abti->text(0)!=abts); abti=(KontoTreeItem*)abti->nextSibling()) ;
+  for (abti=(KontoTreeItem*)topi->child(0); (abti!=NULL)&&(abti->text(KontoTreeItem::COL_ACCOUNTS)!=abts); abti=(KontoTreeItem*)abti->nextSibling()) ;
   if (abti==NULL) return NULL;
 
-  for (koi=(KontoTreeItem*)abti->child(0); (koi!=NULL)&&(koi->text(0)!=kos); koi=(KontoTreeItem*)koi->nextSibling()) ;
+  for (koi=(KontoTreeItem*)abti->child(0); (koi!=NULL)&&(koi->text(KontoTreeItem::COL_ACCOUNTS)!=kos); koi=(KontoTreeItem*)koi->nextSibling()) ;
 
   return koi;
 }
@@ -314,7 +314,7 @@ KontoTreeItem* KontoTreeView::sucheUnterKontoItem(const QString& tops, const QSt
   koi = sucheKontoItem(tops, abts, kos);
   if (koi==NULL) return NULL;
 
-  for (ukoi=(KontoTreeItem*)koi->child(0); (ukoi!=NULL)&&(ukoi->text(0)!=ukos); ukoi=(KontoTreeItem*)ukoi->nextSibling()) ;
+  for (ukoi=(KontoTreeItem*)koi->child(0); (ukoi!=NULL)&&(ukoi->text(KontoTreeItem::COL_ACCOUNTS)!=ukos); ukoi=(KontoTreeItem*)ukoi->nextSibling()) ;
   return ukoi;
 }
 
