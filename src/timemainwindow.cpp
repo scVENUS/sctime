@@ -39,6 +39,10 @@
 #include <QLocale>
 #include <QTextStream>
 #include <QUrlQuery>
+#include <QLocalServer>
+#include <QLocalSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include "globals.h"
 #include "time.h"
@@ -437,6 +441,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
   QMetaObject::invokeMethod(specialRemunDSM, "start", Qt::QueuedConnection);
   specialRemunAction->setEnabled(false);
+
+  m_ipcserver = new QLocalServer(this);
+  connect(m_ipcserver, SIGNAL(newConnection()), this, SLOT(readIPCMessage()));
+  if (!m_ipcserver->listen("SCTIME")) {
+     trace(tr("cannot start ipc server"));
+  }
 }
 
 void TimeMainWindow::displayLastLogEntry(){
@@ -984,6 +994,14 @@ void TimeMainWindow::pasteEntryAsLink()
 {
   QString text=QApplication::clipboard()->text(QClipboard::Clipboard);
   QUrl url=QUrl(text);
+  openEntryLink(QUrl(text));
+}
+
+/**
+ * opens a link to an entry
+ */
+void TimeMainWindow::openEntryLink(const QUrl& url)
+{
   if (url.scheme()=="sctime") {
      QStringList pathlist=url.path().split("/");
      if (pathlist.size()==0) {
@@ -2025,4 +2043,30 @@ void TimeMainWindow::callNightTimeBeginDialog(){
  * slot to open a dialog asking to switch nightmode off, if necessary */
 void TimeMainWindow::callNightTimeEndDialog(){
   callNightTimeDialog(false);
+}
+
+void TimeMainWindow::readIPCMessage() {
+  QLocalSocket *socket = m_ipcserver->nextPendingConnection();
+  if (!socket->waitForReadyRead(3000))
+  {
+     trace(socket->errorString());
+     socket->close();
+     delete socket;
+     return;
+  }
+  QByteArray ba = socket->readAll();
+  QJsonDocument msg =QJsonDocument::fromJson(ba);
+  if (msg.isNull()) {
+     socket->close();
+     delete socket;
+     return;
+  }
+  auto obj=msg.object();
+  auto type = obj.value("type").toString();
+  if (type=="accountlink") {
+    auto link=obj.value("link").toString();
+    openEntryLink(QUrl(link));
+  }
+  socket->close();
+  delete socket;
 }

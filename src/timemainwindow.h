@@ -35,6 +35,7 @@ class EintragsListe;
 class StatusBar;
 class UnterKontoDialog;
 class QTextBrowser;
+class QLocalServer;
 
 #include "defaultcommentreader.h"
 #include "datasource.h"
@@ -174,6 +175,7 @@ public:
     void callNightTimeEndDialog();
     void callCantSaveDialog();
     void callSwitchDateErrorDialog();
+    void readIPCMessage();
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -188,6 +190,7 @@ public:
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
+    void openEntryLink(const QUrl& url);
     KontoTreeView* kontoTree;
     Lock *m_lock;
     QAction* editUnterKontoAction;
@@ -234,5 +237,6 @@ public:
     QDialog* cantSaveDialog;
     int stopTimers(const QString& grund); // rv: Sekunden seit letztem Tick
     void resumeTimers(int secSinceTick, const QString& reason);
+    QLocalServer *m_ipcserver;
 };
 #endif

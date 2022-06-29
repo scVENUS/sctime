@@ -26,6 +26,7 @@
 #include <QSqlDatabase>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QLocalSocket>
 
 #ifndef WIN32
 #include <assert.h>
@@ -147,6 +148,8 @@ int main(int argc, char **argv ) {
   parser.addOption(datasourceopt);
   QCommandLineOption logfileopt("logfile","",QObject::tr("file"));
   parser.addOption(logfileopt);
+  QCommandLineOption accountlinkopt("accountlink","",QObject::tr("link"));
+  parser.addOption(accountlinkopt);
   parser.process(*app);
   
   QString configdirstring=parser.value(configdiropt);
@@ -155,7 +158,24 @@ int main(int argc, char **argv ) {
   QString specialremunfile=parser.value(specialremunfileopt);
   QString offlinefile=parser.value(offlinefileopt);
   QString logfile=parser.value(logfileopt);
+  QString accountlink=parser.value(accountlinkopt);
   QStringList dataSourceNames=parser.values(datasourceopt);
+
+  if (!accountlink.isEmpty()) {
+     QLocalSocket ls;
+     ls.connectToServer("SCTIME", QIODevice::WriteOnly);
+     if (!ls.waitForConnected(3000))
+     {
+        fatal("Error on connecting to sctime", ls.errorString().toUtf8());
+     }
+     ls.write(("{\"type\":\"accountlink\", \"link\":\""+accountlink+"\"}").toUtf8());
+     if (!ls.waitForBytesWritten(5000))
+     {
+        fatal("Error on connecting to sctime", ls.errorString().toUtf8());
+     }
+     ls.disconnectFromServer();
+     return 0;
+  }
 
   if (configdirstring.isEmpty()) {
     char *envpointer = getenv("SCTIME_CONFIG_DIR");
