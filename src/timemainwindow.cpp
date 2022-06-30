@@ -210,9 +210,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
 
-  QAction* pasteLinkAction = new QAction(tr("paste link"), this);
+  QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
   pasteLinkAction->setShortcut(Qt::CTRL+Qt::Key_V);
-  pasteLinkAction->setStatusTip(tr("Copy infos about account and entry from clipboard"));
+  pasteLinkAction->setStatusTip(tr("Open account from link from clipboard"));
   connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
@@ -1212,6 +1212,7 @@ void TimeMainWindow::commitKontenliste(DSResult data) {
   statusBar->showMessage(tr("Account list successfully read."), 2000);
   QApplication::restoreOverrideCursor();
   QMetaObject::invokeMethod(this, "aktivesKontoPruefen", Qt::QueuedConnection);
+  emit accountListRead();
 }
 
 /**

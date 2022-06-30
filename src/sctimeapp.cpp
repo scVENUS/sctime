@@ -20,6 +20,7 @@
 #include "lock.h"
 #include "sctimexmlsettings.h"
 #include "setupdsm.h"
+#include <QUrl>
 
 #ifndef WIN32
 #include <signal.h>
@@ -63,9 +64,10 @@ bool SctimeApp::winEventFilter(MSG * msg, long * result) {
 #endif
 
 void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& zeitkontenfile,
- const QString& bereitschaftsfile, const QString& specialremunfile, const QString& offlinefile, const QString& logfile)
+ const QString& bereitschaftsfile, const QString& specialremunfile, const QString& offlinefile, const QString& logfile, const QString& accountlink)
 {
   m_lock=lock;
+  m_accountLink=accountlink;
   SCTimeXMLSettings settings;
   settings.readSettings();
   if (dataSourceNames.isEmpty()) dataSourceNames = settings.backends.split(" ");
@@ -82,7 +84,16 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
   connect(cont, SIGNAL(received()), mainWindow, SLOT(resume()));
 #endif
   connect(this, SIGNAL(aboutToQuit()), this, SLOT(cleanup()));
+  if (accountlink!="") {
+    m_openLinkConnect=connect(mainWindow, SIGNAL(accountListRead()), this, SLOT(openLink()));
+  }
   mainWindow->show();
+}
+
+/* opens the link once after the application has fully started up */
+void SctimeApp::openLink() {
+   disconnect(m_openLinkConnect);
+   mainWindow->openEntryLink(QUrl(m_accountLink));
 }
 
 void SctimeApp::cleanup() {

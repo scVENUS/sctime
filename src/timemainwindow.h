@@ -111,6 +111,7 @@ public:
     void copyEntryAsText();
     void copyEntryAsLink();
     void pasteEntryAsLink();
+    void openEntryLink(const QUrl& url);
     void showArbeitszeitwarning();
     void checkComment(const QString& abt, const QString& ko , const QString& uko,int idx);
     void commitKontenliste(DSResult data);
@@ -165,6 +166,11 @@ public:
      */
     void aktivierbarerEintragSelected(bool isActivable);
 
+    /**
+     * account list was successfully read
+     */
+    void accountListRead();
+
   private slots:
     void quit();
     void logDialog();
@@ -190,7 +196,6 @@ public:
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
-    void openEntryLink(const QUrl& url);
     KontoTreeView* kontoTree;
     Lock *m_lock;
     QAction* editUnterKontoAction;
