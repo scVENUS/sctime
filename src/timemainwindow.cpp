@@ -444,7 +444,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
 
   m_ipcserver = new QLocalServer(this);
   connect(m_ipcserver, SIGNAL(newConnection()), this, SLOT(readIPCMessage()));
-  if (!m_ipcserver->listen("SCTIME")) {
+  if (!m_ipcserver->listen(SCTIME_IPC)) {
      trace(tr("cannot start ipc server"));
   }
 }

@@ -54,6 +54,7 @@ QDir configDir;
 QString lockfilePath;
 QString PERSOENLICHE_KONTEN_STRING;
 QString ALLE_KONTEN_STRING;
+QString SCTIME_IPC;
 
 static void fatal(const QString& title, const QString& body) {
   QMessageBox::critical(NULL, title, body, QMessageBox::Ok);
@@ -104,7 +105,7 @@ QString absolutePath(QString path) {
  */
 bool openLinkInExistingInstance(QString accountlink) {
   QLocalSocket ls;
-  ls.connectToServer("SCTIME", QIODevice::WriteOnly);
+  ls.connectToServer(SCTIME_IPC, QIODevice::WriteOnly);
   if (!ls.waitForConnected(3000))
   {
      return false; // existing instance could not be reached
@@ -181,10 +182,6 @@ int main(int argc, char **argv ) {
   QString accountlink=parser.value(accountlinkopt);
   QStringList dataSourceNames=parser.values(datasourceopt);
 
-  if ((!accountlink.isEmpty())&&(openLinkInExistingInstance(accountlink))) {
-     return 0;
-  }
-
   if (configdirstring.isEmpty()) {
     char *envpointer = getenv("SCTIME_CONFIG_DIR");
     configdirstring = envpointer ? envpointer : CONFIGDIR; // default Configdir
@@ -201,6 +198,12 @@ int main(int argc, char **argv ) {
         QObject::tr("Cannot access configration directory %1.").arg(configdirstring));
   }
   configDir.setPath(directory.path());
+
+  SCTIME_IPC=configdirstring+"/SCTIME_IPC";
+
+  if ((!accountlink.isEmpty())&&(openLinkInExistingInstance(accountlink))) {
+     return 0;
+  }
 
   if (!zeitkontenfile.isEmpty())
       zeitkontenfile=absolutePath(zeitkontenfile);
