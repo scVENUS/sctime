@@ -62,6 +62,7 @@ public:
       m_useCustomFont=false;
       m_useDefaultCommentIfUnique=false;
       m_dragNDrop=true;
+      m_warnISO8859=true;
       m_customFont="helvetica";
       m_customFontSize=10;
       m_showSpecialRemunSelector=false;
@@ -287,6 +288,15 @@ public:
         m_showSpecialRemunSelector=on;
     }
 
+    bool warnISO8859() {
+        return m_warnISO8859;
+    }
+
+    void setWarnISO8859(bool on)
+    {
+        m_warnISO8859=on;
+    }
+
     QString zeitKontenKommando()
     {
         return m_zeitKontenKommando;
@@ -442,6 +452,7 @@ public:
     bool m_useDefaultCommentIfUnique;
     bool m_persoenlicheKontensumme;
     bool m_showSpecialRemunSelector;
+    bool m_warnISO8859;
     int m_maxWorkingTime;
     QString m_customFont;
     int m_customFontSize;

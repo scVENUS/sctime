@@ -1769,7 +1769,7 @@ void TimeMainWindow::jumpToAlleKonten()
 
 void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const QString& uko,int idx) {
   UnterKontoEintrag eintrag;
-  if (abtList->getEintrag(eintrag, abt, ko, uko, idx)) {
+  if ((settings->warnISO8859())&&(abtList->getEintrag(eintrag, abt, ko, uko, idx))) {
     QTextCodec *codec = QTextCodec::codecForName("ISO 8859-1");
     if (!codec->canEncode(eintrag.kommentar))
       QMessageBox::warning(

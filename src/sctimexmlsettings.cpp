@@ -498,6 +498,9 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
             if (elem2.tagName()=="singleclickactivation") {
               setSingleClickActivation((elem2.attribute("on")=="yes"));
             }
+            if (elem2.tagName()=="warnISO8859") {
+              setWarnISO8859((elem2.attribute("on")=="yes"));
+            }
             if (elem2.tagName()=="kontodlgwindowposition") {
               bool ok;
               int x = QString(elem2.attribute("x")).toInt(&ok);
@@ -695,6 +698,12 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
     if (singleClickActivation()) on="yes";
     singleclicktag.setAttribute("on",on);
     generaltag.appendChild(singleclicktag);
+
+    QDomElement warnISO8859tag = doc.createElement("warnISO8859");
+    on="no";
+    if (warnISO8859()) on="yes";
+    warnISO8859tag.setAttribute("on",on);
+    generaltag.appendChild(warnISO8859tag);
 
     QDomElement dragndroptag = doc.createElement("dragndrop");
     on="no";

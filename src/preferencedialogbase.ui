@@ -86,6 +86,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="warnISO8859">
+        <property name="text">
+         <string>Warn if comment doesn't conform to ISO8859-1</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
