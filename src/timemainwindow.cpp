@@ -835,6 +835,7 @@ void TimeMainWindow::pause() {
         secSinceTick = 60;
     }
     settings->setLastRecordedTimestamp(lastMinuteTick);
+    qApp->setWindowIcon(QIcon(":/window_icon_paused"));
     setWindowIcon(QIcon(":/window_icon_paused"));
     QDateTime now = QDateTime::currentDateTime();
     QString currtime= QLocale().toString(now.time(), QLocale::ShortFormat);
@@ -843,6 +844,7 @@ void TimeMainWindow::pause() {
     now = QDateTime::currentDateTime();
     sekunden = drift;
     trace(tr("End of break: ") +now.toString());
+    qApp->setWindowIcon(QIcon(":/window_icon"));
     setWindowIcon(QIcon(":/window_icon"));
     autosavetimer->start();
     // Tricks wegen der vor der Pause angebrochenen Minute
