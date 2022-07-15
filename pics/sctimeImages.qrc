@@ -22,5 +22,6 @@
         <file alias="zero">zero.xpm</file>
         <file alias="cr16_action_bookmark">cr16-action-bookmark.xpm</file>
         <file alias="window_icon">Uhr.ico</file>
+        <file alias="window_icon_paused">Uhr_paused.ico</file>
     </qresource>
 </RCC>

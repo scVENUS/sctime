@@ -35,6 +35,7 @@ class EintragsListe;
 class StatusBar;
 class UnterKontoDialog;
 class QTextBrowser;
+class QLocalServer;
 
 #include "defaultcommentreader.h"
 #include "datasource.h"
@@ -109,6 +110,9 @@ public:
     void configClickMode(bool singleClickActivation);
     void copyNameToClipboard();
     void copyEntryAsText();
+    void copyEntryAsLink();
+    void pasteEntryAsLink();
+    void openEntryLink(const QUrl& url);
     void showArbeitszeitwarning();
     void checkComment(const QString& abt, const QString& ko , const QString& uko,int idx);
     void commitKontenliste(DSResult data);
@@ -163,6 +167,11 @@ public:
      */
     void aktivierbarerEintragSelected(bool isActivable);
 
+    /**
+     * account list was successfully read
+     */
+    void accountListRead();
+
   private slots:
     void quit();
     void logDialog();
@@ -173,6 +182,7 @@ public:
     void callNightTimeEndDialog();
     void callCantSaveDialog();
     void callSwitchDateErrorDialog();
+    void readIPCMessage();
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -184,6 +194,7 @@ public:
     void refreshAfterColorChange(QString&, QString&, QString&);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
     bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
+    void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
     void changeDate(const QDate& datum, bool changeVisible, bool changeToday);
@@ -234,5 +245,6 @@ public:
     int stopTimers(const QString& grund); // rv: Sekunden seit letztem Tick
     void resumeTimers(int secSinceTick, const QString& reason);
     bool entryBeingEdited; // indicates that currently an entry is being edited
+    QLocalServer *m_ipcserver;
 };
 #endif

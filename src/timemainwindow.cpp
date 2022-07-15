@@ -38,6 +38,11 @@
 #include <QDesktopWidget>
 #include <QLocale>
 #include <QTextStream>
+#include <QUrlQuery>
+#include <QLocalServer>
+#include <QLocalSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include "globals.h"
 #include "time.h"
@@ -200,6 +205,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   copyAction->setShortcut(Qt::CTRL+Qt::Key_C);
   copyAction->setStatusTip(tr("Copy infos about account and entry as text to clipboard"));
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
+
+  QAction* copyLinkAction = new QAction(tr("Copy as &link"), this);
+  copyLinkAction->setShortcut(Qt::CTRL+Qt::Key_L);
+  copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
+  connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
+
+  QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
+  pasteLinkAction->setShortcut(Qt::CTRL+Qt::Key_V);
+  pasteLinkAction->setStatusTip(tr("Open account from link from clipboard"));
+  connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
   changeDateAction->setShortcut(Qt::CTRL+Qt::Key_D);
@@ -382,6 +397,8 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   kontomenu->addAction(findKontoAction);
   kontomenu->addAction(jumpAction);
   kontomenu->addAction(copyAction);
+  kontomenu->addAction(copyLinkAction);
+  kontomenu->addAction(pasteLinkAction);
   kontomenu->addAction(refreshAction);
   kontomenu->addSeparator();
   kontomenu->addAction(bgColorChooseAction);
@@ -425,6 +442,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
   QMetaObject::invokeMethod(specialRemunDSM, "start", Qt::QueuedConnection);
   specialRemunAction->setEnabled(false);
+
+  m_ipcserver = new QLocalServer(this);
+  connect(m_ipcserver, SIGNAL(newConnection()), this, SLOT(readIPCMessage()));
+  if (!m_ipcserver->listen(SCTIME_IPC)) {
+     trace(tr("cannot start ipc server"));
+  }
 }
 
 void TimeMainWindow::displayLastLogEntry(){
@@ -813,6 +836,8 @@ void TimeMainWindow::pause() {
         secSinceTick = 60;
     }
     settings->setLastRecordedTimestamp(lastMinuteTick);
+    qApp->setWindowIcon(QIcon(":/window_icon_paused"));
+    setWindowIcon(QIcon(":/window_icon_paused"));
     QDateTime now = QDateTime::currentDateTime();
     QString currtime= QLocale().toString(now.time(), QLocale::ShortFormat);
     QMessageBox::warning(this, tr("sctime: Pause"), tr("Accounting has been stopped at %1. Resume work with OK.").arg(currtime));
@@ -820,6 +845,8 @@ void TimeMainWindow::pause() {
     now = QDateTime::currentDateTime();
     sekunden = drift;
     trace(tr("End of break: ") +now.toString());
+    qApp->setWindowIcon(QIcon(":/window_icon"));
+    setWindowIcon(QIcon(":/window_icon"));
     autosavetimer->start();
     // Tricks wegen der vor der Pause angebrochenen Minute
     restTimer->start((60 - secSinceTick) * 1000);
@@ -945,6 +972,58 @@ void TimeMainWindow::copyEntryAsText()
 }
 
 /**
+ * Copies a new Entry as link to the clipboard
+ */
+void TimeMainWindow::copyEntryAsLink()
+{
+  QTreeWidgetItem * item=kontoTree->currentItem();
+  QString top,uko,ko,abt;
+  int idx;
+  kontoTree->itemInfo(item,top,abt,ko,uko,idx);
+  QString text;
+  text="sctime://local/"+QUrl::toPercentEncoding(abt)+"/"+QUrl::toPercentEncoding(ko)+"/"+QUrl::toPercentEncoding(uko);
+  if (kontoTree->isEintragsItem(item)) {
+        UnterKontoEintrag eintrag;
+        abtList->getEintrag(eintrag,abt,ko,uko,idx);
+        if (eintrag.kommentar!="") {
+            QTextStream(&text) << "?comment=" + QUrl::toPercentEncoding(eintrag.kommentar);
+        }
+  }
+  QApplication::clipboard()->setText(text, QClipboard::Clipboard);
+}
+
+/**
+ * Copies a link from the clipboard and opens it
+ */
+void TimeMainWindow::pasteEntryAsLink()
+{
+  QString text=QApplication::clipboard()->text(QClipboard::Clipboard);
+  QUrl url=QUrl(text);
+  openEntryLink(QUrl(text));
+}
+
+/**
+ * opens a link to an entry
+ */
+void TimeMainWindow::openEntryLink(const QUrl& url)
+{
+  if (url.scheme()=="sctime") {
+     QStringList pathlist=url.path().split("/");
+     if (pathlist.size()==0) {
+      return;
+     }
+     pathlist[0]=ALLE_KONTEN_STRING;
+     if (url.hasQuery()) {
+       QString comment=QUrlQuery(url.query()).queryItemValue("comment",QUrl::FullyDecoded);
+       if (comment!="") {
+           pathlist<<comment;
+       }
+     }
+     openItemFromPathList(pathlist);
+  }
+}
+
+/**
  * Aktiviert einen Eintrag
  */
 void TimeMainWindow::eintragAktivieren()
@@ -1040,7 +1119,8 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
     if (checkConfigDir())
     {
         checkLock();
-        bool currentDateSel = (datum == QDate::currentDate());
+        QDate currentDate = QDate::currentDate();
+        bool currentDateSel = (datum == currentDate);
         kontoTree->flagClosedPersoenlicheItems();
         std::vector<int> columnwidthlist;
         kontoTree->getColumnWidthList(columnwidthlist);
@@ -1056,7 +1136,6 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
             if (!(settings->writeSettings(abtListToday) &&
                  settings->writeSettings(abtList)
                  )) {
-                   callSwitchDateErrorDialog();
                    return;
                  }
             settings->writeShellSkript(abtListToday);
@@ -1068,7 +1147,9 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         }
         else
         {
-            settings->writeSettings(abtList);
+            if (!settings->writeSettings(abtList)) {
+                return;
+            }
             settings->writeShellSkript(abtList);
         }
         if (currentDateSel&&changeVisible)
@@ -1079,9 +1160,9 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
             abtList = new AbteilungsListe(datum, abtListToday);
         }
         if (changeToday) {
-            if (abtListToday->getDatum() != datum)
+            if (abtListToday->getDatum() != currentDate)
             {
-               if (abtList->getDatum() == datum) {
+               if (abtList->getDatum() == currentDate) {
                  abtListToday=abtList;
                } else {
                  // if an entry of today is being edited, we don't switch the view to the current date
@@ -1174,6 +1255,7 @@ void TimeMainWindow::commitKontenliste(DSResult data) {
   statusBar->showMessage(tr("Account list successfully read."), 2000);
   QApplication::restoreOverrideCursor();
   QMetaObject::invokeMethod(this, "aktivesKontoPruefen", Qt::QueuedConnection);
+  emit accountListRead();
 }
 
 /**
@@ -1362,6 +1444,41 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
   entryBeingEdited = false;
 }
 
+void TimeMainWindow::openItemFromPathList(QStringList pathlist)
+{
+  if (pathlist.size() > 0)
+  {
+    // Konto was searched
+    if (pathlist.size() == 3)
+    {
+      QTreeWidgetItem *item = kontoTree->sucheKontoItem(pathlist.at(0),
+                                                        pathlist.at(1), pathlist.at(2));
+      openItem(item);
+    }
+    // Unterkonto was searched
+    if (pathlist.size() == 4)
+    {
+      QTreeWidgetItem *item = kontoTree->sucheUnterKontoItem(
+          pathlist.at(0), pathlist.at(1), pathlist.at(2), pathlist.at(3));
+      openItem(item);
+    }
+    // Kommentar was searched
+    if (pathlist.size() == 5)
+    {
+      QTreeWidgetItem *item = kontoTree->sucheKommentarItem(
+          pathlist.at(0), pathlist.at(1), pathlist.at(2),
+          pathlist.at(3), pathlist.at(4));
+      // in case we didnt find the comment (e.g. because it was just a default comment), at least open the subaccount
+      if (item == NULL)
+      {
+        item = kontoTree->sucheUnterKontoItem(
+            pathlist.at(0), pathlist.at(1), pathlist.at(2), pathlist.at(3));
+      }
+      openItem(item);
+    }
+  }
+}
+
 /**
  * Baut den Kontosuchdialog auf, und zeigt das Such-Ergebnis an.
  */
@@ -1378,37 +1495,8 @@ void TimeMainWindow::callFindKontoDialog()
   else if( rcFindDialog == QDialog::Accepted )
   {
     QStringList items = findKontoDialog.getSelectedItems();
-
-    if( items.size() > 0 )
-    {
-      //Konto was searched
-      if( items.size() == 3 )
-      {
-        QTreeWidgetItem *item = kontoTree->sucheKontoItem(items.at(0),
-              items.at(1), items.at(2));
-        openItem( item );
-      }
-      //Unterkonto was searched
-      if( items.size() == 4 )
-      {
-        QTreeWidgetItem *item = kontoTree->sucheUnterKontoItem(
-              items.at(0), items.at(1), items.at(2), items.at(3) );
-        openItem( item );
-      }
-      //Kommentar was searched
-      if( items.size() == 5 )
-      {
-        QTreeWidgetItem *item = kontoTree->sucheKommentarItem(
-              items.at(0), items.at(1), items.at(2),
-              items.at(3), items.at(4));
-        // in case we didnt find the comment (e.g. because it was just a default comment), at least open the subaccount
-        if (item==NULL) {
-          item = kontoTree->sucheUnterKontoItem(
-              items.at(0), items.at(1), items.at(2), items.at(3) );
-        }
-        openItem( item );
-      }
-    }
+    openItemFromPathList(items);
+    
   }
 }
 
@@ -1722,7 +1810,7 @@ void TimeMainWindow::jumpToAlleKonten()
 
 void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const QString& uko,int idx) {
   UnterKontoEintrag eintrag;
-  if (abtList->getEintrag(eintrag, abt, ko, uko, idx)) {
+  if ((settings->warnISO8859())&&(abtList->getEintrag(eintrag, abt, ko, uko, idx))) {
     QTextCodec *codec = QTextCodec::codecForName("ISO 8859-1");
     if (!codec->canEncode(eintrag.kommentar))
       QMessageBox::warning(
@@ -2001,4 +2089,30 @@ void TimeMainWindow::callNightTimeBeginDialog(){
  * slot to open a dialog asking to switch nightmode off, if necessary */
 void TimeMainWindow::callNightTimeEndDialog(){
   callNightTimeDialog(false);
+}
+
+void TimeMainWindow::readIPCMessage() {
+  QLocalSocket *socket = m_ipcserver->nextPendingConnection();
+  if (!socket->waitForReadyRead(3000))
+  {
+     trace(socket->errorString());
+     socket->close();
+     delete socket;
+     return;
+  }
+  QByteArray ba = socket->readAll();
+  QJsonDocument msg =QJsonDocument::fromJson(ba);
+  if (msg.isNull()) {
+     socket->close();
+     delete socket;
+     return;
+  }
+  auto obj=msg.object();
+  auto type = obj.value("type").toString();
+  if (type=="accountlink") {
+    auto link=obj.value("link").toString();
+    openEntryLink(QUrl(link));
+  }
+  socket->close();
+  delete socket;
 }

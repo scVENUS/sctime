@@ -26,6 +26,7 @@
 #include <QSqlDatabase>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
+#include <QLocalSocket>
 
 #ifndef WIN32
 #include <assert.h>
@@ -53,6 +54,7 @@ QDir configDir;
 QString lockfilePath;
 QString PERSOENLICHE_KONTEN_STRING;
 QString ALLE_KONTEN_STRING;
+QString SCTIME_IPC;
 
 static void fatal(const QString& title, const QString& body) {
   QMessageBox::critical(NULL, title, body, QMessageBox::Ok);
@@ -74,6 +76,8 @@ static const QString help(QObject::tr(
 "			(default: output of 'sonderzeitls'. Obsolete.\n\n"
 "--offlinefile=FILE		read all needed data from FILE which must be of json format\n"
 "			overides --zeitkontenfile --bereitschaftsfile and --specialremunfile\n\n"
+"--accountlink=URL		opens sctime with the given account selected. If an instance of sctime\n"
+"\t\t\tis already running, the existing instance will be used for that.\n\n"
 "Please see the Help menu for further information (F1)!"));
 
 QString absolutePath(QString path) {
@@ -95,6 +99,24 @@ QString absolutePath(QString path) {
 	    return path.replace(0, 1, homedir);
     }
     return QFileInfo(path).absoluteFilePath();
+}
+
+/** tries to open a link in an existing instance
+ */
+bool openLinkInExistingInstance(QString accountlink) {
+  QLocalSocket ls;
+  ls.connectToServer(SCTIME_IPC, QIODevice::WriteOnly);
+  if (!ls.waitForConnected(3000))
+  {
+     return false; // existing instance could not be reached
+  }
+  ls.write(("{\"type\":\"accountlink\", \"link\":\""+accountlink+"\"}").toUtf8());
+  if (!ls.waitForBytesWritten(5000))
+  {
+     fatal(QObject::tr("Error on connecting to sctime"), ls.errorString().toUtf8());
+  }
+  ls.disconnectFromServer();
+  return true;
 }
 
 /** main: hier wird ueberprueft, ob die Applikation ueberhaupt starten soll
@@ -147,6 +169,8 @@ int main(int argc, char **argv ) {
   parser.addOption(datasourceopt);
   QCommandLineOption logfileopt("logfile","",QObject::tr("file"));
   parser.addOption(logfileopt);
+  QCommandLineOption accountlinkopt("accountlink","",QObject::tr("link"));
+  parser.addOption(accountlinkopt);
   parser.process(*app);
   
   QString configdirstring=parser.value(configdiropt);
@@ -155,6 +179,7 @@ int main(int argc, char **argv ) {
   QString specialremunfile=parser.value(specialremunfileopt);
   QString offlinefile=parser.value(offlinefileopt);
   QString logfile=parser.value(logfileopt);
+  QString accountlink=parser.value(accountlinkopt);
   QStringList dataSourceNames=parser.values(datasourceopt);
 
   if (configdirstring.isEmpty()) {
@@ -173,6 +198,12 @@ int main(int argc, char **argv ) {
         QObject::tr("Cannot access configration directory %1.").arg(configdirstring));
   }
   configDir.setPath(directory.path());
+
+  SCTIME_IPC=configdirstring+"/SCTIME_IPC";
+
+  if ((!accountlink.isEmpty())&&(openLinkInExistingInstance(accountlink))) {
+     return 0;
+  }
 
   if (!zeitkontenfile.isEmpty())
       zeitkontenfile=absolutePath(zeitkontenfile);
@@ -209,7 +240,7 @@ int main(int argc, char **argv ) {
         QMessageBox::critical(NULL, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
       }
   }
-  app->init(&local, dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile, offlinefile, logfile);
+  app->init(&local, dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile, offlinefile, logfile, accountlink);
   app->exec();
   
   // warning: dont rely on anything being executed beyond that point

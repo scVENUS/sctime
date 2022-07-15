@@ -40,12 +40,15 @@ public:
 #endif
 
    void init(Lock* lock, QStringList& dataSourceNames, const QString& zeitkontenfile,
-             const QString& bereitschaftsfile, const QString& specialremunfile, const QString& offlinefile, const QString& logfile);
+             const QString& bereitschaftsfile, const QString& specialremunfile, const QString& offlinefile, const QString& logfile, const QString& accountlink);
 public slots:
    void cleanup(); 
+   void openLink();
 private:
    Lock *m_lock;
+   QString m_accountLink;
    TimeMainWindow* mainWindow;
+   QMetaObject::Connection m_openLinkConnect;
 #ifndef WIN32
    SignalHandler* term;
    SignalHandler* hup;

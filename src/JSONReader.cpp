@@ -137,7 +137,7 @@ QJsonDocument &JSONReaderBase::getData()
 
 int JSONReaderBase::loadDataNewerThan(int version)
 {
-  if ((version<=currentversion)&&(currentversion!=INVALIDDATA))
+  if ((version<currentversion)&&(currentversion!=INVALIDDATA))
      return currentversion;
   currentversion=version+1;
   QByteArray byteData;
