@@ -1237,6 +1237,13 @@ void TimeMainWindow::inPersoenlicheKonten(bool hinzufuegen)
 
   kontoTree->itemInfo(item,top,abt,ko,uko,idx);
 
+  if (!hinzufuegen) {
+    if (QMessageBox::question(this,tr("Remove from personal accounts"), tr("Do you really want to remove this item from your personal accounts?"))!=QMessageBox::Yes) {
+      flagsChanged(abt,ko,uko,idx);
+      return;
+    }
+  }
+
   if (kontoTree->getItemDepth(item)==2) {
     abtList->moveKontoPersoenlich(abt,ko,hinzufuegen);
     kontoTree->refreshAllItemsInKonto(abt,ko);
