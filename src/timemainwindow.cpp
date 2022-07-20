@@ -1152,11 +1152,11 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
             }
             settings->writeShellSkript(abtList);
         }
-        if (currentDateSel&&changeVisible)
+        if ((datum==abtListToday->getDatum())&&changeVisible)
         {
             abtList = abtListToday;
         }
-        if (!currentDateSel&&changeVisible) {
+        if (!(datum==abtListToday->getDatum())&&changeVisible) {
             abtList = new AbteilungsListe(datum, abtListToday);
         }
         if (changeToday) {
@@ -1214,9 +1214,9 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
     }
 }
 
-// changes the visible date
+// changes the visible date and updates todays date if we are not on the current date
 void TimeMainWindow::changeVisibleDate(const QDate &date) {
-  changeDate(date, true, false);
+  changeDate(date, true, true);
 }
 
 /* changes today's date (because e.g. we are past midnight)
