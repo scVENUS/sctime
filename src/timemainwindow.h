@@ -183,6 +183,7 @@ public:
     void callCantSaveDialog();
     void callSwitchDateErrorDialog();
     void readIPCMessage();
+    void showContextMenu(const QPoint &pos);
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -216,6 +217,8 @@ public:
     QAction* overtimeOtherModeAction;
     QAction* nightModeAction;
     QAction* publicHolidayModeAction;
+    QAction* copyAction;
+    QAction* copyLinkAction;
     QDateTime startTime;
     QDateTime lastMinuteTick;
     QFont qtDefaultFont;

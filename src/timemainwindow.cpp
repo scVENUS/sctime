@@ -201,12 +201,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   saveAction->setShortcut(Qt::CTRL+Qt::Key_S);
   connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
 
-  QAction* copyAction = new QAction(tr("&Copy as text"), this);
+  copyAction = new QAction(tr("&Copy as text"), this);
   copyAction->setShortcut(Qt::CTRL+Qt::Key_C);
   copyAction->setStatusTip(tr("Copy infos about account and entry as text to clipboard"));
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
 
-  QAction* copyLinkAction = new QAction(tr("Copy as &link"), this);
+  copyLinkAction = new QAction(tr("Copy as &link"), this);
   copyLinkAction->setShortcut(Qt::CTRL+Qt::Key_L);
   copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
@@ -428,6 +428,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   kontoTree->addAction(min1MinusAction);
   kontoTree->showAktivesProjekt();
   kontoTree->updateColumnWidth();
+  kontoTree->setContextMenuPolicy(Qt::CustomContextMenu);
   //close the flagged items, needed if "Summe in pers. Konten" is 
   //selected
   kontoTree->closeFlaggedPersoenlicheItems();
@@ -438,6 +439,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   connect(kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+  connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
   QMetaObject::invokeMethod(bereitDSM, "start", Qt::QueuedConnection);
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
   QMetaObject::invokeMethod(specialRemunDSM, "start", Qt::QueuedConnection);
@@ -1276,6 +1278,13 @@ void TimeMainWindow::inPersoenlicheKonten(bool hinzufuegen)
 
   kontoTree->itemInfo(item,top,abt,ko,uko,idx);
 
+  if (!hinzufuegen) {
+    if (QMessageBox::question(this,tr("Remove from personal accounts"), tr("Do you really want to remove this item from your personal accounts?"))!=QMessageBox::Yes) {
+      flagsChanged(abt,ko,uko,idx);
+      return;
+    }
+  }
+
   if (kontoTree->getItemDepth(item)==2) {
     abtList->moveKontoPersoenlich(abt,ko,hinzufuegen);
     kontoTree->refreshAllItemsInKonto(abt,ko);
@@ -1401,6 +1410,28 @@ void TimeMainWindow::resizeToIfSensible(QDialog* dialog, const QPoint& pos, cons
     dialog->resize(size);
     dialog->move(pos);
   } 
+}
+
+void TimeMainWindow::showContextMenu(const QPoint &pos)
+{
+      // no context menu in single click activation mode
+      if (settings->singleClickActivation()) {
+         return;
+      }
+      QTreeWidgetItem *item = kontoTree->itemAt(pos);
+      if (!item || kontoTree->isEintragsItem(item))
+         return;
+ 
+      int col=kontoTree->columnAt(pos.x());
+      int d=kontoTree->getItemDepth(item);
+
+      if ((d==2)&&(col==KontoTreeItem::COL_ACCOUNTS)) {
+         QMenu menu(tr("Account menu"), this);
+         menu.addAction(copyAction);
+         menu.addAction(copyLinkAction);
+         menu.addAction(inPersKontAction);
+         menu.exec(kontoTree->viewport()->mapToGlobal(pos));
+      }
 }
 
 /**
