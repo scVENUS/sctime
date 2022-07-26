@@ -100,6 +100,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   }
   m_lock = lock;
   paused = false;
+  entryBeingEdited = false;
   sekunden = 0;
   setObjectName(tr("sctime"));
   std::vector<QString> xmlfilelist;
@@ -640,7 +641,7 @@ void TimeMainWindow::minuteHochzaehlen() {
 
 void TimeMainWindow::tageswechsel() {
   if (abtList->getDatum().daysTo(lastMinuteTick.date()))
-    emit changeDate(QDate::currentDate());
+    emit changeTodaysDate(QDate::currentDate());
 }
 
 /**
@@ -1115,7 +1116,7 @@ void TimeMainWindow::callSwitchDateErrorDialog()
  * Aendert das Datum: dazu werden zuerst die aktuellen Zeiten und Einstellungen gespeichert,
  * sodann die Daten fuer das angegebene Datum neu eingelesen.
  */
-void TimeMainWindow::changeDate(const QDate &datum)
+void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool changeToday)
 {
     if (checkConfigDir())
     {
@@ -1126,6 +1127,12 @@ void TimeMainWindow::changeDate(const QDate &datum)
         std::vector<int> columnwidthlist;
         kontoTree->getColumnWidthList(columnwidthlist);
         settings->setColumnWidthList(columnwidthlist);
+
+        QString abt,ko,uko;
+        int idx;
+
+        abtListToday->getAktiv(abt,ko,uko,idx);
+
         if (abtListToday != abtList)
         {
             if (!(settings->writeSettings(abtListToday) &&
@@ -1135,8 +1142,10 @@ void TimeMainWindow::changeDate(const QDate &datum)
                  }
             settings->writeShellSkript(abtListToday);
             settings->writeShellSkript(abtList);
-            delete abtList;
-            abtList = NULL;
+            if (changeVisible) {
+              delete abtList;
+              abtList=NULL;
+            }
         }
         else
         {
@@ -1145,36 +1154,55 @@ void TimeMainWindow::changeDate(const QDate &datum)
             }
             settings->writeShellSkript(abtList);
         }
-        if (abtListToday->getDatum() != currentDate)
-        {
-            abtListToday->setDatum(currentDate);
-            if (abtListToday != abtList) {
-                abtListToday->clearKonten();
-                settings->readSettings(abtListToday);
-            }
-        }
-        if (currentDateSel)
+        if ((datum==abtListToday->getDatum())&&changeVisible)
         {
             abtList = abtListToday;
         }
-        else
-        {
+        if (!(datum==abtListToday->getDatum())&&changeVisible) {
             abtList = new AbteilungsListe(datum, abtListToday);
         }
+        if (changeToday) {
+            if (abtListToday->getDatum() != currentDate)
+            {
+               if (abtList->getDatum() == currentDate) {
+                 abtListToday=abtList;
+               } else {
+                 // if an entry of today is being edited, we don't switch the view to the current date
+                 if (entryBeingEdited&&(abtListToday == abtList)) {
+                   abtListToday = new AbteilungsListe(datum, abtListToday);
+                 } else {
+                   abtListToday->setDatum(datum);
+                 }
+               }
+            }
+        }
+
+        if (changeToday&&(abtListToday != abtList)) {
+            abtListToday->clearKonten();
+            settings->readSettings(abtListToday);
+        }
+
         abtList->clearKonten();
         settings->readSettings(abtList);
+
+        abtListToday->setAsAktiv(abt,ko,uko,idx);
 
         kontoTree->load(abtList);
         kontoTree->closeFlaggedPersoenlicheItems();
         kontoTree->showAktivesProjekt();
-        if (currentDateSel)
+        if (changeToday)
         {
             updateSpecialModes(false);
         }
         zeitChanged();
         emit(currentDateSelected(currentDateSel));
-        trace(tr("Day set to: ") + datum.toString());
-        statusBar->dateWarning(!currentDateSel, datum);
+        statusBar->dateWarning((abtList!=abtListToday), abtList->getDatum());
+        if (changeVisible) {
+          trace(tr("Visible day set to: ") + datum.toString());
+        }
+        if (changeToday) {
+          trace(tr("Today is now: ") + datum.toString());
+        }
         //Append Warning if current file is checked in
         if (!currentDateSel)
         {
@@ -1186,6 +1214,17 @@ void TimeMainWindow::changeDate(const QDate &datum)
     } else {
       callSwitchDateErrorDialog();
     }
+}
+
+// changes the visible date and updates todays date if we are not on the current date
+void TimeMainWindow::changeVisibleDate(const QDate &date) {
+  changeDate(date, true, true);
+}
+
+/* changes today's date (because e.g. we are past midnight)
+   implictly changes the visible date, iff it happens to be the same as the previous todays date, and no one is editig something at the moment*/
+void TimeMainWindow::changeTodaysDate(const QDate &date) {
+  changeDate(date, false, true);
 }
 
 void TimeMainWindow::refreshKontoListe() {
@@ -1402,6 +1441,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
 {
   if ((!kontoTree->isEintragsItem(item)))
     return;
+  entryBeingEdited = true;
 
   QString top,uko,ko,abt;
 
@@ -1432,6 +1472,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
   unterKontoDialog->disconnect();
   QObject::disconnect(timerconn);
   delete unterKontoDialog;
+  entryBeingEdited = false;
 }
 
 void TimeMainWindow::openItemFromPathList(QStringList pathlist)
@@ -1621,7 +1662,7 @@ void TimeMainWindow::callDateDialog()
   }
 
   DateDialog * dateDialog=new DateDialog(abtList->getDatum(), this);
-  connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeDate(const QDate&)));
+  connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeVisibleDate(const QDate&)));
   dateDialog->setAttribute(Qt::WA_DeleteOnClose);
   dateDialog->show();
 }
