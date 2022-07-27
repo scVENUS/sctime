@@ -47,14 +47,20 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList)
       trace(QObject::tr("Shell script not written because it has already been checked in."));
       return;
   }
-  QString filename="zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".sh";
-  QFile shellFile(configDir.filePath(filename));
+  QString filename=configDir.filePath("zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".sh");
+  QString tmpfilename=filename+".tmp";
+  QFile workfile(tmpfilename);
+  QFile targetfile(filename);
 
-  if (!shellFile.open(QIODevice::WriteOnly)) {
-      QMessageBox::warning(NULL, QObject::tr("sctime: writing shell script"), shellFile.fileName() + ": " + shellFile.errorString());
+  // we remove the target file - we have all the data in the xml file anyways and can regenerate it even if we crash
+  // this ensures that no other tools try to read an unfinished or obsolete sh file
+  targetfile.remove();
+
+  if (!workfile.open(QIODevice::WriteOnly)) {
+      QMessageBox::warning(NULL, QObject::tr("sctime: writing shell script"), workfile.fileName() + ": " + workfile.errorString());
       return;
   }
-  QTextStream stream( & shellFile);
+  QTextStream stream( & workfile);
   stream.setCodec(charmap());
   int sek, abzurSek;
   abtList->getGesamtZeit(sek,abzurSek);
@@ -124,7 +130,12 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList)
     }
   }
   stream<<endl;
-  shellFile.close();
+  workfile.close();
+
+  if (!workfile.rename(filename)) {
+    QMessageBox::critical(NULL, QObject::tr("sctime: saving sh file"),
+                         QObject::tr("%1 cannot be renamed to %2: %3").arg(workfile.fileName(), filename, workfile.errorString()));
+  }
 }
 
 // returns the encoding that the user has chosen by his locale settings
