@@ -45,6 +45,7 @@ PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, QWidget *parent
     customFontSelectButton->setEnabled(settings->useCustomFont());
     showSpecialRemunSelector->setChecked(settings->showSpecialRemunSelector());
     warnISO8859->setChecked(settings->warnISO8859());
+    sortByCommentTextCheckbox->setChecked(settings->sortByCommentText());
     QString custFont=settings->customFont();
     int custFontSize=settings->customFontSize();
     if (custFont.isEmpty()) {
@@ -106,6 +107,7 @@ void PreferenceDialog::accept()
     settings->setCustomFontSize(selectedFont.pointSize());
     settings->setShowSpecialRemunSelector(showSpecialRemunSelector->isChecked());
     settings->setWarnISO8859(warnISO8859->isChecked());
+    settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
     SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
     if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
         dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;

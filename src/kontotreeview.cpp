@@ -41,9 +41,10 @@
 /**
  * Erzeugt ein neues Objekt zur Anzeige des Kontobaums. Seine Daten bezieht es aus abtlist.
  */
-KontoTreeView::KontoTreeView(QWidget *parent, AbteilungsListe* abtlist, const std::vector<int>& columnwidth, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode): QTreeWidget(parent)
+KontoTreeView::KontoTreeView(QWidget *parent, AbteilungsListe* abtlist, const std::vector<int>& columnwidth, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidget(parent)
 {
   this->displaymode=displaymode;
+  this->sortByCommentText=sortByCommentText;
   setColumnCount(7);
   QTreeWidgetItem * header = new QTreeWidgetItem;
   header->setText(KontoTreeItem::COL_ACCOUNTS, tr("Accounts") );
@@ -329,7 +330,7 @@ KontoTreeItem* KontoTreeView::sucheKommentarItem(const QString& tops, const QStr
   return komi;
 }
 
-int KontoTreeView::getItemDepth( QTreeWidgetItem* item )
+int KontoTreeView::getItemDepth(const QTreeWidgetItem* item )
 {
   int depth = -1;
 
@@ -497,9 +498,9 @@ void KontoTreeView::load(AbteilungsListe* abtlist)
     topi=next;
   }
 
-  KontoTreeItem* allekonten=new KontoTreeItem(this, displaymode);
+  KontoTreeItem* allekonten=new KontoTreeItem(this, displaymode, sortByCommentText);
   allekonten->setText(KontoTreeItem::COL_ACCOUNTS, ALLE_KONTEN_STRING);
-  KontoTreeItem* perskonten=new KontoTreeItem(this, displaymode);
+  KontoTreeItem* perskonten=new KontoTreeItem(this, displaymode, sortByCommentText);
   perskonten->setText(KontoTreeItem::COL_ACCOUNTS, PERSOENLICHE_KONTEN_STRING);
 
   this->addTopLevelItem(allekonten);
@@ -512,12 +513,12 @@ void KontoTreeView::load(AbteilungsListe* abtlist)
     AbteilungsListe::iterator abtPos;
 
     for (abtPos=abtList->begin(); abtPos!=abtList->end(); ++abtPos) {
-      KontoTreeItem* abteilungsitem=new KontoTreeItem(allekonten, displaymode);
+      KontoTreeItem* abteilungsitem=new KontoTreeItem(allekonten, displaymode, sortByCommentText);
       abteilungsitem->setText(KontoTreeItem::COL_ACCOUNTS, abtPos->first);
       abteilungsitem->setBgColor(abtList->getBgColor(abtPos->first));
       KontoListe* kontoliste=&(abtPos->second);
       for (KontoListe::iterator kontPos=kontoliste->begin(); kontPos!=kontoliste->end(); ++kontPos) {
-        KontoTreeItem* kontoitem= new KontoTreeItem(abteilungsitem, displaymode);
+        KontoTreeItem* kontoitem= new KontoTreeItem(abteilungsitem, displaymode, sortByCommentText);
         kontoitem->setText(KontoTreeItem::COL_ACCOUNTS, kontPos->first);
         kontoitem->setBgColor(abtList->getBgColor(abtPos->first,kontPos->first));        
         UnterKontoListe* unterkontoliste=&(kontPos->second);
@@ -532,7 +533,7 @@ void KontoTreeView::load(AbteilungsListe* abtlist)
             if (etPos==eintragsliste->begin()) {
                 //KontoTreeItem* newItem=new KontoTreeItem( kontoitem, ukontPos->first, dd.type(), "", tc.toString(),
                                                       //tcAbzur.toString() , etPos->second.kommentar);
-                KontoTreeItem* newItem=new KontoTreeItem(kontoitem, displaymode);
+                KontoTreeItem* newItem=new KontoTreeItem(kontoitem, displaymode, sortByCommentText);
                 newItem->setText( KontoTreeItem::COL_ACCOUNTS, ukontPos->first);
                 newItem->setText( KontoTreeItem::COL_TYPE, dd.type());
                 newItem->setText( KontoTreeItem::COL_PSP, dd.pspElem());
@@ -674,7 +675,7 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
   bool itemFound=(sucheItem(ALLE_KONTEN_STRING,abt,ko,uko,idx,topi,abti,koi,ukoi,eti));
 
   if ((koi)&&(!ukoi)) {
-    ukoi=new KontoTreeItem(koi, displaymode, uko);
+    ukoi=new KontoTreeItem(koi, displaymode, sortByCommentText, uko);
     itemFound=true;
   }
 
@@ -710,7 +711,7 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
         qs.setNum(etl->begin()->first);
         QVector<DefaultComment>* defaultCommentList = etl->getDefaultCommentList();
         ukoi->setHasSelectableMicroAccounts(!defaultCommentList->isEmpty());
-        eti=new KontoTreeItem(ukoi, displaymode, qs);
+        eti=new KontoTreeItem(ukoi, displaymode, sortByCommentText, qs);
         //std::cout << "ukoi->child(0)=" << ukoi->child(0)->text(0).toStdString()<<std::endl;
         ukoi->setIcon(KontoTreeItem::COL_ACTIVE,QIcon());
         ukoi->setText(KontoTreeItem::COL_PSP,"");
@@ -733,7 +734,7 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
       if (!etiFound) {
         QString qs;
         qs.setNum(idx);
-        eti=new KontoTreeItem(ukoi, displaymode, qs);
+        eti=new KontoTreeItem(ukoi, displaymode, sortByCommentText, qs);
         //ukoi->setExpanded(true);
       }
       ukoi->setText(KontoTreeItem::COL_TYPE,"");
@@ -817,19 +818,19 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
       }
     }
     if ((!inPersKontenGefunden)&&((etiter->second.flags)&UK_PERSOENLICH)) {
-      if (!topi) topi=new KontoTreeItem(this, displaymode, PERSOENLICHE_KONTEN_STRING);
-      if (!abti) abti=new KontoTreeItem(topi,displaymode, abt);
-      if (!koi) koi=new KontoTreeItem(abti, displaymode, ko);
+      if (!topi) topi=new KontoTreeItem(this, displaymode, sortByCommentText, PERSOENLICHE_KONTEN_STRING);
+      if (!abti) abti=new KontoTreeItem(topi,displaymode, sortByCommentText, abt);
+      if (!koi) koi=new KontoTreeItem(abti, displaymode, sortByCommentText, ko);
       if (!ukoi) {
         if (!ukHasSubTree) {
-            eti=new KontoTreeItem(koi, displaymode, uko);
+            eti=new KontoTreeItem(koi, displaymode, sortByCommentText, uko);
             ukoi=eti;
         }
         else
-          ukoi=new KontoTreeItem(koi, displaymode, uko);
+          ukoi=new KontoTreeItem(koi, displaymode, sortByCommentText, uko);
       }
       if (!eti) {
-            eti=new KontoTreeItem(ukoi, displaymode, QString().setNum(idx));
+            eti=new KontoTreeItem(ukoi, displaymode, sortByCommentText, QString().setNum(idx));
       }
       eti->setText(KontoTreeItem::COL_TYPE,dd.type());
       eti->setText(KontoTreeItem::COL_PSP,dd.pspElem());
@@ -901,7 +902,7 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
         if (!etiFound) {
           QString qs;
           qs.setNum(idx);
-          eti=new KontoTreeItem(ukoi, displaymode, qs);
+          eti=new KontoTreeItem(ukoi, displaymode, sortByCommentText, qs);
           ukoi->setExpanded(true);
         }
         ukoi->setText(KontoTreeItem::COL_TYPE,"");
@@ -1058,6 +1059,16 @@ void KontoTreeView::refreshAllItemsInDepartment(const QString& department)
 
 void KontoTreeView::setDisplayMode(SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode)
 {
-  this->displaymode=displaymode;
-  load(abtList);
+  if (this->displaymode!=displaymode) {
+    this->displaymode=displaymode;
+    load(abtList);
+  }
+}
+
+void KontoTreeView::setSortByCommentText(bool sortByCommentText)
+{
+  if (this->sortByCommentText!=sortByCommentText) {
+    this->sortByCommentText=sortByCommentText;
+    load(abtList);
+  }
 }

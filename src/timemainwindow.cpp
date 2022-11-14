@@ -144,7 +144,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
 
   settings->getColumnWidthList(columnwidthlist);
 
-  kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode());
+  kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
   kontoTree->closeFlaggedPersoenlicheItems();
   kontoTree->showPersoenlicheKontenSummenzeit(settings->persoenlicheKontensumme());
 #ifndef Q_OS_MAC
@@ -1590,6 +1590,7 @@ void TimeMainWindow::callPreferenceDialog()
   if (settings->defCommentDisplayMode()!=olddisplaymode) {
       kontoTree->setDisplayMode(settings->defCommentDisplayMode());
   }
+  kontoTree->setSortByCommentText(settings->sortByCommentText());
   kontoTree->closeFlaggedPersoenlicheItems();
   
 }

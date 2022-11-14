@@ -19,32 +19,35 @@
 #include "kontotreeitem.h"
 
 
-KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode): QTreeWidgetItem(parent)
+KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidgetItem(parent)
 {
   isBoldAccount=false;
   isMicroAccount=false;
   hasSelectableMicroAccounts=false;
+  this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
   m_bgColor=Qt::white;
   setGray();
 }
 
-KontoTreeItem::KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode): QTreeWidgetItem(parent)
+KontoTreeItem::KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidgetItem(parent)
 {
   isBoldAccount=false;
   isMicroAccount=false;
   hasSelectableMicroAccounts=false;
+  this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
   m_bgColor=Qt::white;
   setGray();
 }
 
-KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, QString accountname) 
+KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText, QString accountname)
      :QTreeWidgetItem(parent,0)
 {
   isBoldAccount=false;
   isMicroAccount=false;
   hasSelectableMicroAccounts=false;
+  this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
   setGray();
   m_bgColor=Qt::white;
@@ -53,12 +56,13 @@ KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommen
 }
 
 
-KontoTreeItem::KontoTreeItem (QTreeWidgetItem *parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, QString accountname) 
+KontoTreeItem::KontoTreeItem (QTreeWidgetItem *parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText, QString accountname)
     :QTreeWidgetItem(parent)
 {
   isBoldAccount=false;
   isMicroAccount=false;
   hasSelectableMicroAccounts=false;
+  this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
   setGray();
   m_bgColor=Qt::white;
@@ -155,4 +159,18 @@ KontoTreeItem* KontoTreeItem::nextSibling( )
     nextSibling = (KontoTreeItem*) treeWidget->topLevelItem(treeWidget->indexOfTopLevelItem(this)+1);
   }
   return nextSibling;
+}
+
+// implements special sort order for comments, if sorting account column: either by id (numerical) or by text (other column)
+bool KontoTreeItem::operator<(const QTreeWidgetItem &other) const {
+  QTreeWidget* tw=(KontoTreeView*)treeWidget();
+  int col = tw->sortColumn();
+  if ((col!=COL_ACCOUNTS)||(KontoTreeView::getItemDepth(this)!=4)||(KontoTreeView::getItemDepth(&other)!=4)) {
+    return QTreeWidgetItem::operator<(other);
+  }
+  if (!sortByCommentText) {
+    return (text(COL_ACCOUNTS).toInt()<other.text(COL_ACCOUNTS).toInt());
+  } else {
+    return (text(COL_COMMENT)<other.text(COL_COMMENT));
+  }
 }

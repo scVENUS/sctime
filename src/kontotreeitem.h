@@ -30,13 +30,13 @@ class KontoTreeItem: public QTreeWidgetItem
     enum Columns { COL_ACCOUNTS, COL_TYPE, COL_PSP, COL_ACTIVE, COL_TIME, COL_ACCOUNTABLE, COL_COMMENT };
     const static int NUM_COLUMNS=7;
 
-    KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode);
-    KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode);
+    KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText);
+    KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText);
 
 
-    KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, QString accountname); 
+    KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText, QString accountname);
 
-    KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, QString accountname); 
+    KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText, QString accountname);
 
     void setBoldAccount(bool bold);
     
@@ -52,6 +52,9 @@ class KontoTreeItem: public QTreeWidgetItem
 
     KontoTreeItem* nextSibling( );
 
+    bool operator<(const QTreeWidgetItem &other) const override;
+
+
   protected:
     void paintEvent(QPaintEvent *event);
 
@@ -59,6 +62,7 @@ class KontoTreeItem: public QTreeWidgetItem
     bool isBoldAccount;
     bool isMicroAccount;
     bool hasSelectableMicroAccounts;
+    bool sortByCommentText;
     SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode;
     bool isGray;
     SCTimeXMLSettings* settings;

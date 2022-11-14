@@ -70,6 +70,7 @@ public:
       databaseserver = defaultdatabaseserver;
       database = defaultdatabase;
       m_defCommentDisplayMode = DM_BOLD;
+      m_sortByCommentText = false;
       // databaseuser - empty means "use system username"
       // databasepassword - empty means "try to read from file"
 
@@ -268,6 +269,16 @@ public:
         m_defCommentDisplayMode=defCommentDisplayMode;
     }
 
+    bool sortByCommentText()
+    {
+        return m_sortByCommentText;
+    }
+
+    void setSortByCommentText(bool sortByCommentText)
+    {
+        m_sortByCommentText=sortByCommentText;
+    }
+
     bool dragNDrop()
     {
         return m_dragNDrop;
@@ -457,6 +468,7 @@ public:
     QString m_customFont;
     int m_customFontSize;
     bool backupSettingsXml; // nur beim ersten Speichern ein  Backup von settings.xml erstellen
+    bool m_sortByCommentText;
     DefCommentDisplayModeEnum m_defCommentDisplayMode;
     QPoint unterKontoWindowPosition;
     QSize unterKontoWindowSize;

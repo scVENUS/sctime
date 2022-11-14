@@ -47,7 +47,7 @@ class KontoTreeView: public QTreeWidget
 
   public:
     
-    KontoTreeView(QWidget *parent, AbteilungsListe* abtlist, const std::vector<int>& columnwidth, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode);
+    KontoTreeView(QWidget *parent, AbteilungsListe* abtlist, const std::vector<int>& columnwidth, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText);
 
     bool sucheItem(const QString& tops, const QString& abts, const QString& kos, const QString& ukos, int idx,
          KontoTreeItem* &topi, KontoTreeItem* &abti, KontoTreeItem* &koi, KontoTreeItem* &ukoi, KontoTreeItem* &eti);
@@ -80,11 +80,13 @@ class KontoTreeView: public QTreeWidget
 
     void showPersoenlicheKontenSummenzeit(bool show);
 
-    int getItemDepth( QTreeWidgetItem* );
+    static int getItemDepth(const QTreeWidgetItem* );
 
     void updateColumnWidth();
 
     void setDisplayMode(SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode);
+
+    void setSortByCommentText(bool sortByCommentText);
 
   public slots:
     virtual void refreshItem(const QString& abt, const QString& ko,const QString& uko, int idx);
@@ -116,6 +118,7 @@ class KontoTreeView: public QTreeWidget
     Qt::KeyboardModifiers keyboardModifier;
     QPersistentModelIndex rightPressedIndex;
     SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode;
+    bool sortByCommentText;
 };
 
 #endif

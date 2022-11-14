@@ -512,6 +512,9 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
             if (elem2.tagName()=="warnISO8859") {
               setWarnISO8859((elem2.attribute("on")=="yes"));
             }
+            if (elem2.tagName()=="sortByCommentText") {
+              setSortByCommentText((elem2.attribute("on")=="yes"));
+            }
             if (elem2.tagName()=="kontodlgwindowposition") {
               bool ok;
               int x = QString(elem2.attribute("x")).toInt(&ok);
@@ -715,6 +718,12 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
     if (warnISO8859()) on="yes";
     warnISO8859tag.setAttribute("on",on);
     generaltag.appendChild(warnISO8859tag);
+
+    QDomElement sortByCommentTextTag = doc.createElement("sortByCommentText");
+    on="no";
+    if (sortByCommentText()) on="yes";
+    sortByCommentTextTag.setAttribute("on",on);
+    generaltag.appendChild(sortByCommentTextTag);
 
     QDomElement dragndroptag = doc.createElement("dragndrop");
     on="no";
