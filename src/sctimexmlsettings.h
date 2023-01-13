@@ -30,6 +30,8 @@
 
 class AbteilungsListe;
 class QTextStream;
+class PunchClockEntry;
+class PunchClockList;
 
 class SCTimeXMLSettings
 {
@@ -101,13 +103,13 @@ public:
      
     }
 
-    bool writeSettings(AbteilungsListe* abtList);
+    bool writeSettings(AbteilungsListe* abtList, PunchClockList* pcl);
 
     void readSettings();
 
-    void readSettings(AbteilungsListe* abtList);
+    void readSettings(AbteilungsListe* abtList, PunchClockList* pcl);
 
-    void writeShellSkript(AbteilungsListe* abtList);
+    void writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl);
 
     void setTimeIncrement(int sekunden) { timeInc=sekunden; };
 
@@ -430,9 +432,9 @@ public:
 
   private:
 
-    bool writeSettings(bool global, AbteilungsListe* abtList);
+    bool writeSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
 
-    void readSettings(bool global, AbteilungsListe* abtList);
+    void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     
     int compVersion(const QString& version1, const QString& version2);
 

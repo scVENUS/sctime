@@ -36,6 +36,7 @@ class StatusBar;
 class UnterKontoDialog;
 class QTextBrowser;
 class QLocalServer;
+class PunchClockList;
 
 #include "defaultcommentreader.h"
 #include "datasource.h"
@@ -103,6 +104,7 @@ public:
     void callSpecialRemunerationsDialog(QTreeWidgetItem * item);
     void callColorDialog();
     void callAdditionalLicenseDialog();
+    void callPunchClockDialog();
     void removeBgColor();
     void jumpToAlleKonten();
 
@@ -249,5 +251,6 @@ public:
     void resumeTimers(int secSinceTick, const QString& reason);
     bool entryBeingEdited; // indicates that currently an entry is being edited
     QLocalServer *m_ipcserver;
+    PunchClockList *m_punchClockList;
 };
 #endif

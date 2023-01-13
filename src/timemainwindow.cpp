@@ -64,6 +64,7 @@
 #include "sctimexmlsettings.h"
 #include "lock.h"
 #include "datasource.h"
+#include "punchclockdialog.h"
 #include "setupdsm.h"
 #include "specialremunerationsdialog.h"
 #include "util.h"
@@ -107,12 +108,13 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QDate heute;
   abtListToday=new AbteilungsListe(heute.currentDate(), zk);
   abtList=abtListToday;
+  m_punchClockList=new PunchClockList();
   pausedAbzur=false;
   inPersoenlicheKontenAllowed=true;
   powerToolBar = NULL;
   cantSaveDialog = NULL;
   settings=new SCTimeXMLSettings();
-  settings->readSettings(abtList);
+  settings->readSettings(abtList, m_punchClockList);
 
   settings->getDefaultCommentFiles(xmlfilelist);
   qtDefaultFont=QApplication::font();
@@ -219,6 +221,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
   changeDateAction->setShortcut(Qt::CTRL+Qt::Key_D);
   connect(changeDateAction, SIGNAL(triggered()), this, SLOT(callDateDialog()));
+
+  QAction* punchClockAction = new QAction(tr("Punch Clock"), this);
+  punchClockAction->setShortcut(Qt::CTRL+Qt::Key_O);
+  connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
   resetAction->setShortcut(Qt::CTRL+Qt::Key_N);
@@ -408,6 +414,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   kontomenu->addSeparator();
   kontomenu->addAction(quitAction);
   zeitmenu->addAction(changeDateAction);
+  zeitmenu->addAction(punchClockAction);
   zeitmenu->addAction(resetAction);
   settingsmenu->addAction(preferenceAction);
   hilfemenu->addAction(helpAction);
@@ -881,11 +888,11 @@ void TimeMainWindow::save()
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    settings->writeSettings(abtListToday);
-    settings->writeShellSkript(abtListToday);
+    settings->writeSettings(abtListToday, m_punchClockList);
+    settings->writeShellSkript(abtListToday, m_punchClockList);
     if (abtList!=abtListToday) {
-      settings->writeSettings(abtList);
-      settings->writeShellSkript(abtList);
+      settings->writeSettings(abtList, m_punchClockList);
+      settings->writeShellSkript(abtList, m_punchClockList);
     }
   }
 }
@@ -1135,13 +1142,13 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
 
         if (abtListToday != abtList)
         {
-            if (!(settings->writeSettings(abtListToday) &&
-                 settings->writeSettings(abtList)
+            if (!(settings->writeSettings(abtListToday, m_punchClockList) &&
+                 settings->writeSettings(abtList, m_punchClockList)
                  )) {
                    return;
                  }
-            settings->writeShellSkript(abtListToday);
-            settings->writeShellSkript(abtList);
+            settings->writeShellSkript(abtListToday, m_punchClockList);
+            settings->writeShellSkript(abtList, m_punchClockList);
             if (changeVisible) {
               delete abtList;
               abtList=NULL;
@@ -1149,10 +1156,10 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         }
         else
         {
-            if (!settings->writeSettings(abtList)) {
+            if (!settings->writeSettings(abtList, m_punchClockList)) {
                 return;
             }
-            settings->writeShellSkript(abtList);
+            settings->writeShellSkript(abtList, m_punchClockList);
         }
         if ((datum==abtListToday->getDatum())&&changeVisible)
         {
@@ -1179,11 +1186,11 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
 
         if (changeToday&&(abtListToday != abtList)) {
             abtListToday->clearKonten();
-            settings->readSettings(abtListToday);
+            settings->readSettings(abtListToday, m_punchClockList);
         }
 
         abtList->clearKonten();
-        settings->readSettings(abtList);
+        settings->readSettings(abtList, m_punchClockList);
 
         abtListToday->setAsAktiv(abt,ko,uko,idx);
 
@@ -1241,14 +1248,14 @@ void TimeMainWindow::commitKontenliste(DSResult data) {
   settings->setColumnWidthList(columnwidthlist);
   if (checkConfigDir()) {
     checkLock();
-    settings->writeSettings(abtList); // settings wont survive the reload
+    settings->writeSettings(abtList, m_punchClockList); // settings wont survive the reload
     int diff = abtList->getZeitDifferenz();
     abtList->reload(data);
-    settings->readSettings(abtList);
+    settings->readSettings(abtList, m_punchClockList);
     if (abtList!=abtListToday) {
-        settings->writeSettings(abtListToday); // settings wont survive the reload
+        settings->writeSettings(abtListToday, m_punchClockList); // settings wont survive the reload
         abtListToday->reload(data);
-        settings->readSettings(abtListToday);
+        settings->readSettings(abtListToday, m_punchClockList);
     }
     kontoTree->load(abtList);
     abtList->setZeitDifferenz(diff);
@@ -2147,4 +2154,10 @@ void TimeMainWindow::readIPCMessage() {
   }
   socket->close();
   delete socket;
+}
+
+void TimeMainWindow::callPunchClockDialog() {
+  PunchClockDialog pcDialog(m_punchClockList, this);
+  pcDialog.exec();
+  pcDialog.copyToList(m_punchClockList);
 }
