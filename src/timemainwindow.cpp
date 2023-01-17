@@ -108,7 +108,8 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QDate heute;
   abtListToday=new AbteilungsListe(heute.currentDate(), zk);
   abtList=abtListToday;
-  m_punchClockList=new PunchClockList();
+  m_punchClockListToday=new PunchClockList();
+  m_punchClockList=m_punchClockListToday;
   pausedAbzur=false;
   inPersoenlicheKontenAllowed=true;
   powerToolBar = NULL;
@@ -172,6 +173,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QMenu * remunmenu = menuBar()->addMenu(tr("&Remuneration"));
   QMenu * settingsmenu = menuBar()->addMenu(tr("&Settings"));
   QMenu * hilfemenu = menuBar()->addMenu(tr("&Help"));
+
+  auto now=QDateTime::currentDateTime();
+  m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+  m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
   minutenTimer = new QTimer(this);
   connect( minutenTimer,SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
@@ -636,6 +641,15 @@ void TimeMainWindow::minuteHochzaehlen() {
   // -> notwendig?
   abtListToday->getAktiv(abt,ko,uko,idx);
   kontoTree->refreshItem(abt,ko,uko,idx);
+  auto pce=m_punchClockListToday->currentEntry();
+  if (pce!=m_punchClockListToday->end()) {
+      pce->second=now.time().msecsSinceStartOfDay()/1000;
+      logError("tick");
+  } else {
+      m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+      m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+      logError("tock");
+  }
   zeitChanged();
   // <- notwendig?
   if (lastMinuteTick.time().secsTo(QTime(0,2)) > 0) {
@@ -849,11 +863,19 @@ void TimeMainWindow::pause() {
     setWindowIcon(QIcon(":/window_icon_paused"));
     QDateTime now = QDateTime::currentDateTime();
     QString currtime= QLocale().toString(now.time(), QLocale::ShortFormat);
+    auto pce=m_punchClockListToday->currentEntry();
+    if (pce!=m_punchClockListToday->end()) {
+      pce->second=now.time().msecsSinceStartOfDay()/1000;
+    }
     QMessageBox::warning(this, tr("sctime: Pause"), tr("Accounting has been stopped at %1. Resume work with OK.").arg(currtime));
     paused = false;
     now = QDateTime::currentDateTime();
     sekunden = drift;
     trace(tr("End of break: ") +now.toString());
+
+    m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+    m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+
     qApp->setWindowIcon(QIcon(":/window_icon"));
     setWindowIcon(QIcon(":/window_icon"));
     autosavetimer->start();
@@ -1142,16 +1164,18 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
 
         if (abtListToday != abtList)
         {
-            if (!(settings->writeSettings(abtListToday, m_punchClockList) &&
+            if (!(settings->writeSettings(abtListToday, m_punchClockListToday) &&
                  settings->writeSettings(abtList, m_punchClockList)
                  )) {
                    return;
                  }
-            settings->writeShellSkript(abtListToday, m_punchClockList);
+            settings->writeShellSkript(abtListToday, m_punchClockListToday);
             settings->writeShellSkript(abtList, m_punchClockList);
             if (changeVisible) {
               delete abtList;
               abtList=NULL;
+              delete m_punchClockList;
+              m_punchClockList=NULL;
             }
         }
         else
@@ -1164,15 +1188,18 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         if ((datum==abtListToday->getDatum())&&changeVisible)
         {
             abtList = abtListToday;
+            m_punchClockList = m_punchClockListToday;
         }
         if (!(datum==abtListToday->getDatum())&&changeVisible) {
             abtList = new AbteilungsListe(datum, abtListToday);
+            m_punchClockList = new PunchClockList();
         }
         if (changeToday) {
             if (abtListToday->getDatum() != currentDate)
             {
                if (abtList->getDatum() == currentDate) {
                  abtListToday=abtList;
+                 m_punchClockListToday=m_punchClockList;
                } else {
                  // if an entry of today is being edited, we don't switch the view to the current date
                  if (entryBeingEdited&&(abtListToday == abtList)) {
@@ -1186,11 +1213,25 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
 
         if (changeToday&&(abtListToday != abtList)) {
             abtListToday->clearKonten();
-            settings->readSettings(abtListToday, m_punchClockList);
+            m_punchClockListToday->clear();
+            settings->readSettings(abtListToday, m_punchClockListToday);
         }
 
         abtList->clearKonten();
+        m_punchClockList->clear();
         settings->readSettings(abtList, m_punchClockList);
+
+        auto lastentry = std::prev(m_punchClockListToday->end());
+        auto now=QDateTime::currentDateTime();
+        int diff=now.time().msecsSinceStartOfDay()/1000-(lastentry->second);
+        if ((diff<=90) && (diff>=-90)) {
+          logError("change date in range");
+          m_punchClockListToday->setCurrentEntry(lastentry);
+        } else {
+          logError("change date out of range");
+          m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+          m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+        }
 
         abtListToday->setAsAktiv(abt,ko,uko,idx);
 
@@ -1251,11 +1292,11 @@ void TimeMainWindow::commitKontenliste(DSResult data) {
     settings->writeSettings(abtList, m_punchClockList); // settings wont survive the reload
     int diff = abtList->getZeitDifferenz();
     abtList->reload(data);
-    settings->readSettings(abtList, m_punchClockList);
+    settings->readSettings(abtList, NULL);
     if (abtList!=abtListToday) {
         settings->writeSettings(abtListToday, m_punchClockList); // settings wont survive the reload
         abtListToday->reload(data);
-        settings->readSettings(abtListToday, m_punchClockList);
+        settings->readSettings(abtListToday, NULL);
     }
     kontoTree->load(abtList);
     abtList->setZeitDifferenz(diff);
@@ -2158,6 +2199,15 @@ void TimeMainWindow::readIPCMessage() {
 
 void TimeMainWindow::callPunchClockDialog() {
   PunchClockDialog pcDialog(m_punchClockList, this);
-  pcDialog.exec();
-  pcDialog.copyToList(m_punchClockList);
+  int result = pcDialog.exec();
+  if (result==QDialog::Accepted) {
+    pcDialog.copyToList(m_punchClockList);
+    auto now=QDateTime::currentDateTime();
+    if (m_punchClockList==m_punchClockListToday) {
+      auto pce=m_punchClockListToday->currentEntry();
+      if (pce!=m_punchClockListToday->end()) {
+        pce->second=now.time().msecsSinceStartOfDay()/1000;
+      } 
+    }
+  }
 }

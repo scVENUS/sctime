@@ -252,5 +252,6 @@ public:
     bool entryBeingEdited; // indicates that currently an entry is being edited
     QLocalServer *m_ipcserver;
     PunchClockList *m_punchClockList;
+    PunchClockList *m_punchClockListToday;
 };
 #endif

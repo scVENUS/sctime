@@ -44,8 +44,12 @@ PunchClockDialog::~PunchClockDialog()
 void PunchClockDialog::fillFromList(PunchClockList *pcl) {
   punchClockTable->clear();
   int row=0;
-  for (auto const& entry : *pcl) {
-    insertEntry(row, QTime::fromMSecsSinceStartOfDay(entry.first*1000), QTime::fromMSecsSinceStartOfDay(entry.second*1000));
+  for (auto entry = pcl->begin(); entry != pcl->end(); ++entry) {
+    insertEntry(row, QTime::fromMSecsSinceStartOfDay(entry->first*1000), QTime::fromMSecsSinceStartOfDay(entry->second*1000));
+    if (entry==pcl->currentEntry()) {
+      punchClockTable->cellWidget(row,1)->setEnabled(false);
+    }
+    row++;
   }
 }
 
@@ -62,8 +66,12 @@ void PunchClockDialog::copyToList(PunchClockList *pcl) {
       begin=end;
       end=t;
     }
-    if (begin!=end) {
-      it=pcl->insert(it, PunchClockEntry(begin, end));
+    bool active=!endCell->isEnabled();
+    if (active||(begin!=end)) {
+      pcl->push_back(PunchClockEntry(begin, end));
+      if (active) {
+         pcl->setCurrentEntry(std::prev(pcl->end()));
+      }
     }
   }
 }
@@ -76,7 +84,7 @@ void PunchClockDialog::deleteEntry()
 void PunchClockDialog::insertEntry()
 {
   int row=punchClockTable->currentRow()+1;
-  insertEntry(row, QTime(), QTime());
+  insertEntry(row, QTime::fromString("00:00", "hh:mm"), QTime::fromString("00:00", "hh:mm"));
 }
 
 void PunchClockDialog::insertEntry(int row, QTime begin, QTime end)

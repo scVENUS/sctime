@@ -27,10 +27,27 @@
 class PunchClockEntry: public std::pair<int, int>{
   public:
      PunchClockEntry(int begin, int end): std::pair<int, int>(begin, end) {
-
      }
 };
 
-class PunchClockList: public std::list<PunchClockEntry> {};
+class PunchClockList: public std::list<PunchClockEntry> {
+   public:
+     PunchClockList(): std::list<PunchClockEntry>() {
+      m_currentEntry=this->end();
+     }
+     void setCurrentEntry(PunchClockList::iterator entry) {
+      m_currentEntry=entry;
+     }
+     PunchClockList::iterator currentEntry() {
+      return m_currentEntry;
+     }
+     void clear() {
+       std::list<PunchClockEntry>::clear();
+       m_currentEntry=this->end();
+     }
+   private:
+     PunchClockList::iterator m_currentEntry;
+
+};
 
 #endif
