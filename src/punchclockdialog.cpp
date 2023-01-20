@@ -84,19 +84,19 @@ void PunchClockDialog::deleteEntry()
 void PunchClockDialog::insertEntry()
 {
   int row=punchClockTable->currentRow()+1;
-  insertEntry(row, QTime::fromString("00:00", "hh:mm"), QTime::fromString("00:00", "hh:mm"));
+  insertEntry(row, QTime::fromString("0:0", "H:m"), QTime::fromString("0:0", "H:m"));
 }
 
 void PunchClockDialog::insertEntry(int row, QTime begin, QTime end)
 {
   punchClockTable->insertRow(row);
   auto dateTime = new QDateTimeEdit(this);
-  dateTime->setDisplayFormat("hh:mm");
+  dateTime->setDisplayFormat("H:mm");
   dateTime->setFrame(false);
   dateTime->setTime(begin);
   punchClockTable->setCellWidget(row, 0, dateTime);
   dateTime = new QDateTimeEdit(this);
-  dateTime->setDisplayFormat("hh:mm");
+  dateTime->setDisplayFormat("H:mm");
   dateTime->setFrame(false);
   dateTime->setTime(end);
   punchClockTable->setCellWidget(row, 1, dateTime);

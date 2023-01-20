@@ -409,8 +409,8 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
               QString beginstr=elem2.attribute("begin");
               QString endstr=elem2.attribute("end");
               if (beginstr.isNull()||endstr.isNull()) continue;
-              QTime begintime=QTime::fromString(beginstr,"HH:mm");
-              QTime endtime=QTime::fromString(endstr,"HH:mm");
+              QTime begintime=QTime::fromString(beginstr,"H:m");
+              QTime endtime=QTime::fromString(endstr,"H:m");
               if (!begintime.isValid()||!endtime.isValid()) continue;
               pcl->push_back(PunchClockEntry((int)(begintime.msecsSinceStartOfDay()/1000), (int)(endtime.msecsSinceStartOfDay()/1000)));
             }
@@ -949,8 +949,8 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
     QDomElement punchclocktag = doc.createElement( "punchclock" );
     for (auto pce: *pcl) {
       QDomElement pcentrytag= doc.createElement( "pcentry" );
-      pcentrytag.setAttribute("begin", QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("HH:mm"));
-      pcentrytag.setAttribute("end", QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("HH:mm"));
+      pcentrytag.setAttribute("begin", QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:m"));
+      pcentrytag.setAttribute("end", QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:m"));
       punchclocktag.appendChild(pcentrytag);
     }
     root.appendChild(punchclocktag);
