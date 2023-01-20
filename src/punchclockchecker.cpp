@@ -77,12 +77,12 @@ QString checkCurrentState(PunchClockList * pcl, int currentTime) {
                   laststartlegal=itoken.time;
                 }
                 else if (itoken.time-lastend>=15*60) {
-                  breaktimeworkday+=itoken.time-laststart;
+                  breaktimeworkday+=itoken.time-lastend;
                   if (itoken.time>15*60*60) {
-                     breaktimetodayafter15h+=itoken.time-(std::max(laststart, 15*60*60));
+                     breaktimetodayafter15h+=itoken.time-(std::max(lastend, 15*60*60));
                   }
                   if (itoken.time>18*60*60) {
-                     breaktimetodayafter18h+=itoken.time-(std::max(laststart, 18*60*60));
+                     breaktimetodayafter18h+=itoken.time-(std::max(lastend, 18*60*60));
                   }
                   laststartlegal=itoken.time;
                 }
@@ -98,7 +98,7 @@ QString checkCurrentState(PunchClockList * pcl, int currentTime) {
     }
     if ((currentTime-laststartlegal>=6*60*60-60)&&(currentTime-lastend<15*60)) {
       warning="You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.";
-    }
+    } else
     if (worktimeworkday>6*60*60-60 && breaktimeworkday<30*60) {
       warning=QString().sprintf("You are working for 6 hours without many breaks. You should take a break of at least 15 minutes in the next three hours.");
     }

@@ -40,10 +40,11 @@ void TestPunchClockChecker::testNormalDay() {
    pcl.push_back(entry("12:32","14:01"));
    QCOMPARE(checkCurrentState(&pcl, toSecs("14:05")), QString(""));
    pcl.push_back(entry("14:20","18:15"));
+   QCOMPARE(checkCurrentState(&pcl, toSecs("18:15")), QString(""));
    QCOMPARE(checkCurrentState(&pcl, toSecs("23:59")), QString(""));
 }
 
-void TestPunchClockChecker::testLateLunchBreak() {
+void TestPunchClockChecker::testLongDayWithVeryShortBreak() {
    PunchClockList pcl;
    QCOMPARE(checkCurrentState(&pcl, toSecs("8:00")), QString(""));
    pcl.push_back(entry("8:43","10:07"));
@@ -51,7 +52,18 @@ void TestPunchClockChecker::testLateLunchBreak() {
    pcl.push_back(entry("10:09","14:01"));
    QCOMPARE(checkCurrentState(&pcl, toSecs("14:05")), QString(""));
    pcl.push_back(entry("14:20","18:15"));
-   QCOMPARE(checkCurrentState(&pcl, toSecs("18:15")), "");
+   QCOMPARE(checkCurrentState(&pcl, toSecs("18:15")), "You are working for 9 hours without many breaks. You should take a break of at least 26 minutes now.");
+}
+
+void TestPunchClockChecker::testLongDayWithMediumBreak() {
+   PunchClockList pcl;
+   QCOMPARE(checkCurrentState(&pcl, toSecs("8:00")), QString(""));
+   pcl.push_back(entry("8:43","10:07"));
+   QCOMPARE(checkCurrentState(&pcl, toSecs("8:50")), QString(""));
+   pcl.push_back(entry("10:09","14:01"));
+   QCOMPARE(checkCurrentState(&pcl, toSecs("14:05")), QString(""));
+   pcl.push_back(entry("14:35","18:30"));
+   QCOMPARE(checkCurrentState(&pcl, toSecs("18:30")), "You are working for 9 hours without many breaks. You should take a break of at least 15 minutes now.");
 }
 
 void TestPunchClockChecker::testMissingLunchBreak() {
@@ -62,7 +74,16 @@ void TestPunchClockChecker::testMissingLunchBreak() {
    pcl.push_back(entry("10:09","14:01"));
    QCOMPARE(checkCurrentState(&pcl, toSecs("14:05")), QString(""));
    pcl.push_back(entry("14:10","16:15"));
-   QCOMPARE(checkCurrentState(&pcl, toSecs("18:15")), "You are working for 6 hours without many breaks. You should take a break of at least 15 minutes in the next three hours.");
+   QCOMPARE(checkCurrentState(&pcl, toSecs("16:15")), "You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.");
+}
+
+void TestPunchClockChecker::testShortLunchBreak() {
+   PunchClockList pcl;
+   QCOMPARE(checkCurrentState(&pcl, toSecs("8:00")), QString(""));
+   pcl.push_back(entry("8:00","12:00"));
+   QCOMPARE(checkCurrentState(&pcl, toSecs("8:50")), QString(""));
+   pcl.push_back(entry("12:15","14:30"));
+   QCOMPARE(checkCurrentState(&pcl, toSecs("14:30")), "You are working for 6 hours without many breaks. You should take a break of at least 15 minutes in the next three hours.");
 }
 
 void TestPunchClockChecker::testLongDayWithBreaks() {
