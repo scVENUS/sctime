@@ -21,6 +21,9 @@
 #include "punchclock.h"
 #include "punchclockchecker.h"
 
+const int MINUTE=60;
+const int HOUR=60*MINUTE;
+
 class WorkEvent;
 class WorkEvent {
 public:
@@ -45,44 +48,44 @@ bool compare_interval (const WorkEvent& first, const WorkEvent& second) {
     return ((first.time<second.time)||((first.time==second.time)&&first.isBegin&&!second.isBegin));
 }
 
-QString checkCurrentState(PunchClockList * pcl, int currentTime) {
-    QString warning;
+PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const PunchClockState& yesterdayState) {
+    PunchClockState currentState;
+    currentState.currentWarning="";
+    currentState.warnId=PW_NONE;
     WorkEventList wel;
     AddPclToWorkEventList(&wel, pcl);
     if (wel.size()==0) {
-      return "";
+      return currentState;
     }
     wel.sort(compare_interval);
-    int workdaystart=-12*60*60;
-    int laststart=workdaystart;
-    int laststartlegal=workdaystart;
-    int lastend=workdaystart;
+    int laststart=yesterdayState.lastLegalBreakEnd-24*HOUR;
+    int laststartlegal=laststart;
+    int lastend=yesterdayState.workEnd-24*HOUR;
     // we might have overlapping intervals
     int workingIntervalLevel=0;
     // TODO: use offset of last day, if applicable
     // please note that there may be a difference between the calendaric day and the work day.
     // these variables should contain the values for the current workday.
-    int worktimeworkday=0;
-    int breaktimeworkday=0;
+    int worktimeworkday=yesterdayState.workTimeThisWorkday;
+    int breaktimeworkday=yesterdayState.breakTimeThisWorkday;
     int breaktimetodayafter15h=0;
     int breaktimetodayafter18h=0;
     for (auto itoken: wel) {
         if (itoken.isBegin) {
             workingIntervalLevel++;
             if (workingIntervalLevel==1) {
-                if (itoken.time-laststart>=11*60*60) {
-                  workdaystart=itoken.time;
+                if (itoken.time-lastend>=11*HOUR) {
                   worktimeworkday=0;
                   breaktimeworkday=0;
                   laststartlegal=itoken.time;
                 }
-                else if (itoken.time-lastend>=15*60) {
+                else if (itoken.time-lastend>=15*MINUTE) {
                   breaktimeworkday+=itoken.time-lastend;
-                  if (itoken.time>15*60*60) {
-                     breaktimetodayafter15h+=itoken.time-(std::max(lastend, 15*60*60));
+                  if (itoken.time>15*HOUR) {
+                     breaktimetodayafter15h+=itoken.time-(std::max(lastend, 15*HOUR));
                   }
-                  if (itoken.time>18*60*60) {
-                     breaktimetodayafter18h+=itoken.time-(std::max(lastend, 18*60*60));
+                  if (itoken.time>18*HOUR) {
+                     breaktimetodayafter18h+=itoken.time-(std::max(lastend, 18*HOUR));
                   }
                   laststartlegal=itoken.time;
                 }
@@ -96,19 +99,27 @@ QString checkCurrentState(PunchClockList * pcl, int currentTime) {
             }
         }
     }
-    if ((currentTime-laststartlegal>=6*60*60-60)&&(currentTime-lastend<15*60)) {
-      warning="You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.";
+    if ((currentTime-laststartlegal>=6*HOUR-MINUTE)&&(currentTime-lastend<15*MINUTE)) {
+      currentState.currentWarning="You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.";
+      currentState.warnId=PW_NO_BREAK_6H;
     } else
-    if (worktimeworkday>6*60*60-60 && breaktimeworkday<30*60) {
-      warning=QString().sprintf("You are working for 6 hours without many breaks. You should take a break of at least 15 minutes in the next three hours.");
+    if (worktimeworkday>6*HOUR-MINUTE && breaktimeworkday<30*MINUTE) {
+      currentState.currentWarning="You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.";
+      currentState.warnId=PW_TOO_SHORT_BREAK_6H;
     }
-    if (worktimeworkday>9*60*60-60 && breaktimeworkday<30*60) {
-      warning=QString().sprintf("You are working for 9 hours and did not take enough breaks. You should take a break of at least %d minutes now.", std::max(30-breaktimeworkday/60, 15));
+    if (worktimeworkday>9*HOUR-MINUTE && breaktimeworkday<45*MINUTE) {
+      currentState.currentWarning=QString("You are working for 9 hours without enough breaks. You should take a break of at least %1 minutes now.").arg(std::max(15,(45-breaktimeworkday/MINUTE)));
+      currentState.warnId=PW_TOO_SHORT_BREAK_9H;
     }
-    if (worktimeworkday>9*60*60-60 && breaktimeworkday<45*60) {
-      warning=QString().sprintf("You are working for 9 hours without many breaks. You should take a break of at least %d minutes now.", std::max(15,(45-breaktimeworkday/60)));
+    if (worktimeworkday>10*HOUR) {
+      currentState.currentWarning="You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.";
+      currentState.warnId=PW_OVER_10H;
     }
     
-    return warning;
+    currentState.breakTimeThisWorkday=breaktimeworkday;
+    currentState.workEnd=lastend;
+    currentState.lastLegalBreakEnd=laststartlegal;
+    currentState.workTimeThisWorkday=worktimeworkday;
+    return currentState;
 }
 

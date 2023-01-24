@@ -32,6 +32,15 @@ private slots:
     void testLongDayWithMediumBreak();
     void testLongDayWithBreaks();
     void testShortLunchBreak();
+    void testOverNightWorkWithoutbreak();
+    void testOverNightWorkShortBreakBeforeMidnight();
+    void testOverNightWorkMediumBreakOverMidnight();
+    void testLongOverNightWorkMediumBreakOverMidnight();
+    void testLongOverNightShortBreakBeforeMidnight();
+    void testLongOverNightEnoughBreaks();
+    void testComplexWorkdaysOK();
+    void testComplexWorkdaysNotOK();
+    void testComplexWorkdaysNotOK2();
 };
 
 #endif
