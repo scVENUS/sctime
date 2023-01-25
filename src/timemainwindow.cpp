@@ -69,6 +69,7 @@
 #include "specialremunerationsdialog.h"
 #include "util.h"
 #include "textviewerdialog.h"
+#include "punchclockchecker.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -765,33 +766,34 @@ void TimeMainWindow::addDeltaToZeit(int delta, bool abzurOnly)
  */
 void TimeMainWindow::zeitChanged()
 {
-  static int lastworkedtime=0;
+  static PUNCHWARN lastwarn=PW_NONE;
   static QTime lastclocktime = QTime::currentTime();
   int zeitAbzur, workedtime;
-  int max_working_time=settings->maxWorkingTime();
+  //int max_working_time=settings->maxWorkingTime();
   QTime clocktime = QTime::currentTime();
   abtList->getGesamtZeit(workedtime, zeitAbzur);
   statusBar->setDiff(abtList->getZeitDifferenz());
   emit gesamtZeitChanged(workedtime);
   emit gesamtZeitAbzurChanged(zeitAbzur);
 
-  // remember the last workedtime for the next call, which might happen while
+  // remember the last clocktime for the next call, which might happen while
   // we do further stuff inside this function. Also remember the old lastworkedtime
   // in the local variable oldlast
-  int oldlastworkedtime=lastworkedtime;
-  lastworkedtime=workedtime;
+  PUNCHWARN oldlastwarn=lastwarn;
+  m_PCSToday=checkCurrentState(m_punchClockListToday, clocktime.msecsSinceStartOfDay()/1000, m_PCSYesterday);
+  lastwarn=m_PCSToday.warnId;
 
   // do the same for clocktime
   QTime oldlastclocktime = lastclocktime;
   lastclocktime = clocktime;
 
-  // Beim ersten ueberschreiten von MAX_WORKTIME
-  if ((workedtime>max_working_time)&&(oldlastworkedtime<=max_working_time)) {
+  // at first occurrence of a warning
+  if ((lastwarn!=PW_NONE)&&(oldlastwarn!=lastwarn)) {
     // OK, QTimer erwartet nun, dass der letzte aufruf zurueckgekehrt ist, bevor
     // der nächste kommen kann. Da wir ueber einen QTimer aufgerufen wurden,
     // und wir weiter Tick-Events bekommen muessen, muessen wir den Arbeitszeitdialog asynchron starten.
     // Das tun wir ueber einen weiteren QTimer (das klappt, weil wir hier einen Wegwerftimer benutzen.
-    QTimer::singleShot(0, this, SLOT(showArbeitszeitwarning()));
+    QTimer::singleShot(0, this, SLOT(showWorkdayWarning()));
   }
   if ((clocktime>settings->nightModeBegin())&&(oldlastclocktime<=settings->nightModeBegin())) {
     QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
@@ -829,8 +831,11 @@ void TimeMainWindow::updateTaskbarTitle(int zeit)
 }
 #endif
 
-void TimeMainWindow::showArbeitszeitwarning() {
-  QMessageBox::warning(0, tr("Warning") ,tr("Warning: Legally allowed working time has been exceeded."));
+void TimeMainWindow::showWorkdayWarning() {
+  QString warning=m_PCSToday.currentWarning;
+  if (warning!="") {
+     QMessageBox::warning(0, tr("Warning"),warning);
+  }
 }
 
 int TimeMainWindow::stopTimers(const QString& grund) {

@@ -36,10 +36,10 @@ class StatusBar;
 class UnterKontoDialog;
 class QTextBrowser;
 class QLocalServer;
-class PunchClockList;
 
 #include "defaultcommentreader.h"
 #include "datasource.h"
+#include "punchclockchecker.h"
 
 class TextViewerDialog;
 class Lock;
@@ -115,7 +115,7 @@ public:
     void copyEntryAsLink();
     void pasteEntryAsLink();
     void openEntryLink(const QUrl& url);
-    void showArbeitszeitwarning();
+    void showWorkdayWarning();
     void checkComment(const QString& abt, const QString& ko , const QString& uko,int idx);
     void commitKontenliste(DSResult data);
     void displayLastLogEntry();
@@ -253,5 +253,7 @@ public:
     QLocalServer *m_ipcserver;
     PunchClockList *m_punchClockList;
     PunchClockList *m_punchClockListToday;
+    PunchClockState m_PCSToday;
+    PunchClockState m_PCSYesterday;
 };
 #endif
