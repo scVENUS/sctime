@@ -131,3 +131,33 @@ PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const P
     return currentState;
 }
 
+PunchClockState::PunchClockState() {
+    workEnd=0;
+    breakTimeThisWorkday=0;
+    lastLegalBreakEnd=0;
+    workTimeThisWorkday=0;
+    currentWarning="";
+    warnId=PUNCHWARN::PW_NONE;
+}
+
+QString PunchClockState::serialize() {
+    return QString("%1;%2;%3;%4;%5;%6").arg("DE23").arg(date.toString("yyyyMMdd")).arg(workEnd).arg(breakTimeThisWorkday).arg(lastLegalBreakEnd).arg(workTimeThisWorkday);
+}
+
+void PunchClockState::deserialize(const QString& s) {
+    auto list=s.split(";");
+    if (list.length()==0) {
+      *this=PunchClockState();
+      return;
+    }
+    QString type=list[0];
+    if ((type!="DE23")||list.length()!=6) {
+      *this=PunchClockState();
+      return;
+    }
+    date=QDate::fromString(list[1],"yyyyMMdd");
+    workEnd=list[2].toInt();
+    breakTimeThisWorkday=list[3].toInt();
+    lastLegalBreakEnd=list[4].toInt();
+    workTimeThisWorkday=list[5].toInt();
+}

@@ -491,6 +491,10 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
             if (elem2.tagName()=="typecolumn") {
               m_showTypeColumn=(elem2.attribute("show")=="yes");
             }
+            if (elem2.tagName()=="pccdata") {
+              m_currentPCCdata=elem2.attribute("current");
+              m_prevPCCdata=elem2.attribute("previous");
+            }
             if (elem2.tagName()=="pspcolumn") {
               m_showPSPColumn=(elem2.attribute("show")=="yes");
             }
@@ -627,6 +631,11 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
     QDomElement timeinctag = doc.createElement( "timeincrement" );
     timeinctag.setAttribute("seconds",timeInc);
     generaltag.appendChild(timeinctag);
+
+    QDomElement pcctag = doc.createElement( "pccdata" );
+    pcctag.setAttribute("current",m_currentPCCdata);
+    pcctag.setAttribute("previous",m_prevPCCdata);
+    generaltag.appendChild(pcctag);
 
     QDomElement fasttimeinctag = doc.createElement( "fasttimeincrement" );
     fasttimeinctag.setAttribute("seconds",fastTimeInc);

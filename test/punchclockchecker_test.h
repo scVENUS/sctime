@@ -43,6 +43,7 @@ private slots:
     void testComplexWorkdaysNotOK2();
     void testEarlyMorningLongSegmentUnordered();
     void testLongSegmentOverMidnight();
+    void testSerialization();
 };
 
 #endif

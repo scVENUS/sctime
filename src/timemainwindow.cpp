@@ -179,6 +179,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
+  loadPCCData(settings->previousPCCData());
+  loadPCCData(settings->currentPCCData());
+
   minutenTimer = new QTimer(this);
   connect( minutenTimer,SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
   lastMinuteTick = startTime;
@@ -782,6 +785,10 @@ void TimeMainWindow::zeitChanged()
   PUNCHWARN oldlastwarn=lastwarn;
   m_PCSToday=checkCurrentState(m_punchClockListToday, clocktime.msecsSinceStartOfDay()/1000, m_PCSYesterday);
   lastwarn=m_PCSToday.warnId;
+  m_PCSToday.date=abtListToday->getDatum();
+
+  settings->setCurrentPCCData(m_PCSToday.serialize());
+  settings->setPreviousPCCData(m_PCSYesterday.serialize());
 
   // do the same for clocktime
   QTime oldlastclocktime = lastclocktime;
@@ -912,6 +919,7 @@ void TimeMainWindow::save()
   kontoTree->getColumnWidthList(columnwidthlist);
   settings->setColumnWidthList(columnwidthlist);
   settings->setLastRecordedTimestamp(lastMinuteTick);
+  settings->setCurrentPCCData(m_PCSToday.serialize());
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
@@ -1146,6 +1154,17 @@ void TimeMainWindow::callSwitchDateErrorDialog()
     msg.exec();
 }
 
+void TimeMainWindow::loadPCCData(const QString& pccdata) {
+   PunchClockState pcs;
+   pcs.deserialize(settings->currentPCCData());
+   if (pcs.date==abtListToday->getDatum()) {
+      m_PCSToday=pcs;
+   } else if (pcs.date==abtListToday->getDatum().addDays(-1)) {
+      m_PCSYesterday=pcs;
+   }
+
+}
+
 /**
  * Aendert das Datum: dazu werden zuerst die aktuellen Zeiten und Einstellungen gespeichert,
  * sodann die Daten fuer das angegebene Datum neu eingelesen.
@@ -1245,6 +1264,8 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         kontoTree->showAktivesProjekt();
         if (changeToday)
         {
+            loadPCCData(settings->previousPCCData());
+            loadPCCData(settings->currentPCCData());
             updateSpecialModes(false);
         }
         zeitChanged();

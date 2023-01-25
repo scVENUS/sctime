@@ -421,6 +421,22 @@ public:
         return "yyyy-MM-dd HH:mm:ss";
     }
 
+    QString currentPCCData() {
+        return m_currentPCCdata;
+    }
+
+    void setCurrentPCCData(const QString &s) {
+       m_currentPCCdata=s;
+    }
+
+    QString previousPCCData() {
+        return m_prevPCCdata;
+    }
+
+    void setPreviousPCCData(const QString &s) {
+       m_prevPCCdata=s;
+    }
+
 
     QString backends;
 
@@ -494,6 +510,9 @@ public:
     // database backend
     QString defaultdatabaseserver;
     QString defaultdatabase;
+
+    QString m_currentPCCdata;
+    QString m_prevPCCdata;
 };
 
 

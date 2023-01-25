@@ -22,25 +22,22 @@
 
 #include "punchclock.h"
 #include <QString>
+#include <QDate>
 
 enum PUNCHWARN {PW_NONE, PW_NO_BREAK_6H, PW_TOO_SHORT_BREAK_6H, PW_TOO_SHORT_BREAK_9H, PW_OVER_10H};
 
 class PunchClockState {
 public:
-    PunchClockState() {
-        workEnd=0;
-        breakTimeThisWorkday=0;
-        lastLegalBreakEnd=0;
-        workTimeThisWorkday=0;
-        currentWarning="";
-        warnId=PUNCHWARN::PW_NONE;
-    }
+    PunchClockState();
+    QString serialize();
+    void deserialize(const QString& s);
     int workEnd;
     int breakTimeThisWorkday;
     int lastLegalBreakEnd;
     int workTimeThisWorkday;
     PUNCHWARN warnId;
     QString currentWarning;
+    QDate date;
 };
 
 PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const PunchClockState& yesterdayState);

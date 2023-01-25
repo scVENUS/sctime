@@ -423,5 +423,25 @@ void TestPunchClockChecker::testLongSegmentOverMidnight() {
    QCOMPARE(state.warnId, PW_NO_BREAK_6H);
 }
 
+void TestPunchClockChecker::testSerialization() {
+   PunchClockState state1;
+   PunchClockState state2;
+
+   state1.breakTimeThisWorkday=toSecs("0:40");
+   state1.lastLegalBreakEnd=toSecs("13:10");
+   state1.workEnd=toSecs("17:10");
+   state1.workTimeThisWorkday=toSecs("8:10");
+   state1.date=QDate::fromString("20230401","yyyyMMdd");
+
+   QString s=state1.serialize();
+   QCOMPARE(s,"DE23;20230401;61800;2400;47400;29400");
+   state2.deserialize(s);
+   QCOMPARE(state1.breakTimeThisWorkday, state2.breakTimeThisWorkday);
+   QCOMPARE(state1.lastLegalBreakEnd, state2.lastLegalBreakEnd);
+   QCOMPARE(state1.workTimeThisWorkday, state2.workTimeThisWorkday);
+   QCOMPARE(state1.workEnd, state2.workEnd);
+   QCOMPARE(state1.date, state2.date);
+}
+
 QTEST_MAIN(TestPunchClockChecker)
 #include "moc_punchclockchecker_test.cpp"
