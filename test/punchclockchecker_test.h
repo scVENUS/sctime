@@ -41,6 +41,8 @@ private slots:
     void testComplexWorkdaysOK();
     void testComplexWorkdaysNotOK();
     void testComplexWorkdaysNotOK2();
+    void testEarlyMorningLongSegmentUnordered();
+    void testLongSegmentOverMidnight();
 };
 
 #endif

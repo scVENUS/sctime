@@ -21,6 +21,8 @@
 #include "punchclock.h"
 #include "punchclockchecker.h"
 
+#include <QObject>
+
 const int MINUTE=60;
 const int HOUR=60*MINUTE;
 
@@ -94,25 +96,31 @@ PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const P
         } else {
             workingIntervalLevel--;
             if (workingIntervalLevel==0) {
+                int lastendold=lastend;
                 lastend=itoken.time;
-                worktimeworkday+=lastend-laststart;
+                // we only count pause intervals in the legal sense here. if the pause does not count, use the previous end instead
+                if (laststart==laststartlegal) {
+                  worktimeworkday+=lastend-laststart;
+                } else {
+                  worktimeworkday+=lastend-lastendold;
+                }
             }
         }
     }
     if ((currentTime-laststartlegal>=6*HOUR-MINUTE)&&(currentTime-lastend<15*MINUTE)) {
-      currentState.currentWarning="You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.";
+      currentState.currentWarning=QObject::tr("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.");
       currentState.warnId=PW_NO_BREAK_6H;
     } else
     if (worktimeworkday>6*HOUR-MINUTE && breaktimeworkday<30*MINUTE) {
-      currentState.currentWarning="You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.";
+      currentState.currentWarning=QObject::tr("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.");
       currentState.warnId=PW_TOO_SHORT_BREAK_6H;
     }
     if (worktimeworkday>9*HOUR-MINUTE && breaktimeworkday<45*MINUTE) {
-      currentState.currentWarning=QString("You are working for 9 hours without enough breaks. You should take a break of at least %1 minutes now.").arg(std::max(15,(45-breaktimeworkday/MINUTE)));
+      currentState.currentWarning=QString(QObject::tr("You are working for 9 hours without enough breaks. You should take a break of at least %1 minutes now.")).arg(std::max(15,(45-breaktimeworkday/MINUTE)));
       currentState.warnId=PW_TOO_SHORT_BREAK_9H;
     }
     if (worktimeworkday>10*HOUR) {
-      currentState.currentWarning="You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.";
+      currentState.currentWarning=QObject::tr("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.");
       currentState.warnId=PW_OVER_10H;
     }
     

@@ -47,9 +47,10 @@ void TestPunchClockChecker::testNormalDay() {
    QCOMPARE(state.currentWarning, QString(""));
    pcl.push_back(entry("14:20","18:15"));
    state=checkCurrentState(&pcl, toSecs("18:15"), yesterday);
+   QCOMPARE(state.workTimeThisWorkday, toSecs("8:39"));
    QCOMPARE(state.currentWarning, QString(""));
    state=checkCurrentState(&pcl, toSecs("23:59"), yesterday);
-   QCOMPARE(state.currentWarning, QString(""));
+   QCOMPARE(state.workTimeThisWorkday, toSecs("8:39"));
    QCOMPARE(state.warnId, PW_NONE);
 }
 
@@ -143,7 +144,7 @@ void TestPunchClockChecker::testLongDayWithBreaks() {
    pcl.push_back(entry("18:17","20:00"));
    state=checkCurrentState(&pcl, toSecs("23:59"), yesterday);
    QCOMPARE(state.currentWarning, QString("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now."));
-   QCOMPARE(state.workTimeThisWorkday, toSecs("10:20"));
+   QCOMPARE(state.workTimeThisWorkday, toSecs("10:24"));
    QCOMPARE(state.warnId, PW_OVER_10H);
 }
 
@@ -345,7 +346,8 @@ void TestPunchClockChecker::testComplexWorkdaysNotOK() {
    yesterday=state;
    pcl.push_back(entry("0:13","0:40"));
    state=checkCurrentState(&pcl, toSecs("0:40"), yesterday);
-   QCOMPARE(state.currentWarning, QString(""));
+   QCOMPARE(state.workTimeThisWorkday, toSecs("10:14"));
+   QCOMPARE(state.currentWarning, QString("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now."));
    pcl.push_back(entry("1:15","5:40"));
    state=checkCurrentState(&pcl, toSecs("5:40"), yesterday);
    QCOMPARE(state.currentWarning, QString("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now."));
@@ -380,14 +382,46 @@ void TestPunchClockChecker::testComplexWorkdaysNotOK2() {
    yesterday=state;
    pcl.push_back(entry("0:13","0:40"));
    state=checkCurrentState(&pcl, toSecs("0:40"), yesterday);
-   QCOMPARE(state.currentWarning, QString(""));
+   QCOMPARE(state.currentWarning, QString("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now."));
+   QCOMPARE(state.workTimeThisWorkday, toSecs("10:14"));
    pcl.push_back(entry("1:15","5:40"));
    state=checkCurrentState(&pcl, toSecs("5:40"), yesterday);
    QCOMPARE(state.currentWarning, QString("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now."));
-   QCOMPARE(state.workTimeThisWorkday, toSecs("14:25"));
+   QCOMPARE(state.workTimeThisWorkday, toSecs("14:39"));
    QCOMPARE(state.warnId, PW_OVER_10H);
 }
 
+void TestPunchClockChecker::testEarlyMorningLongSegmentUnordered() {
+   PunchClockList pcl;
+   PunchClockState yesterday;
+   PunchClockState state;
+   state=checkCurrentState(&pcl, toSecs("1:00"), yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("7:00","13:59"));
+   pcl.push_back(entry("2:00","4:30"));
+   pcl.push_back(entry("14:05","14:14"));
+   state=checkCurrentState(&pcl, toSecs("14:14"), yesterday);
+   QCOMPARE(state.workTimeThisWorkday, toSecs("9:44"));
+   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now."));
+   QCOMPARE(state.warnId, PW_NO_BREAK_6H);
+}
+
+void TestPunchClockChecker::testLongSegmentOverMidnight() {
+   PunchClockList pcl;
+   PunchClockState emptyday;
+   PunchClockState yesterday;
+   PunchClockState state;
+   pcl.push_back(entry("21:00","23:00"));
+   pcl.push_back(entry("23:40","23:59"));
+   yesterday=checkCurrentState(&pcl, toSecs("15:00"), emptyday);
+   QCOMPARE(yesterday.workTimeThisWorkday, toSecs("2:19"));
+   pcl.clear();
+   pcl.push_back(entry("0:0","6:00"));
+   state=checkCurrentState(&pcl, toSecs("6:00"), yesterday);
+   QCOMPARE(state.workTimeThisWorkday, toSecs("8:20"));
+   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now."));
+   QCOMPARE(state.warnId, PW_NO_BREAK_6H);
+}
 
 QTEST_MAIN(TestPunchClockChecker)
 #include "moc_punchclockchecker_test.cpp"
