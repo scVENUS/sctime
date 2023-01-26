@@ -20,6 +20,7 @@
 
 #include <QPushButton>
 #include <QDir>
+#include <QObject>
 #include <QStringList>
 #include <QTextCharFormat>
 #include <QDateTimeEdit>
@@ -35,6 +36,7 @@ PunchClockDialog::PunchClockDialog(PunchClockList *pcl, QWidget *parent)
   if (pcl!=NULL) {
     fillFromList(pcl);
   }
+  punchClockTable->setHorizontalHeaderLabels(QStringList()<<QObject::tr("Begin time")<<QObject::tr("End time"));
 }
 
 PunchClockDialog::~PunchClockDialog()
@@ -62,9 +64,14 @@ void PunchClockDialog::copyToList(PunchClockList *pcl) {
     int begin=(int)beginCell->time().msecsSinceStartOfDay()/1000;
     int end=(int)endCell->time().msecsSinceStartOfDay()/1000;
     if (begin>end) {
-      int t=begin;
-      begin=end;
-      end=t;
+      // heuristics, if someone probably meant to end at 23:59, 0:00 would already be the next day
+      if ((begin>12*60*60)&&(end<=60)) {
+        end=23*60*60+59*60;
+      } else {
+        int t=begin;
+        begin=end;
+        end=t;
+      }
     }
     bool active=!endCell->isEnabled();
     if (active||(begin!=end)) {

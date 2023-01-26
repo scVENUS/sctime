@@ -6,14 +6,24 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1475</width>
-    <height>908</height>
+    <width>539</width>
+    <height>724</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Here you can edit your attendance time records (begin and end time of each interval you were working). sctime tries to capture them automatically like the accounting records, but both are largely independent and may deviate. </string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QFrame" name="frame">
      <property name="frameShape">
@@ -28,6 +38,15 @@
         <property name="columnCount">
          <number>2</number>
         </property>
+        <attribute name="horizontalHeaderMinimumSectionSize">
+         <number>40</number>
+        </attribute>
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>140</number>
+        </attribute>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
         <column/>
         <column/>
        </widget>
@@ -77,8 +96,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>frame</zorder>
-  <zorder>buttonBox</zorder>
  </widget>
  <resources/>
  <connections>

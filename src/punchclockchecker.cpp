@@ -41,6 +41,11 @@ class WorkEventList: public std::list<WorkEvent> {
 
 void AddPclToWorkEventList(WorkEventList *wel, PunchClockList * pcl) {
     for (auto pcentry: *pcl) {
+      // do not wrap around midnight, but cut any entry that seems to go past.
+      // please note: this also cuts entries if begin and end is ordered wrong
+      if (pcentry.second<pcentry.first) {
+        pcentry.second=23*HOUR+59*MINUTE;
+      }
       wel->push_back(WorkEvent(pcentry.first, true));
       wel->push_back(WorkEvent(pcentry.second,false));
     }

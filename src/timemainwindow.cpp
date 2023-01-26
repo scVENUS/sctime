@@ -919,6 +919,8 @@ void TimeMainWindow::save()
   kontoTree->getColumnWidthList(columnwidthlist);
   settings->setColumnWidthList(columnwidthlist);
   settings->setLastRecordedTimestamp(lastMinuteTick);
+  m_PCSToday=checkCurrentState(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
+  m_PCSToday.date=abtListToday->getDatum();
   settings->setCurrentPCCData(m_PCSToday.serialize());
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
@@ -1266,6 +1268,8 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         {
             loadPCCData(settings->previousPCCData());
             loadPCCData(settings->currentPCCData());
+            m_PCSToday=checkCurrentState(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
+            m_PCSToday.date=abtListToday->getDatum();
             updateSpecialModes(false);
         }
         zeitChanged();
