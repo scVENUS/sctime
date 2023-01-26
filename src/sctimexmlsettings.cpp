@@ -132,17 +132,17 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   }
 
   if (pcl!=NULL) {
-    stream<<Qt::endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd");
+    stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd");
     for (auto pce: *pcl) {
       if (pce.first>pce.second) {
         pce.second=23*60*60+59*60;
       }
       stream<<" "<<QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:mm")<<"-"<<QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:mm");
     }
-    stream<<Qt::endl;
+    stream<<endl;
   }
 
-  stream<<Qt::endl;
+  stream<<endl;
   workfile.close();
 
   if (!workfile.rename(filename)) {
