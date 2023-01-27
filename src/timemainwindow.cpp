@@ -892,8 +892,10 @@ void TimeMainWindow::pause() {
     sekunden = drift;
     trace(tr("End of break: ") +now.toString());
 
-    m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
-    m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+    if (now.date()==abtListToday->getDatum()) {
+      m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+      m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+    }
 
     qApp->setWindowIcon(QIcon(":/window_icon"));
     setWindowIcon(QIcon(":/window_icon"));
@@ -929,6 +931,7 @@ void TimeMainWindow::save()
   m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
   m_PCSToday->date=abtListToday->getDatum();
   settings->setCurrentPCCData(m_PCSToday->serialize());
+  settings->setPreviousPCCData(m_PCSYesterday->serialize());
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
@@ -1169,11 +1172,11 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
 #else
    PunchClockStateNoop pcs;
 #endif
-   pcs.deserialize(settings->currentPCCData());
+   pcs.deserialize(pccdata);
    if (pcs.date==abtListToday->getDatum()) {
-      *m_PCSToday=pcs;
+      m_PCSToday->copyFrom(&pcs);
    } else if (pcs.date==abtListToday->getDatum().addDays(-1)) {
-      *m_PCSYesterday=pcs;
+      m_PCSYesterday->copyFrom(&pcs);
    }
 
 }
@@ -1198,6 +1201,11 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         int idx;
 
         abtListToday->getAktiv(abt,ko,uko,idx);
+
+        if (abtListToday->getDatum().addDays(1)==currentDate) {
+            m_PCSToday->date=abtListToday->getDatum();
+            settings->setPreviousPCCData(m_PCSToday->serialize());
+        }
 
         if (abtListToday != abtList)
         {

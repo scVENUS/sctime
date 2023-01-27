@@ -176,3 +176,13 @@ void PunchClockStateDE23::deserialize(const QString& s) {
     lastLegalBreakEnd=list[4].toInt();
     workTimeThisWorkday=list[5].toInt();
 }
+
+void PunchClockStateDE23::copyFrom(const PunchClockStateBase* source) {
+    PunchClockStateBase::copyFrom(source);
+    auto s=dynamic_cast<const PunchClockStateDE23*>(source);
+    if (s==NULL) return;
+    workEnd=s->workEnd;
+    breakTimeThisWorkday=s->breakTimeThisWorkday;
+    lastLegalBreakEnd=s->lastLegalBreakEnd;
+    workTimeThisWorkday=s->workTimeThisWorkday;
+}

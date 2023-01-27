@@ -33,6 +33,7 @@ public:
     virtual QString serialize()=0;
     virtual void deserialize(const QString& s)=0;
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState)=0;
+    virtual void copyFrom(const PunchClockStateBase* source) { warnId=source->warnId; currentWarning=source->currentWarning; date=source->date;};
     PUNCHWARN warnId;
     QString currentWarning;
     QDate date;
@@ -54,6 +55,7 @@ public:
     virtual QString serialize();
     virtual void deserialize(const QString& s);
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState);
+    virtual void copyFrom(const PunchClockStateBase* source);
 private:
     int workEnd;
     int breakTimeThisWorkday;

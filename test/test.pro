@@ -3,6 +3,7 @@
 ######################################################################
 
 QT += testlib
+DEFINES += PUNCHCLOCKDE23
 CONFIG += debug
 TEMPLATE = app
 TARGET = test
