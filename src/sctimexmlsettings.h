@@ -25,9 +25,6 @@
 #include <vector>
 #include <QString>
 
-#define MAX_WORKTIME_DEFAULT 10*60*60 // Warn if more time is spent
-
-
 class AbteilungsListe;
 class QTextStream;
 class PunchClockEntry;
@@ -51,7 +48,7 @@ public:
       alwaysSaveEintrag = false;
       m_powerUserView = false;
       m_singleClickActivation = false;
-      m_maxWorkingTime=MAX_WORKTIME_DEFAULT;
+      m_workingTimeWarnings=true;
       m_persoenlicheKontensumme=false;
       m_lastRecordedTimestamp=QDateTime();
       defaultcommentfiles.clear();
@@ -181,9 +178,9 @@ public:
         return m_singleClickActivation;
     }
 
-    int maxWorkingTime()
+    int workingTimeWarnings()
     {
-       return m_maxWorkingTime;
+       return m_workingTimeWarnings;
     }
 
     void getDefaultCommentFiles(std::vector<QString>& list)
@@ -482,7 +479,7 @@ public:
     bool m_persoenlicheKontensumme;
     bool m_showSpecialRemunSelector;
     bool m_warnISO8859;
-    int m_maxWorkingTime;
+    bool m_workingTimeWarnings;
     QString m_customFont;
     int m_customFontSize;
     bool backupSettingsXml; // nur beim ersten Speichern ein  Backup von settings.xml erstellen

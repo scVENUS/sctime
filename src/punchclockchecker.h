@@ -26,21 +26,41 @@
 
 enum PUNCHWARN {PW_NONE, PW_NO_BREAK_6H, PW_TOO_SHORT_BREAK_6H, PW_TOO_SHORT_BREAK_9H, PW_OVER_10H};
 
-class PunchClockState {
+class PunchClockStateBase {
 public:
-    PunchClockState();
-    QString serialize();
-    void deserialize(const QString& s);
-    int workEnd;
-    int breakTimeThisWorkday;
-    int lastLegalBreakEnd;
-    int workTimeThisWorkday;
+    PunchClockStateBase();
+    virtual ~PunchClockStateBase() {};
+    virtual QString serialize()=0;
+    virtual void deserialize(const QString& s)=0;
+    virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState)=0;
     PUNCHWARN warnId;
     QString currentWarning;
     QDate date;
 };
 
-PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const PunchClockState& yesterdayState);
+class PunchClockStateNoop: public PunchClockStateBase {
+public:
+    PunchClockStateNoop() {};
+    virtual ~PunchClockStateNoop() {};
+    virtual QString serialize() { return "NOOP"; };
+    virtual void deserialize(const QString& s) {};
+    virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState) {};
+};
+
+class PunchClockStateDE23: public PunchClockStateBase {
+public:
+    PunchClockStateDE23();
+    virtual ~PunchClockStateDE23() {};
+    virtual QString serialize();
+    virtual void deserialize(const QString& s);
+    virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState);
+private:
+    int workEnd;
+    int breakTimeThisWorkday;
+    int lastLegalBreakEnd;
+    int workTimeThisWorkday;
+    friend class TestPunchClockChecker;
+};
 
 
 #endif

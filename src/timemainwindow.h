@@ -254,7 +254,7 @@ public:
     QLocalServer *m_ipcserver;
     PunchClockList *m_punchClockList;
     PunchClockList *m_punchClockListToday;
-    PunchClockState m_PCSToday;
-    PunchClockState m_PCSYesterday;
+    PunchClockStateBase *m_PCSToday;
+    PunchClockStateBase *m_PCSYesterday;
 };
 #endif

@@ -472,10 +472,8 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
             if (elem2.tagName()=="persoenliche_kontensumme") {
               setPersoenlicheKontensumme(elem2.attribute("on")=="yes");
             }
-            if (elem2.tagName()=="max_working_time") {
-              QString secondsstr=elem2.attribute("seconds");
-              if (secondsstr.isNull()) continue;
-              m_maxWorkingTime=secondsstr.toInt();
+            if (elem2.tagName()=="working_time_warnings") {
+              m_workingTimeWarnings=(elem2.attribute("on")!="no");
             }
             if (elem2.tagName()=="aktives_konto") {
               aktiveskontotag=elem2; // Aktives Konto merken und zum Schluss setzen, damit es vorher erzeugt wurde
@@ -664,9 +662,9 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
       generaltag.appendChild(zeitkontenkommandotag);
     }
 
-    if (MAX_WORKTIME_DEFAULT!=m_maxWorkingTime) {
-        QDomElement maxworktag = doc.createElement( "max_working_time" );
-        maxworktag.setAttribute("seconds",m_maxWorkingTime);
+    if (m_workingTimeWarnings==false) {
+        QDomElement maxworktag = doc.createElement( "working_time_warnings" );
+        maxworktag.setAttribute("on","no");
         generaltag.appendChild(maxworktag);
     }
 

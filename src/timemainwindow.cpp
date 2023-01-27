@@ -111,6 +111,13 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   abtList=abtListToday;
   m_punchClockListToday=new PunchClockList();
   m_punchClockList=m_punchClockListToday;
+#if PUNCHCLOCKDE23
+  m_PCSToday=new PunchClockStateDE23();
+  m_PCSYesterday=new PunchClockStateDE23();
+#else
+  m_PCSToday=new PunchClockStateNoop();
+  m_PCSYesterday=new PunchClockStateNoop();
+#endif
   pausedAbzur=false;
   inPersoenlicheKontenAllowed=true;
   powerToolBar = NULL;
@@ -783,12 +790,12 @@ void TimeMainWindow::zeitChanged()
   // we do further stuff inside this function. Also remember the old lastworkedtime
   // in the local variable oldlast
   PUNCHWARN oldlastwarn=lastwarn;
-  m_PCSToday=checkCurrentState(m_punchClockListToday, clocktime.msecsSinceStartOfDay()/1000, m_PCSYesterday);
-  lastwarn=m_PCSToday.warnId;
-  m_PCSToday.date=abtListToday->getDatum();
+  m_PCSToday->check(m_punchClockListToday, clocktime.msecsSinceStartOfDay()/1000, m_PCSYesterday);
+  lastwarn=m_PCSToday->warnId;
+  m_PCSToday->date=abtListToday->getDatum();
 
-  settings->setCurrentPCCData(m_PCSToday.serialize());
-  settings->setPreviousPCCData(m_PCSYesterday.serialize());
+  settings->setCurrentPCCData(m_PCSToday->serialize());
+  settings->setPreviousPCCData(m_PCSYesterday->serialize());
 
   // do the same for clocktime
   QTime oldlastclocktime = lastclocktime;
@@ -839,8 +846,8 @@ void TimeMainWindow::updateTaskbarTitle(int zeit)
 #endif
 
 void TimeMainWindow::showWorkdayWarning() {
-  QString warning=m_PCSToday.currentWarning;
-  if (warning!="") {
+  QString warning=m_PCSToday->currentWarning;
+  if ((warning!="")&&(settings->workingTimeWarnings())) {
      QMessageBox::warning(0, tr("Warning"),warning);
   }
 }
@@ -919,9 +926,9 @@ void TimeMainWindow::save()
   kontoTree->getColumnWidthList(columnwidthlist);
   settings->setColumnWidthList(columnwidthlist);
   settings->setLastRecordedTimestamp(lastMinuteTick);
-  m_PCSToday=checkCurrentState(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
-  m_PCSToday.date=abtListToday->getDatum();
-  settings->setCurrentPCCData(m_PCSToday.serialize());
+  m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
+  m_PCSToday->date=abtListToday->getDatum();
+  settings->setCurrentPCCData(m_PCSToday->serialize());
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
@@ -1157,12 +1164,16 @@ void TimeMainWindow::callSwitchDateErrorDialog()
 }
 
 void TimeMainWindow::loadPCCData(const QString& pccdata) {
-   PunchClockState pcs;
+#if PUNCHCLOCKDE23
+   PunchClockStateDE23 pcs;
+#else
+   PunchClockStateNoop pcs;
+#endif
    pcs.deserialize(settings->currentPCCData());
    if (pcs.date==abtListToday->getDatum()) {
-      m_PCSToday=pcs;
+      *m_PCSToday=pcs;
    } else if (pcs.date==abtListToday->getDatum().addDays(-1)) {
-      m_PCSYesterday=pcs;
+      *m_PCSYesterday=pcs;
    }
 
 }
@@ -1268,8 +1279,8 @@ void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool cha
         {
             loadPCCData(settings->previousPCCData());
             loadPCCData(settings->currentPCCData());
-            m_PCSToday=checkCurrentState(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
-            m_PCSToday.date=abtListToday->getDatum();
+            m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
+            m_PCSToday->date=abtListToday->getDatum();
             updateSpecialModes(false);
         }
         zeitChanged();

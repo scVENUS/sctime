@@ -55,26 +55,34 @@ bool compare_interval (const WorkEvent& first, const WorkEvent& second) {
     return ((first.time<second.time)||((first.time==second.time)&&first.isBegin&&!second.isBegin));
 }
 
-PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const PunchClockState& yesterdayState) {
-    PunchClockState currentState;
-    currentState.currentWarning="";
-    currentState.warnId=PW_NONE;
+void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayStateBase) {
+    auto yesterdayState=dynamic_cast<const PunchClockStateDE23*>(yesterdayStateBase);
+    currentWarning="";
+    warnId=PW_NONE;
     WorkEventList wel;
     AddPclToWorkEventList(&wel, pcl);
     if (wel.size()==0) {
-      return currentState;
+      workEnd=0;
+      breakTimeThisWorkday=0;
+      lastLegalBreakEnd=0;
+      workTimeThisWorkday=0;
     }
     wel.sort(compare_interval);
-    int laststart=yesterdayState.lastLegalBreakEnd-24*HOUR;
-    int laststartlegal=laststart;
-    int lastend=yesterdayState.workEnd-24*HOUR;
+    int laststart=-24*HOUR;
+    int lastend=-24*HOUR;
     // we might have overlapping intervals
     int workingIntervalLevel=0;
-    // TODO: use offset of last day, if applicable
     // please note that there may be a difference between the calendaric day and the work day.
     // these variables should contain the values for the current workday.
-    int worktimeworkday=yesterdayState.workTimeThisWorkday;
-    int breaktimeworkday=yesterdayState.breakTimeThisWorkday;
+    int worktimeworkday=0;
+    int breaktimeworkday=0;
+    if (yesterdayState!=NULL) {
+      laststart+=yesterdayState->lastLegalBreakEnd;
+      lastend+=yesterdayState->workEnd;
+      worktimeworkday+=yesterdayState->workTimeThisWorkday;
+      breaktimeworkday+=yesterdayState->breakTimeThisWorkday;
+    }
+    int laststartlegal=laststart;
     int breaktimetodayafter15h=0;
     int breaktimetodayafter18h=0;
     for (auto itoken: wel) {
@@ -113,51 +121,53 @@ PunchClockState checkCurrentState(PunchClockList * pcl, int currentTime, const P
         }
     }
     if ((currentTime-laststartlegal>=6*HOUR-MINUTE)&&(currentTime-lastend<15*MINUTE)) {
-      currentState.currentWarning=QObject::tr("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.");
-      currentState.warnId=PW_NO_BREAK_6H;
+      currentWarning=QObject::tr("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.");
+      warnId=PW_NO_BREAK_6H;
     } else
     if (worktimeworkday>6*HOUR-MINUTE && breaktimeworkday<30*MINUTE) {
-      currentState.currentWarning=QObject::tr("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.");
-      currentState.warnId=PW_TOO_SHORT_BREAK_6H;
+      currentWarning=QObject::tr("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.");
+      warnId=PW_TOO_SHORT_BREAK_6H;
     }
     if (worktimeworkday>9*HOUR-MINUTE && breaktimeworkday<45*MINUTE) {
-      currentState.currentWarning=QString(QObject::tr("You are working for 9 hours without enough breaks. You should take a break of at least %1 minutes now.")).arg(std::max(15,(45-breaktimeworkday/MINUTE)));
-      currentState.warnId=PW_TOO_SHORT_BREAK_9H;
+      currentWarning=QString(QObject::tr("You are working for 9 hours without enough breaks. You should take a break of at least %1 minutes now.")).arg(std::max(15,(45-breaktimeworkday/MINUTE)));
+      warnId=PW_TOO_SHORT_BREAK_9H;
     }
     if (worktimeworkday>10*HOUR) {
-      currentState.currentWarning=QObject::tr("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.");
-      currentState.warnId=PW_OVER_10H;
+      currentWarning=QObject::tr("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.");
+      warnId=PW_OVER_10H;
     }
     
-    currentState.breakTimeThisWorkday=breaktimeworkday;
-    currentState.workEnd=lastend;
-    currentState.lastLegalBreakEnd=laststartlegal;
-    currentState.workTimeThisWorkday=worktimeworkday;
-    return currentState;
+    breakTimeThisWorkday=breaktimeworkday;
+    workEnd=lastend;
+    lastLegalBreakEnd=laststartlegal;
+    workTimeThisWorkday=worktimeworkday;
 }
 
-PunchClockState::PunchClockState() {
-    workEnd=0;
-    breakTimeThisWorkday=0;
-    lastLegalBreakEnd=0;
-    workTimeThisWorkday=0;
+PunchClockStateBase::PunchClockStateBase() {
     currentWarning="";
     warnId=PUNCHWARN::PW_NONE;
 }
 
-QString PunchClockState::serialize() {
+PunchClockStateDE23::PunchClockStateDE23() {
+    workEnd=0;
+    breakTimeThisWorkday=0;
+    lastLegalBreakEnd=0;
+    workTimeThisWorkday=0;
+}
+
+QString PunchClockStateDE23::serialize() {
     return QString("%1;%2;%3;%4;%5;%6").arg("DE23").arg(date.toString("yyyyMMdd")).arg(workEnd).arg(breakTimeThisWorkday).arg(lastLegalBreakEnd).arg(workTimeThisWorkday);
 }
 
-void PunchClockState::deserialize(const QString& s) {
+void PunchClockStateDE23::deserialize(const QString& s) {
     auto list=s.split(";");
     if (list.length()==0) {
-      *this=PunchClockState();
+      *this=PunchClockStateDE23();
       return;
     }
     QString type=list[0];
     if ((type!="DE23")||list.length()!=6) {
-      *this=PunchClockState();
+      *this=PunchClockStateDE23();
       return;
     }
     date=QDate::fromString(list[1],"yyyyMMdd");
