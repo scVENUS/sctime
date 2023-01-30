@@ -653,13 +653,13 @@ void TimeMainWindow::minuteHochzaehlen() {
   abtListToday->getAktiv(abt,ko,uko,idx);
   kontoTree->refreshItem(abt,ko,uko,idx);
   auto pce=m_punchClockListToday->currentEntry();
-  if (pce!=m_punchClockListToday->end()) {
-      pce->second=now.time().msecsSinceStartOfDay()/1000;
-      logError("tick");
-  } else {
-      m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
-      m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
-      logError("tock");
+  if (abtListToday->getDatum()==now.date()) {
+     if (pce!=m_punchClockListToday->end()) {
+        pce->second=now.time().msecsSinceStartOfDay()/1000;
+     } else {
+        m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+        m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+     }
   }
   zeitChanged();
   // <- notwendig?
@@ -935,8 +935,8 @@ void TimeMainWindow::save()
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    settings->writeSettings(abtListToday, m_punchClockList);
-    settings->writeShellSkript(abtListToday, m_punchClockList);
+    settings->writeSettings(abtListToday, m_punchClockListToday);
+    settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
       settings->writeSettings(abtList, m_punchClockList);
       settings->writeShellSkript(abtList, m_punchClockList);
