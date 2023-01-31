@@ -25,11 +25,10 @@
 #include <vector>
 #include <QString>
 
-#define MAX_WORKTIME_DEFAULT 10*60*60 // Warn if more time is spent
-
-
 class AbteilungsListe;
 class QTextStream;
+class PunchClockEntry;
+class PunchClockList;
 
 class SCTimeXMLSettings
 {
@@ -49,7 +48,7 @@ public:
       alwaysSaveEintrag = false;
       m_powerUserView = false;
       m_singleClickActivation = false;
-      m_maxWorkingTime=MAX_WORKTIME_DEFAULT;
+      m_workingTimeWarnings=true;
       m_persoenlicheKontensumme=false;
       m_lastRecordedTimestamp=QDateTime();
       defaultcommentfiles.clear();
@@ -101,13 +100,13 @@ public:
      
     }
 
-    bool writeSettings(AbteilungsListe* abtList);
+    bool writeSettings(AbteilungsListe* abtList, PunchClockList* pcl);
 
     void readSettings();
 
-    void readSettings(AbteilungsListe* abtList);
+    void readSettings(AbteilungsListe* abtList, PunchClockList* pcl);
 
-    void writeShellSkript(AbteilungsListe* abtList);
+    void writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl);
 
     void setTimeIncrement(int sekunden) { timeInc=sekunden; };
 
@@ -179,9 +178,9 @@ public:
         return m_singleClickActivation;
     }
 
-    int maxWorkingTime()
+    int workingTimeWarnings()
     {
-       return m_maxWorkingTime;
+       return m_workingTimeWarnings;
     }
 
     void getDefaultCommentFiles(std::vector<QString>& list)
@@ -419,6 +418,22 @@ public:
         return "yyyy-MM-dd HH:mm:ss";
     }
 
+    QString currentPCCData() {
+        return m_currentPCCdata;
+    }
+
+    void setCurrentPCCData(const QString &s) {
+       m_currentPCCdata=s;
+    }
+
+    QString previousPCCData() {
+        return m_prevPCCdata;
+    }
+
+    void setPreviousPCCData(const QString &s) {
+       m_prevPCCdata=s;
+    }
+
 
     QString backends;
 
@@ -430,9 +445,9 @@ public:
 
   private:
 
-    bool writeSettings(bool global, AbteilungsListe* abtList);
+    bool writeSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
 
-    void readSettings(bool global, AbteilungsListe* abtList);
+    void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     
     int compVersion(const QString& version1, const QString& version2);
 
@@ -464,7 +479,7 @@ public:
     bool m_persoenlicheKontensumme;
     bool m_showSpecialRemunSelector;
     bool m_warnISO8859;
-    int m_maxWorkingTime;
+    bool m_workingTimeWarnings;
     QString m_customFont;
     int m_customFontSize;
     bool backupSettingsXml; // nur beim ersten Speichern ein  Backup von settings.xml erstellen
@@ -492,6 +507,9 @@ public:
     // database backend
     QString defaultdatabaseserver;
     QString defaultdatabase;
+
+    QString m_currentPCCdata;
+    QString m_prevPCCdata;
 };
 
 

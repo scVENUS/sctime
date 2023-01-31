@@ -34,6 +34,7 @@
 #endif
 #include "qdom.h"
 #include "abteilungsliste.h"
+#include "punchclock.h"
 #include "globals.h"
 #include "timecounter.h"
 #define WIN_CODEC "utf8"
@@ -41,7 +42,7 @@
 #include "util.h"
 
 /** Schreibt die Eintraege in ein Shellskript */
-void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList)
+void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl)
 {
   if (abtList->checkInState()) {
       trace(QObject::tr("Shell script not written because it has already been checked in."));
@@ -129,6 +130,18 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList)
       }
     }
   }
+
+  if (pcl!=NULL) {
+    stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd");
+    for (auto pce: *pcl) {
+      if (pce.first>pce.second) {
+        pce.second=23*60*60+59*60;
+      }
+      stream<<" "<<QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:mm")<<"-"<<QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:mm");
+    }
+    stream<<endl;
+  }
+
   stream<<endl;
   workfile.close();
 
@@ -147,19 +160,19 @@ const char* SCTimeXMLSettings::charmap() {
 #endif
 }
 
-void SCTimeXMLSettings::readSettings(AbteilungsListe* abtList)
+void SCTimeXMLSettings::readSettings(AbteilungsListe* abtList, PunchClockList* pcl)
 {
   abtList->clearKonten();
   // Erst globale Einstellungen lesen
-  readSettings(true, abtList);
+  readSettings(true, abtList, pcl);
   // Dann die Tagesspezifischen
-  readSettings(false, abtList);
+  readSettings(false, abtList, pcl);
 }
 
 void SCTimeXMLSettings::readSettings()
 {
   // Nur globale Einstellungen lesen
-  readSettings(true, NULL);
+  readSettings(true, NULL, NULL);
 }
 
 int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
@@ -193,7 +206,7 @@ int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
  * Liest alle Einstellungen.
  */
 
-void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
+void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
   QDomDocument doc("settings");
   QString filename;
@@ -399,6 +412,24 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
           }
         }
       }
+      if ((elem1.tagName()=="punchclock")&&(pcl)) {
+        pcl->clear();
+        for( QDomNode node2 = elem1.firstChild(); !node2.isNull(); node2 = node2.nextSibling() ) {
+          QDomElement elem2 = node2.toElement();
+          if( !elem2.isNull() ) {
+            if (elem2.tagName()=="pcentry") {
+              QString beginstr=elem2.attribute("begin");
+              QString endstr=elem2.attribute("end");
+              if (beginstr.isNull()||endstr.isNull()) continue;
+              QTime begintime=QTime::fromString(beginstr,"H:m");
+              QTime endtime=QTime::fromString(endstr,"H:m");
+              if (!begintime.isValid()||!endtime.isValid()) continue;
+              if (begintime>endtime) continue;
+              pcl->push_back(PunchClockEntry((int)(begintime.msecsSinceStartOfDay()/1000), (int)(endtime.msecsSinceStartOfDay()/1000)));
+            }
+          }
+        }
+      }
       if (elem1.tagName()=="general") {
         for( QDomNode node2 = elem1.firstChild(); !node2.isNull(); node2 = node2.nextSibling() ) {
           QDomElement elem2 = node2.toElement();
@@ -441,10 +472,8 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
             if (elem2.tagName()=="persoenliche_kontensumme") {
               setPersoenlicheKontensumme(elem2.attribute("on")=="yes");
             }
-            if (elem2.tagName()=="max_working_time") {
-              QString secondsstr=elem2.attribute("seconds");
-              if (secondsstr.isNull()) continue;
-              m_maxWorkingTime=secondsstr.toInt();
+            if (elem2.tagName()=="working_time_warnings") {
+              m_workingTimeWarnings=(elem2.attribute("on")!="no");
             }
             if (elem2.tagName()=="aktives_konto") {
               aktiveskontotag=elem2; // Aktives Konto merken und zum Schluss setzen, damit es vorher erzeugt wurde
@@ -472,6 +501,10 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
             }
             if (elem2.tagName()=="typecolumn") {
               m_showTypeColumn=(elem2.attribute("show")=="yes");
+            }
+            if (elem2.tagName()=="pccdata") {
+              m_currentPCCdata=elem2.attribute("current");
+              m_prevPCCdata=elem2.attribute("previous");
             }
             if (elem2.tagName()=="pspcolumn") {
               m_showPSPColumn=(elem2.attribute("show")=="yes");
@@ -574,13 +607,13 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList)
 }
 
 /** Schreibt saemtliche Einstellungen und Eintraege auf Platte */
-bool SCTimeXMLSettings::writeSettings(AbteilungsListe* abtList)
+bool SCTimeXMLSettings::writeSettings(AbteilungsListe* abtList, PunchClockList* pcl)
 {
   bool success;
   // Globale Einstellungen
-  success = writeSettings(true, abtList);
+  success = writeSettings(true, abtList, pcl);
   // Einstellungen fuer den aktuellen Tag
-  success = writeSettings(false, abtList) && success;
+  success = writeSettings(false, abtList, pcl) && success;
   return success;
 }
 
@@ -589,7 +622,7 @@ bool SCTimeXMLSettings::writeSettings(AbteilungsListe* abtList)
  * werden globale Einstellungen fuer alle Tage gespeichert, sonst nur
  * fuer das aktuelle Datum.
  */
-bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
+bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
   if ((abtList->checkInState())&&(!global)) {
       trace(QObject::tr("zeit-DAY.sh not written because it has already been checked in"));
@@ -610,6 +643,11 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
     timeinctag.setAttribute("seconds",timeInc);
     generaltag.appendChild(timeinctag);
 
+    QDomElement pcctag = doc.createElement( "pccdata" );
+    pcctag.setAttribute("current",m_currentPCCdata);
+    pcctag.setAttribute("previous",m_prevPCCdata);
+    generaltag.appendChild(pcctag);
+
     QDomElement fasttimeinctag = doc.createElement( "fasttimeincrement" );
     fasttimeinctag.setAttribute("seconds",fastTimeInc);
     generaltag.appendChild(fasttimeinctag);
@@ -624,9 +662,9 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
       generaltag.appendChild(zeitkontenkommandotag);
     }
 
-    if (MAX_WORKTIME_DEFAULT!=m_maxWorkingTime) {
-        QDomElement maxworktag = doc.createElement( "max_working_time" );
-        maxworktag.setAttribute("seconds",m_maxWorkingTime);
+    if (m_workingTimeWarnings==false) {
+        QDomElement maxworktag = doc.createElement( "working_time_warnings" );
+        maxworktag.setAttribute("on","no");
         generaltag.appendChild(maxworktag);
     }
 
@@ -925,6 +963,20 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList)
         abttag.setAttribute("open","no");
       root.appendChild( abttag );
       }
+  }
+
+  if (!global && pcl!=NULL) {
+    QDomElement punchclocktag = doc.createElement( "punchclock" );
+    for (auto pce: *pcl) {
+      QDomElement pcentrytag= doc.createElement( "pcentry" );
+      if (pce.first>pce.second) {
+        pce.second=23*60*60+59*60;
+      }
+      pcentrytag.setAttribute("begin", QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:m"));
+      pcentrytag.setAttribute("end", QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:m"));
+      punchclocktag.appendChild(pcentrytag);
+    }
+    root.appendChild(punchclocktag);
   }
 
   QString filename(configDir.filePath(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml"));

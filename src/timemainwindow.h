@@ -39,6 +39,7 @@ class QLocalServer;
 
 #include "defaultcommentreader.h"
 #include "datasource.h"
+#include "punchclockchecker.h"
 
 class TextViewerDialog;
 class Lock;
@@ -103,6 +104,7 @@ public:
     void callSpecialRemunerationsDialog(QTreeWidgetItem * item);
     void callColorDialog();
     void callAdditionalLicenseDialog();
+    void callPunchClockDialog();
     void removeBgColor();
     void jumpToAlleKonten();
 
@@ -113,7 +115,7 @@ public:
     void copyEntryAsLink();
     void pasteEntryAsLink();
     void openEntryLink(const QUrl& url);
-    void showArbeitszeitwarning();
+    void showWorkdayWarning();
     void checkComment(const QString& abt, const QString& ko , const QString& uko,int idx);
     void commitKontenliste(DSResult data);
     void displayLastLogEntry();
@@ -199,6 +201,7 @@ public:
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
     void changeDate(const QDate& datum, bool changeVisible, bool changeToday);
+    void loadPCCData(const QString& pccdata);
     KontoTreeView* kontoTree;
     Lock *m_lock;
     QAction* editUnterKontoAction;
@@ -249,5 +252,9 @@ public:
     void resumeTimers(int secSinceTick, const QString& reason);
     bool entryBeingEdited; // indicates that currently an entry is being edited
     QLocalServer *m_ipcserver;
+    PunchClockList *m_punchClockList;
+    PunchClockList *m_punchClockListToday;
+    PunchClockStateBase *m_PCSToday;
+    PunchClockStateBase *m_PCSYesterday;
 };
 #endif
