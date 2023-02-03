@@ -83,8 +83,6 @@ void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const Pun
       breaktimeworkday+=yesterdayState->breakTimeThisWorkday;
     }
     int laststartlegal=laststart;
-    int breaktimetodayafter15h=0;
-    int breaktimetodayafter18h=0;
     for (auto itoken: wel) {
         if (itoken.isBegin) {
             workingIntervalLevel++;
@@ -96,12 +94,6 @@ void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const Pun
                 }
                 else if (itoken.time-lastend>=15*MINUTE) {
                   breaktimeworkday+=itoken.time-lastend;
-                  if (itoken.time>15*HOUR) {
-                     breaktimetodayafter15h+=itoken.time-(std::max(lastend, 15*HOUR));
-                  }
-                  if (itoken.time>18*HOUR) {
-                     breaktimetodayafter18h+=itoken.time-(std::max(lastend, 18*HOUR));
-                  }
                   laststartlegal=itoken.time;
                 }
                 laststart=itoken.time;
@@ -185,4 +177,40 @@ void PunchClockStateDE23::copyFrom(const PunchClockStateBase* source) {
     breakTimeThisWorkday=s->breakTimeThisWorkday;
     lastLegalBreakEnd=s->lastLegalBreakEnd;
     workTimeThisWorkday=s->workTimeThisWorkday;
+}
+
+QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl) {
+    WorkEventList wel;
+    AddPclToWorkEventList(&wel, pcl);
+    wel.sort(compare_interval);
+    int laststart=-24*HOUR;
+    int lastend=-24*HOUR;
+    // we might have overlapping intervals
+    int workingIntervalLevel=0;
+    int laststartlegal=laststart;
+    QString result="";
+    for (auto itoken: wel) {
+        if (itoken.isBegin) {
+            workingIntervalLevel++;
+            if (workingIntervalLevel==1) {
+                if (itoken.time-lastend>=15*MINUTE) {
+                  if (lastend>0) {
+                    result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("THH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("THH:mm")+" ";
+                  }
+                  laststartlegal=itoken.time;
+                }
+                laststart=itoken.time;
+            }
+        } else {
+            workingIntervalLevel--;
+            if (workingIntervalLevel==0) {
+                lastend=itoken.time;
+                
+            }
+        }
+    }
+  if (lastend>0) {
+      result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("THH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("THH:mm");
+  }
+  return result;
 }

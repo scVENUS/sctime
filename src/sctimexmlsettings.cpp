@@ -40,6 +40,7 @@
 #define WIN_CODEC "utf8"
 #include "globals.h"
 #include "util.h"
+#include "punchclockchecker.h"
 
 /** Schreibt die Eintraege in ein Shellskript */
 void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl)
@@ -96,7 +97,7 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
         }
         for (int i=0; i<bereitschaften.size(); i++)
         {
-           stream<<"zeitbereit "<<abtList->getDatum().toString("dd.MM.yyyy")<<" "<<
+           stream<<"zeitbereit "<<abtList->getDatum().toString("yyyy-MM-dd")<<" "<<
                  kontPos->first<<" "<<ukontPos->first<<"\t"<<bereitschaften.at(i)<<"\n";
         }
         for (EintragsListe::iterator etPos=eintragsliste->begin(); etPos!=eintragsliste->end(); ++etPos) {
@@ -120,7 +121,7 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
                srstr="--sonderzeiten='"+srstr+"' ";
              }
              stream<<zeitKommando<<" "<<srstr<<
-                     abtList->getDatum().toString("dd.MM.yyyy")<<" "<<
+                     abtList->getDatum().toString("yyyy-MM-dd")<<" "<<
                      kontPos->first<<" "<<ukontPos->first<<"\t"<<
                      roundTo(1.0/3600*etPos->second.sekunden,0.01)<<"/"<<
                      roundTo(1.0/3600*etPos->second.sekundenAbzur,0.01)<<
@@ -132,13 +133,23 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   }
 
   if (pcl!=NULL) {
-    stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd");
+    stream<<endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
+    stream<<endl<<"#";
+    
     for (auto pce: *pcl) {
       if (pce.first>pce.second) {
         pce.second=23*60*60+59*60;
       }
       stream<<" "<<QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:mm")<<"-"<<QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:mm");
     }
+    PunchClockStateBase* pcc;
+    // TODO: implement and use factory
+    #if PUNCHCLOCKDE23
+      pcc=new PunchClockStateDE23();
+    #else
+      pcc=new PunchClockStateNoop();
+    #endif
+    stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd")<<" "<<pcc->getConsolidatedIntervalString(pcl);
     stream<<endl;
   }
 

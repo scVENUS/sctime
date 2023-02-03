@@ -33,6 +33,7 @@ public:
     virtual QString serialize()=0;
     virtual void deserialize(const QString& s)=0;
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState)=0;
+    virtual QString getConsolidatedIntervalString(PunchClockList * pcl)=0;
     virtual void copyFrom(const PunchClockStateBase* source) { warnId=source->warnId; currentWarning=source->currentWarning; date=source->date;};
     PUNCHWARN warnId;
     QString currentWarning;
@@ -45,6 +46,7 @@ public:
     virtual ~PunchClockStateNoop() {};
     virtual QString serialize() { return "NOOP"; };
     virtual void deserialize(const QString& s) {};
+    virtual QString getConsolidatedIntervalString(PunchClockList * pcl) { return "";};
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState) {};
 };
 
@@ -54,6 +56,7 @@ public:
     virtual ~PunchClockStateDE23() {};
     virtual QString serialize();
     virtual void deserialize(const QString& s);
+    virtual QString getConsolidatedIntervalString(PunchClockList * pcl);
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState);
     virtual void copyFrom(const PunchClockStateBase* source);
 private:

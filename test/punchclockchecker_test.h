@@ -27,6 +27,7 @@ class TestPunchClockChecker: public QObject
     Q_OBJECT
 private slots:
     void testNormalDay();
+    void testNormalDayOverlappingIntervals();
     void testMissingLunchBreak();
     void testLongDayWithVeryShortBreak();
     void testLongDayWithMediumBreak();

@@ -52,6 +52,34 @@ void TestPunchClockChecker::testNormalDay() {
    state.check(&pcl, toSecs("23:59"), &yesterday);
    QCOMPARE(state.workTimeThisWorkday, toSecs("8:39"));
    QCOMPARE(state.warnId, PW_NONE);
+   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "T08:43/T11:58 T12:32/T14:01 T14:20/T18:15");
+}
+
+void TestPunchClockChecker::testNormalDayOverlappingIntervals() {
+   PunchClockList pcl;
+   PunchClockStateDE23 yesterday;
+   PunchClockStateDE23 state;
+   state.check(&pcl, toSecs("8:00"), &yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("8:43","10:07"));
+   pcl.push_back(entry("8:50","10:00"));
+   state.check(&pcl, toSecs("8:50"), &yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("10:09","11:58"));
+   pcl.push_back(entry("10:09","11:59"));
+   state.check(&pcl, toSecs("11:59"), &yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("12:32","14:01"));
+   state.check(&pcl, toSecs("14:05"), &yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("14:20","18:15"));
+   state.check(&pcl, toSecs("18:15"), &yesterday);
+   QCOMPARE(state.workTimeThisWorkday, toSecs("8:40"));
+   QCOMPARE(state.currentWarning, QString(""));
+   state.check(&pcl, toSecs("23:59"), &yesterday);
+   QCOMPARE(state.workTimeThisWorkday, toSecs("8:40"));
+   QCOMPARE(state.warnId, PW_NONE);
+   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "T08:43/T11:59 T12:32/T14:01 T14:20/T18:15");
 }
 
 void TestPunchClockChecker::testLongDayWithVeryShortBreak() {
