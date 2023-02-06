@@ -195,7 +195,7 @@ QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl)
             if (workingIntervalLevel==1) {
                 if (itoken.time-lastend>=15*MINUTE) {
                   if (lastend>0) {
-                    result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("THH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("THH:mm")+" ";
+                    result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("HH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("HH:mm")+" ";
                   }
                   laststartlegal=itoken.time;
                 }
