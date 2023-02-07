@@ -1468,6 +1468,38 @@ void TimeMainWindow::updateCaption()
 
 void TimeMainWindow::resetDiff()
 {
+   int diff=abtList->getZeitDifferenz();
+   if ((diff!=0)&&(abtListToday==abtList)) {
+       QString msg;
+       if (diff>0) {
+          msg = tr("Do you also want to move the begin of the current working intervall by %1 minutes?").arg(abs(diff/60));
+       } else {
+          msg = tr("Do you also want to add a pause of %1 minutes at the end of the current working interval?").arg(abs(diff/60));
+       }
+       auto reply=QMessageBox::question(
+            0,
+            tr("Also adapt punch clock?"),
+            msg, QMessageBox::Yes|QMessageBox::No);
+       if (reply==QMessageBox::Yes) {
+         auto lastentry = std::prev(m_punchClockListToday->end());
+         if (diff>0) {
+            int newbegin=lastentry->first-diff;
+            if (newbegin<0) {
+              newbegin=0;
+            }
+            lastentry->first=newbegin;
+         } else {
+            int newend=lastentry->second+diff;
+            if (newend<lastentry->first) {
+              newend=lastentry->first;
+            }
+            auto now=QTime::currentTime();
+            m_punchClockListToday->push_back(PunchClockEntry(lastentry->second,std::max(now.msecsSinceStartOfDay()/1000, lastentry->second)));
+            m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+            lastentry->second=newend;
+         }
+       }
+   }
    abtList->setZeitDifferenz(0);
    zeitChanged();
 }
