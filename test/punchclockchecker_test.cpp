@@ -52,7 +52,7 @@ void TestPunchClockChecker::testNormalDay() {
    state.check(&pcl, toSecs("23:59"), &yesterday);
    QCOMPARE(state.workTimeThisWorkday, toSecs("8:39"));
    QCOMPARE(state.warnId, PW_NONE);
-   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "T08:43/T11:58 T12:32/T14:01 T14:20/T18:15");
+   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "08:43/11:58 12:32/14:01 14:20/18:15");
 }
 
 void TestPunchClockChecker::testNormalDayOverlappingIntervals() {
@@ -79,7 +79,7 @@ void TestPunchClockChecker::testNormalDayOverlappingIntervals() {
    state.check(&pcl, toSecs("23:59"), &yesterday);
    QCOMPARE(state.workTimeThisWorkday, toSecs("8:40"));
    QCOMPARE(state.warnId, PW_NONE);
-   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "T08:43/T11:59 T12:32/T14:01 T14:20/T18:15");
+   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "08:43/11:59 12:32/14:01 14:20/18:15");
 }
 
 void TestPunchClockChecker::testLongDayWithVeryShortBreak() {
@@ -132,7 +132,7 @@ void TestPunchClockChecker::testMissingLunchBreak() {
    QCOMPARE(state.currentWarning, QString(""));
    pcl.push_back(entry("14:10","16:15"));
    state.check(&pcl, toSecs("16:15"), &yesterday);
-   QCOMPARE(state.currentWarning, "You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.");
+   QCOMPARE(state.currentWarning, "You are working for 6 hours without a longer break. You should take a break of at least 30 minutes now.");
    QCOMPARE(state.warnId, PW_NO_BREAK_6H);
 }
 
@@ -147,7 +147,7 @@ void TestPunchClockChecker::testShortLunchBreak() {
    QCOMPARE(state.currentWarning, QString(""));
    pcl.push_back(entry("12:15","14:30"));
    state.check(&pcl, toSecs("14:30"),&yesterday);
-   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours."));
+   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes now."));
    QCOMPARE(state.warnId, PW_TOO_SHORT_BREAK_6H);
 }
 
@@ -194,7 +194,7 @@ void TestPunchClockChecker::testOverNightWorkWithoutbreak() {
    QCOMPARE(state.currentWarning, QString(""));
    pcl.push_back(entry("0:50","3:10"));
    state.check(&pcl, toSecs("3:10"), &yesterday);
-   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now."));
+   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without a longer break. You should take a break of at least 30 minutes now."));
    QCOMPARE(state.warnId, PW_NO_BREAK_6H);
 }
 
@@ -218,7 +218,7 @@ void TestPunchClockChecker::testOverNightWorkShortBreakBeforeMidnight() {
    QCOMPARE(state.currentWarning, QString(""));
    pcl.push_back(entry("0:50","3:10"));
    state.check(&pcl, toSecs("3:10"), &yesterday);
-   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours."));
+   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes now."));
    QCOMPARE(state.warnId, PW_TOO_SHORT_BREAK_6H);
 }
 

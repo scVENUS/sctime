@@ -961,13 +961,15 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
     </message>
     <message>
         <location filename="punchclockchecker.cpp" line="116"/>
-        <source>You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.</source>
-        <translation>Du hast 6 Stunden ohne längere Pause gearbeitet. Bitte mache jetzt eine Pause von mindestens 15 Minuten.</translation>
+        <source>You are working for 6 hours without a longer break. You should take a break of at least %1 minutes now.</source>
+        <oldsource>You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.</oldsource>
+        <translation type="unfinished">Du hast 6 Stunden am Stück ohne längere Pause gearbeitet. Bitte mache jetzt eine Pause von mindestens %1 Minuten.</translation>
     </message>
     <message>
         <location filename="punchclockchecker.cpp" line="120"/>
-        <source>You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.</source>
-        <translation>Du hast 6 Stunden ohne viele Pausen gearbeitet. Bitte mache in den nächsten drei Stunden eine Pause von mindestens 15 Minuten.</translation>
+        <source>You are working for 6 hours without many breaks. You should take an additional break of at least %1 minutes now.</source>
+        <oldsource>You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.</oldsource>
+        <translation type="unfinished">Du hast 6 Stunden ohne ausreichend Pausen gearbeitet. Bitte mache jetzt eine Pause von mindestens %1 Minuten.</translation>
     </message>
     <message>
         <location filename="punchclockchecker.cpp" line="124"/>

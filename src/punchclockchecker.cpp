@@ -113,11 +113,11 @@ void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const Pun
         }
     }
     if ((currentTime-laststartlegal>=6*HOUR-MINUTE)&&(currentTime-lastend<15*MINUTE)) {
-      currentWarning=QObject::tr("You are working for 6 hours without a longer break. You should take a break of at least 15 minutes now.");
+      currentWarning=QObject::tr("You are working for 6 hours without a longer break. You should take a break of at least %1 minutes now.").arg(std::max(15,(30-breaktimeworkday/MINUTE)));
       warnId=PW_NO_BREAK_6H;
     } else
     if (worktimeworkday>6*HOUR-MINUTE && breaktimeworkday<30*MINUTE) {
-      currentWarning=QObject::tr("You are working for 6 hours without many breaks. You should take an additional break of at least 15 minutes in the next three hours.");
+      currentWarning=QObject::tr("You are working for 6 hours without many breaks. You should take an additional break of at least %1 minutes now.").arg(std::max(15,(30-breaktimeworkday/MINUTE)));
       warnId=PW_TOO_SHORT_BREAK_6H;
     }
     if (worktimeworkday>9*HOUR-MINUTE && breaktimeworkday<45*MINUTE) {
@@ -210,7 +210,7 @@ QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl)
         }
     }
   if (lastend>0) {
-      result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("THH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("THH:mm");
+      result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("HH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("HH:mm");
   }
   return result;
 }
