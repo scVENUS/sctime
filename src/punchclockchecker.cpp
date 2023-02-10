@@ -193,7 +193,8 @@ QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl)
         if (itoken.isBegin) {
             workingIntervalLevel++;
             if (workingIntervalLevel==1) {
-                if (itoken.time-lastend>=15*MINUTE) {
+                // for consolidation we also take breaks into account, that are slightly smaller than the formally required 15m
+                if (itoken.time-lastend>=12*MINUTE) {
                   if (lastend>0) {
                     result+=QTime::fromMSecsSinceStartOfDay(laststartlegal*1000).toString("HH:mm")+"/"+QTime::fromMSecsSinceStartOfDay(lastend*1000).toString("HH:mm")+" ";
                   }

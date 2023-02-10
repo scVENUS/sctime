@@ -45,6 +45,7 @@ private slots:
     void testEarlyMorningLongSegmentUnordered();
     void testLongSegmentOverMidnight();
     void testSerialization();
+    void testVeryShortLunchBreak();
 };
 
 #endif

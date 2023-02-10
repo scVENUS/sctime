@@ -151,6 +151,22 @@ void TestPunchClockChecker::testShortLunchBreak() {
    QCOMPARE(state.warnId, PW_TOO_SHORT_BREAK_6H);
 }
 
+void TestPunchClockChecker::testVeryShortLunchBreak() {
+   PunchClockList pcl;
+   PunchClockStateDE23 yesterday;
+   PunchClockStateDE23 state;
+   state.check(&pcl, toSecs("8:00"),&yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("8:00","12:00"));
+   state.check(&pcl, toSecs("8:50"),&yesterday);
+   QCOMPARE(state.currentWarning, QString(""));
+   pcl.push_back(entry("12:12","14:30"));
+   state.check(&pcl, toSecs("14:30"),&yesterday);
+   QCOMPARE(state.currentWarning, QString("You are working for 6 hours without a longer break. You should take a break of at least 30 minutes now."));
+   QCOMPARE(state.warnId, PW_NO_BREAK_6H);
+   QCOMPARE(state.getConsolidatedIntervalString(&pcl), "08:00/12:00 12:12/14:30");
+}
+
 void TestPunchClockChecker::testLongDayWithBreaks() {
    PunchClockList pcl;
    PunchClockStateDE23 yesterday;
