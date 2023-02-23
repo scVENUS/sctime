@@ -70,6 +70,7 @@
 #include "util.h"
 #include "textviewerdialog.h"
 #include "punchclockchecker.h"
+#include "pausedialog.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -886,7 +887,13 @@ void TimeMainWindow::pause() {
     if (pce!=m_punchClockListToday->end()) {
       pce->second=now.time().msecsSinceStartOfDay()/1000;
     }
-    QMessageBox::warning(this, tr("sctime: Pause"), tr("Accounting has been stopped at %1. Resume work with OK.").arg(currtime));
+    PauseDialog pd(now, this);
+    QTimer pauseTimer;
+    pauseTimer.setInterval(10000); // Update every 10 seconds
+    connect(&pauseTimer, SIGNAL(timeout()),&pd,SLOT(updateTime()));
+    pauseTimer.start();
+    pd.exec();
+    pauseTimer.stop();
     paused = false;
     now = QDateTime::currentDateTime();
     sekunden = drift;

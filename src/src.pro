@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += warn_on qt uic
+CONFIG += warn_on qt uic debug
 CONFIG += c++11
 # you have to explicitly recompile sctime.cpp whenever you change this value
 VERSION = $$system(git describe --always||echo UNDEFINED)
@@ -11,18 +11,20 @@ TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
           datasource.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp preferencedialog.cpp\
-          punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
+          pausedialog.cpp punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
+          setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
           specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp sctimeapp.cpp
 HEADERS = abteilungsliste.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
           datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
-          preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h setupdsm.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
+          pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
+          setupdsm.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
           unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
-FORMS = datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui punchclockdialogbase.ui
+FORMS = datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui punchclockdialogbase.ui pausedialogbase.ui
 
 # just tell qmake that qrc_generated_translations.cpp depends on all
 # translations qm files - yes, this is somewhat bulky
