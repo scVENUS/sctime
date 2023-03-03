@@ -133,24 +133,27 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   }
 
   if (pcl!=NULL) {
-    stream<<endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
-    stream<<endl<<"#";
-    
-    for (auto pce: *pcl) {
-      if (pce.first>pce.second) {
-        pce.second=23*60*60+59*60;
-      }
-      stream<<" "<<QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:mm")<<"-"<<QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:mm");
-    }
-    PunchClockStateBase* pcc;
+     PunchClockStateBase* pcc;
     // TODO: implement and use factory
     #if PUNCHCLOCKDE23
       pcc=new PunchClockStateDE23();
     #else
       pcc=new PunchClockStateNoop();
     #endif
-    stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd")<<" "<<pcc->getConsolidatedIntervalString(pcl);
-    stream<<endl;
+    QString consolidatedIntervals=pcc->getConsolidatedIntervalString(pcl);
+    if (!consolidatedIntervals.isEmpty()) {
+      stream<<endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
+      stream<<endl<<"#";
+      
+      for (auto pce: *pcl) {
+        if (pce.first>pce.second) {
+          pce.second=23*60*60+59*60;
+        }
+        stream<<" "<<QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:mm")<<"-"<<QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:mm");
+      }
+      stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd")<<" "<<consolidatedIntervals;
+      stream<<endl;
+    }
   }
 
   stream<<endl;
