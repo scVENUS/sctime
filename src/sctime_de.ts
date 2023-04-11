@@ -426,16 +426,30 @@ Resume work with OK.</source>
     </message>
     <message>
         <location filename="punchclockdialogbase.ui" line="20"/>
-        <source>Here you can edit your attendance time records (begin and end time of each interval you were working). sctime tries to capture them automatically like the accounting records, but both are largely independent and may deviate. </source>
-        <translation>Hier kannst Du Deine Anwesenheitszeiten editieren (Start und Ende jedes Zeitraums in dem Du gearbeitet hast). sctime versucht diese Zeiten automatisch aufzuzeichnen, analog zu Kontobuchungen. Beide Systeme sind unabhängig und können voneinander abweichen.</translation>
+        <source>Here you can edit your attendance time records (begin and end time of each interval you were working). sctime tries to capture them automatically like the accounting records, but both are largely independent and may deviate. This dialog allows you to edit the raw data, you do not need to worry about consolidating overlapping intervals and similar issues. You can see a preview of the consolidated data that would be recorded in the central system at the bottom.</source>
+        <translation type="unfinished">Hier kannst Du Deine Anwesenheitszeiten editieren (Uhrzeit von Anfang und Ende jedes Intervals in dem Du gearbeitet hast). Sctime versucht diese automatisch aufzuzeichen wie die geleisteten Stunden, aber beides ist weitgehend unabhängig und kann voneinander abweichen. Mit diesem Dialog kannst Du diese Rohdaten editieren. Du brauchst Dir dabei über Überlappungen und ähnliches keine Gedanken zu machen. Die konsolidierten Daten, die basierend auf den Rohdaten im Zentralsystem abgelegt werden würden, können in der Vorschau weiter unten im Dialog geprüft werden.</translation>
     </message>
     <message>
-        <location filename="punchclockdialogbase.ui" line="59"/>
+        <location filename="punchclockdialogbase.ui" line="42"/>
+        <source>Editor</source>
+        <translation type="unfinished">Editor</translation>
+    </message>
+    <message>
+        <location filename="punchclockdialogbase.ui" line="112"/>
+        <source>Preview</source>
+        <translation type="unfinished">Vorschau</translation>
+    </message>
+    <message>
+        <source>Here you can edit your attendance time records (begin and end time of each interval you were working). sctime tries to capture them automatically like the accounting records, but both are largely independent and may deviate. </source>
+        <translation type="vanished">Hier kannst Du Deine Anwesenheitszeiten editieren (Start und Ende jedes Zeitraums in dem Du gearbeitet hast). sctime versucht diese Zeiten automatisch aufzuzeichnen, analog zu Kontobuchungen. Beide Systeme sind unabhängig und können voneinander abweichen.</translation>
+    </message>
+    <message>
+        <location filename="punchclockdialogbase.ui" line="75"/>
         <source>Insert</source>
         <translation>Einfügen</translation>
     </message>
     <message>
-        <location filename="punchclockdialogbase.ui" line="66"/>
+        <location filename="punchclockdialogbase.ui" line="68"/>
         <source>Delete</source>
         <translation>Löschen</translation>
     </message>
@@ -861,63 +875,63 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
         <translation>sctime: Shell-Skript schreiben</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="160"/>
+        <location filename="sctimexmlsettings.cpp" line="163"/>
         <source>sctime: saving sh file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="244"/>
+        <location filename="sctimexmlsettings.cpp" line="247"/>
         <source>sctime: opening configuration file</source>
         <translation>sctime: Konfigurationsdatei öffnen</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="245"/>
+        <location filename="sctimexmlsettings.cpp" line="248"/>
         <source>%1 : %2</source>
         <translation>%1 : %2</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="253"/>
+        <location filename="sctimexmlsettings.cpp" line="256"/>
         <source>sctime: reading configuration file</source>
         <translation>sctime: Konfigurationsdatei lesen</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="254"/>
+        <location filename="sctimexmlsettings.cpp" line="257"/>
         <source>error in %1, line %2, column %3: %4.</source>
         <translation>Fehler in %1, Zeile %2, Spalte %3: %4.</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="639"/>
+        <location filename="sctimexmlsettings.cpp" line="642"/>
         <source>zeit-DAY.sh not written because it has already been checked in</source>
         <translation>zeit-TAG.sh nicht geschrieben, da bereits eingecheckt</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="997"/>
-        <location filename="sctimexmlsettings.cpp" line="1003"/>
-        <location filename="sctimexmlsettings.cpp" line="1020"/>
-        <location filename="sctimexmlsettings.cpp" line="1029"/>
-        <location filename="sctimexmlsettings.cpp" line="1036"/>
+        <location filename="sctimexmlsettings.cpp" line="1000"/>
+        <location filename="sctimexmlsettings.cpp" line="1006"/>
+        <location filename="sctimexmlsettings.cpp" line="1023"/>
+        <location filename="sctimexmlsettings.cpp" line="1032"/>
+        <location filename="sctimexmlsettings.cpp" line="1039"/>
         <source>sctime: saving settings</source>
         <translation>sctime: Einstellungen speichern</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="997"/>
+        <location filename="sctimexmlsettings.cpp" line="1000"/>
         <source>%1 has been modified since the last changes done by this sctime instance. Do you wanto to overwrite theses changes?</source>
         <translation>Datei %1 wurde verändert seit der letzten Änderung durch sctime. Sollen diese Änderungen überschrieben werden?</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="1003"/>
+        <location filename="sctimexmlsettings.cpp" line="1006"/>
         <source>opening file %1 for writing failed. Please make sure the sctime settings directory is available. Details: %2</source>
         <translation>Datei %1 konnte nicht zum Schreiben geöffnet werden. Bitte stellen sie sicher dass das sctime Einstellungsverzeichnis verfügbar ist. Details: %2</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="1021"/>
+        <location filename="sctimexmlsettings.cpp" line="1024"/>
         <source>%1 cannot be copied to %2: %3</source>
         <translation>Kann nicht %1 kopieren nach %2: %3</translation>
     </message>
     <message>
-        <location filename="sctimexmlsettings.cpp" line="161"/>
-        <location filename="sctimexmlsettings.cpp" line="1030"/>
-        <location filename="sctimexmlsettings.cpp" line="1037"/>
+        <location filename="sctimexmlsettings.cpp" line="164"/>
+        <location filename="sctimexmlsettings.cpp" line="1033"/>
+        <location filename="sctimexmlsettings.cpp" line="1040"/>
         <source>%1 cannot be renamed to %2: %3</source>
         <translation>Kann nicht %1 umbenennen zu %2: %3</translation>
     </message>
@@ -1014,12 +1028,12 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
         <translation>Du arbeitest mehr als 10 Stunden an diesem Arbeitstag. Du solltest die Arbeit jetzt für mindestens 11 Stunden unterbrechen.</translation>
     </message>
     <message>
-        <location filename="punchclockdialog.cpp" line="39"/>
+        <location filename="punchclockdialog.cpp" line="41"/>
         <source>Begin time</source>
         <translation>Startzeit</translation>
     </message>
     <message>
-        <location filename="punchclockdialog.cpp" line="39"/>
+        <location filename="punchclockdialog.cpp" line="41"/>
         <source>End time</source>
         <translation>Endzeit</translation>
     </message>

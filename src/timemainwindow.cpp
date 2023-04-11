@@ -2286,7 +2286,7 @@ void TimeMainWindow::readIPCMessage() {
 }
 
 void TimeMainWindow::callPunchClockDialog() {
-  PunchClockDialog pcDialog(m_punchClockList, this);
+  PunchClockDialog pcDialog(m_punchClockList, m_PCSToday, this);
   int result = pcDialog.exec();
   if (result==QDialog::Accepted) {
     pcDialog.copyToList(m_punchClockList);

@@ -6,18 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>539</width>
-    <height>724</height>
+    <width>894</width>
+    <height>844</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Punch Clock Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Here you can edit your attendance time records (begin and end time of each interval you were working). sctime tries to capture them automatically like the accounting records, but both are largely independent and may deviate. </string>
+      <string>Here you can edit your attendance time records (begin and end time of each interval you were working). sctime tries to capture them automatically like the accounting records, but both are largely independent and may deviate. This dialog allows you to edit the raw data, you do not need to worry about consolidating overlapping intervals and similar issues. You can see a preview of the consolidated data that would be recorded in the central system at the bottom.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -25,12 +25,21 @@
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="frame">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Editor</string>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
@@ -52,18 +61,18 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QPushButton" name="insertButton">
-          <property name="text">
-           <string>Insert</string>
-          </property>
-         </widget>
-        </item>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QPushButton" name="deleteButton">
           <property name="text">
            <string>Delete</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="insertButton">
+          <property name="text">
+           <string>Insert</string>
           </property>
          </widget>
         </item>
@@ -81,6 +90,37 @@
          </spacer>
         </item>
        </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>100</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Preview</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QTextBrowser" name="previewBrowser">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

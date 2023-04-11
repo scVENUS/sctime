@@ -26,6 +26,8 @@
 #include <QDialog>
 #include "punchclock.h"
 
+class PunchClockStateBase;
+
 
  /**
   * Dialog to edit punch clock sheet
@@ -35,7 +37,7 @@ class PunchClockDialog : public QDialog, private Ui::PunchClockDialogBase
   Q_OBJECT
 
 public:
-  PunchClockDialog(PunchClockList *pcl, QWidget* parent = 0);
+  PunchClockDialog(PunchClockList *pcl, PunchClockStateBase *pcs, QWidget* parent = 0);
   ~PunchClockDialog();
   /*$PUBLIC_FUNCTIONS$*/
   virtual void          fillFromList(PunchClockList *pcl);
@@ -53,6 +55,11 @@ protected slots:
   virtual void          accept();
   virtual void          deleteEntry();
   virtual void          insertEntry();
+  virtual void          updatePreview();
+
+  private: 
+    PunchClockStateBase* m_pcs;
+
 };
 
 #endif

@@ -25,10 +25,12 @@
 #include <QTextCharFormat>
 #include <QDateTimeEdit>
 #include "globals.h"
+#include "punchclockchecker.h"
 
-PunchClockDialog::PunchClockDialog(PunchClockList *pcl, QWidget *parent)
+PunchClockDialog::PunchClockDialog(PunchClockList *pcl, PunchClockStateBase *pcs, QWidget *parent)
 : QDialog(parent)
 {
+  m_pcs=pcs;
   setupUi(this);
   connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
   connect(insertButton, SIGNAL(clicked()), this, SLOT(insertEntry()));
@@ -37,6 +39,14 @@ PunchClockDialog::PunchClockDialog(PunchClockList *pcl, QWidget *parent)
     fillFromList(pcl);
   }
   punchClockTable->setHorizontalHeaderLabels(QStringList()<<QObject::tr("Begin time")<<QObject::tr("End time"));
+  
+  if (m_pcs==NULL) {
+    previewBrowser->hide();
+  }
+  else {
+    QString consolidated=m_pcs->getConsolidatedIntervalString(pcl);
+    previewBrowser->setText(consolidated);
+  }
 }
 
 PunchClockDialog::~PunchClockDialog()
@@ -74,11 +84,9 @@ void PunchClockDialog::copyToList(PunchClockList *pcl) {
       }
     }
     bool active=!endCell->isEnabled();
-    if (active||(begin!=end)) {
-      pcl->push_back(PunchClockEntry(begin, end));
-      if (active) {
-         pcl->setCurrentEntry(std::prev(pcl->end()));
-      }
+    pcl->push_back(PunchClockEntry(begin, end));
+    if (active) {
+       pcl->setCurrentEntry(std::prev(pcl->end()));
     }
   }
 }
@@ -86,12 +94,14 @@ void PunchClockDialog::copyToList(PunchClockList *pcl) {
 void PunchClockDialog::deleteEntry()
 {
   punchClockTable->removeRow(punchClockTable->currentRow());
+  updatePreview();
 }
 
 void PunchClockDialog::insertEntry()
 {
   int row=punchClockTable->currentRow()+1;
   insertEntry(row, QTime::fromString("0:0", "H:m"), QTime::fromString("0:0", "H:m"));
+  updatePreview();
 }
 
 void PunchClockDialog::insertEntry(int row, QTime begin, QTime end)
@@ -102,11 +112,13 @@ void PunchClockDialog::insertEntry(int row, QTime begin, QTime end)
   dateTime->setFrame(false);
   dateTime->setTime(begin);
   punchClockTable->setCellWidget(row, 0, dateTime);
+  connect(dateTime, SIGNAL(timeChanged(const QTime&)), this, SLOT(updatePreview()));
   dateTime = new QDateTimeEdit(this);
   dateTime->setDisplayFormat("H:mm");
   dateTime->setFrame(false);
   dateTime->setTime(end);
   punchClockTable->setCellWidget(row, 1, dateTime);
+  connect(dateTime, SIGNAL(timeChanged(const QTime&)), this, SLOT(updatePreview()));
 }
 
 void PunchClockDialog::accept()
@@ -114,3 +126,12 @@ void PunchClockDialog::accept()
   QDialog::accept();
 }
 
+void PunchClockDialog::updatePreview()
+{
+  if (m_pcs!=NULL) {
+    PunchClockList pcl;
+    copyToList(&pcl);
+    QString consolidated = m_pcs->getConsolidatedIntervalString(&pcl);
+    previewBrowser->setText(consolidated);
+  }
+}
