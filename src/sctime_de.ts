@@ -132,10 +132,13 @@
     <message>
         <location filename="pausedialog.cpp" line="9"/>
         <source>Accounting has been stopped at %1.
-The duration of the current break is %2 minutes.
+The duration of the current break is %2.
 Resume work with OK.</source>
+        <oldsource>Accounting has been stopped at %1.
+The duration of the current break is %2 minutes.
+Resume work with OK.</oldsource>
         <translation>Die Zeiterfassung wurde um %1 Uhr angehalten.
-Die Dauer der aktuellen Pause beträgt %2 Minuten.
+Die Dauer der aktuellen Pause beträgt %2.
 Ende der Pause mit OK.</translation>
     </message>
 </context>
@@ -151,7 +154,7 @@ Ende der Pause mit OK.</translation>
         <source>Accounting has been stopped at %1.
 The duration of the current break is %2 minutes.
 Resume work with OK.</source>
-        <translation>Die Zeiterfassung wurde um %1 Uhr angehalten.\n Die Dauer der aktuellen Pause beträgt %2 Minuten.\n Ende der Pause mit OK.</translation>
+        <translation>Die Zeiterfassung wurde um %1 Uhr angehalten.\n Die Dauer der aktuellen Pause beträgt %2.\n Ende der Pause mit OK.</translation>
     </message>
 </context>
 <context>
