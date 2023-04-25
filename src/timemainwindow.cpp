@@ -504,6 +504,8 @@ void TimeMainWindow::closeEvent(QCloseEvent * event)
 /** Destruktor  */
 TimeMainWindow::~TimeMainWindow()
 {
+   delete m_PCSToday;
+   delete m_PCSYesterday;
    delete settings;
    if (abtList!=abtListToday)
      delete abtListToday;

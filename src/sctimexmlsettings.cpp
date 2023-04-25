@@ -141,6 +141,7 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
       pcc=new PunchClockStateNoop();
     #endif
     QString consolidatedIntervals=pcc->getConsolidatedIntervalString(pcl);
+    delete pcc;
     if (!consolidatedIntervals.isEmpty()) {
       stream<<endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
       stream<<endl<<"#";
