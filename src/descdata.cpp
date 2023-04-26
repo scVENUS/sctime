@@ -16,7 +16,6 @@
 */
 
 #include "descdata.h"
-#include <QRegularExpression>
 
 DescData::DescData()
 {
@@ -84,7 +83,5 @@ void DescData::setPSPElem(const QString& pspelem)
 
 bool DescData::supportsSpecialRemuneration()
 {
-    QRegularExpression re("\\((x|o)\\)$");
-    QRegularExpressionMatch match = re.match(m_type);
-    return ! match.hasMatch();
+    return !m_type.endsWith("(x)")&&!m_type.endsWith("(o)");
 }
