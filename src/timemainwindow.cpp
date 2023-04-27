@@ -886,7 +886,7 @@ void TimeMainWindow::pause() {
     QDateTime now = QDateTime::currentDateTime();
     QString currtime= QLocale().toString(now.time(), QLocale::ShortFormat);
     auto pce=m_punchClockListToday->currentEntry();
-    if (pce!=m_punchClockListToday->end()) {
+    if ((now.date()==abtListToday->getDatum()) && (pce!=m_punchClockListToday->end())) {
       pce->second=now.time().msecsSinceStartOfDay()/1000;
     }
     PauseDialog pd(now, this);
