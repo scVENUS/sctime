@@ -1074,7 +1074,7 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
         <location filename="statusbar.cpp" line="66"/>
         <source>Warning: Non-current date %1 is being edited.</source>
         <oldsource>Warning: Non-current date </oldsource>
-        <translation>Warnung: Es wird das nicht aktuelle Datum %1 editiert. </translation>
+        <translation type="unfinished">Warnung: Es wird der %1 editiert, nicht das aktuelle Datum. </translation>
     </message>
     <message>
         <source> is being edited.</source>
