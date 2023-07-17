@@ -92,7 +92,8 @@ void logError(const QString &msg) {
 }
 
 /** Erzeugt ein neues TimeMainWindow, das seine Daten aus abtlist bezieht. */
-TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()) {
+TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
+     windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused")  {
   if (!logfile.isNull() && !logfile.isEmpty()) {
     logFile = new QFile(logfile);
     if (logFile->open(QIODevice::ReadWrite)) {
@@ -160,7 +161,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   kontoTree->closeFlaggedPersoenlicheItems();
   kontoTree->showPersoenlicheKontenSummenzeit(settings->persoenlicheKontensumme());
 #ifndef Q_OS_MAC
-  setWindowIcon(QIcon(":/window_icon"));
+  setWindowIcon(windowIcon);
 #endif
 
   setCentralWidget(kontoTree);
@@ -881,8 +882,8 @@ void TimeMainWindow::pause() {
         secSinceTick = 60;
     }
     settings->setLastRecordedTimestamp(lastMinuteTick);
-    qApp->setWindowIcon(QIcon(":/window_icon_paused"));
-    setWindowIcon(QIcon(":/window_icon_paused"));
+    qApp->setWindowIcon(pausedWindowIcon);
+    setWindowIcon(pausedWindowIcon);
     QDateTime now = QDateTime::currentDateTime();
     QString currtime= QLocale().toString(now.time(), QLocale::ShortFormat);
     auto pce=m_punchClockListToday->currentEntry();
@@ -906,8 +907,8 @@ void TimeMainWindow::pause() {
       m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
     }
 
-    qApp->setWindowIcon(QIcon(":/window_icon"));
-    setWindowIcon(QIcon(":/window_icon"));
+    qApp->setWindowIcon(windowIcon);
+    setWindowIcon(windowIcon);
     autosavetimer->start();
     // Tricks wegen der vor der Pause angebrochenen Minute
     restTimer->start((60 - secSinceTick) * 1000);

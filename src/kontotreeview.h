@@ -119,6 +119,11 @@ class KontoTreeView: public QTreeWidget
     QPersistentModelIndex rightPressedIndex;
     SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode;
     bool sortByCommentText;
+    QIcon activeIcon;
+    QIcon srActiveIcon;
+    QIcon srIcon;
+    QIcon noneIcon;
+    QIcon onCallIcon;
 };
 
 #endif

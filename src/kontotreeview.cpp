@@ -41,7 +41,8 @@
 /**
  * Erzeugt ein neues Objekt zur Anzeige des Kontobaums. Seine Daten bezieht es aus abtlist.
  */
-KontoTreeView::KontoTreeView(QWidget *parent, AbteilungsListe* abtlist, const std::vector<int>& columnwidth, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidget(parent)
+KontoTreeView::KontoTreeView(QWidget *parent, AbteilungsListe* abtlist, const std::vector<int>& columnwidth, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText):
+  QTreeWidget(parent), activeIcon(":/hi16_action_apply"), srActiveIcon(":/hi16_moon_apply"), srIcon(":/hi16_moon"), noneIcon(), onCallIcon(":/hi16_action_stamp")
 {
   this->displaymode=displaymode;
   this->sortByCommentText=sortByCommentText;
@@ -774,18 +775,17 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
     if ((abtList->isAktiv(abt,ko,uko,idx))&&(abtList->getDatum()==QDate::currentDate()))
       {
         if (srlist.isEmpty()) {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_action_apply"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,activeIcon);
         } else {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_moon_apply"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,srActiveIcon);
         }
-          
         //setCurrentItem(eti);
       }
     else{
       if (srlist.isEmpty()) {
-        eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon());
+        eti->setIcon(KontoTreeItem::COL_ACTIVE,noneIcon);
       } else {
-        eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_moon"));
+        eti->setIcon(KontoTreeItem::COL_ACTIVE,srIcon);
       }
     }
     refreshParentSumTime(ukoi,"+");
@@ -846,16 +846,16 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
       //eti->setGray(abtList->checkInState());
       if ((abtList->isAktiv(abt,ko,uko,idx))&&(abtList->getDatum()==QDate::currentDate())) {
         if (srlist.isEmpty()) {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_action_apply"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,activeIcon);
         } else {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_moon_apply"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,srActiveIcon);
         }
       }
       else {
         if (srlist.isEmpty()) {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon());
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,noneIcon);
         } else {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_moon"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,srIcon);
         }
       }
       if (m_showPersoenlicheKontenSummenzeit) {
@@ -912,11 +912,11 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
         ukoi->setGray();
         ukoi->setBgColor(abtList->getBgColor(abt,ko,uko));
         if (bereitschaften.size()>=1) {
-          ukoi->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_action_stamp"));
+          ukoi->setIcon(KontoTreeItem::COL_ACTIVE,onCallIcon);
           ukoi->setText(KontoTreeItem::COL_COMMENT,bereitschaften.join("; "));
         }
         else {
-          ukoi->setIcon(KontoTreeItem::COL_ACTIVE,QIcon());
+          ukoi->setIcon(KontoTreeItem::COL_ACTIVE,noneIcon);
           ukoi->setText(KontoTreeItem::COL_COMMENT,"");
           ukoi->setMicroAccount(false);
         }
@@ -925,16 +925,16 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
       if ((abtList->isAktiv(abt,ko,uko,idx))&&(abtList->getDatum()==QDate::currentDate()))
       {
         if (srlist.isEmpty()) {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_action_apply"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,activeIcon);
         } else {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_moon_apply"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,srActiveIcon);
         }
       }
       else {
         if (srlist.isEmpty()) {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon());
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,noneIcon);
         } else {
-          eti->setIcon(KontoTreeItem::COL_ACTIVE,QIcon(":/hi16_moon"));
+          eti->setIcon(KontoTreeItem::COL_ACTIVE,srIcon);
         }
       }
       QString comment=etiter->second.kommentar;

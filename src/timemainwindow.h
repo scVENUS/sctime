@@ -256,5 +256,8 @@ public:
     PunchClockList *m_punchClockListToday;
     PunchClockStateBase *m_PCSToday;
     PunchClockStateBase *m_PCSYesterday;
+    QIcon windowIcon;
+    QIcon pausedWindowIcon;
+
 };
 #endif
