@@ -33,7 +33,6 @@ class SCTimeXMLSettings;
 class KontoDatenInfo;
 class EintragsListe;
 class StatusBar;
-class UnterKontoDialog;
 class QTextBrowser;
 class QLocalServer;
 
@@ -186,6 +185,7 @@ public:
     void callSwitchDateErrorDialog();
     void readIPCMessage();
     void showContextMenu(const QPoint &pos);
+    void cleanupUnterKontoDialog(int result);
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -258,6 +258,7 @@ public:
     PunchClockStateBase *m_PCSYesterday;
     QIcon windowIcon;
     QIcon pausedWindowIcon;
+    UnterKontoDialog* m_unterKontoDialog;
 
 };
 #endif
