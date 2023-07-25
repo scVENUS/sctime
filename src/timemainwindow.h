@@ -259,6 +259,7 @@ public:
     QIcon windowIcon;
     QIcon pausedWindowIcon;
     UnterKontoDialog* m_unterKontoDialog;
+    QMetaObject::Connection m_unterKontoDialogTimerConnection;
 
 };
 #endif

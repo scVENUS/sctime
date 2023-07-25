@@ -1599,9 +1599,10 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
   connect(m_unterKontoDialog, SIGNAL(entryActivated()), this, SLOT(eintragAktivieren()));
   connect(m_unterKontoDialog, SIGNAL(bereitschaftChanged(const QString&, const QString&, const QString&)),
           kontoTree, SLOT(refreshAllItemsInUnterkonto(const QString&, const QString&, const QString&)));
-  QMetaObject::Connection timerconn;
   if (abtList->isAktiv(abt,ko,uko,idx) && (abtList->getDatum()==QDate::currentDate()))
-    timerconn=connect(minutenTimer, SIGNAL(timeout()),m_unterKontoDialog->getZeitBox(),SLOT(incrMin()));
+    m_unterKontoDialogTimerConnection=connect(minutenTimer, SIGNAL(timeout()),m_unterKontoDialog->getZeitBox(),SLOT(incrMin()));
+  else
+    m_unterKontoDialogTimerConnection=QMetaObject::Connection();
 
   QPoint pos;
   QSize size;
@@ -1613,7 +1614,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
 
 void TimeMainWindow::cleanupUnterKontoDialog(int result)
 {
-  m_unterKontoDialog->disconnect();
+  QObject::disconnect(m_unterKontoDialogTimerConnection);
   m_unterKontoDialog->deleteLater();
   m_unterKontoDialog=NULL;
   entryBeingEdited = false;
