@@ -36,6 +36,7 @@ class StatusBar;
 class QTextBrowser;
 class QLocalServer;
 
+
 #include "defaultcommentreader.h"
 #include "datasource.h"
 #include "punchclockchecker.h"
@@ -117,6 +118,7 @@ public:
     void showWorkdayWarning();
     void checkComment(const QString& abt, const QString& ko , const QString& uko,int idx);
     void commitKontenliste(DSResult data);
+    void commitKontenlisteFinished();
     void displayLastLogEntry();
     void resume(); // APM event
     void suspend(); // APM event
@@ -183,6 +185,7 @@ public:
     void callNightTimeEndDialog();
     void callCantSaveDialog();
     void callSwitchDateErrorDialog();
+    void initialSettingsRead();
     void readIPCMessage();
     void showContextMenu(const QPoint &pos);
     void cleanupUnterKontoDialog(int result);
@@ -262,4 +265,7 @@ public:
     QMetaObject::Connection m_unterKontoDialogTimerConnection;
 
 };
+
+
+
 #endif

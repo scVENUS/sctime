@@ -25,8 +25,11 @@
 # include <unistd.h>
 #endif
 #include <QStringList>
+#include <QProcessEnvironment>
+#ifndef RESTONLY
 #include <QSqlDatabase>
 #include <QSqlError>
+#endif
 #include <QFileInfo>
 #include <QFile>
 #include <QDir>
@@ -126,53 +129,57 @@ void setupDatasources(const QStringList& datasourceNames,
                       const SCTimeXMLSettings& settings,
                       const QString &kontenPath, const QString &bereitPath, const QString &specialremunPath, const QString &jsonPath)
 {
-  kontenDSM = new DatasourceManager(QObject::tr("Accounts"));
-  bereitDSM = new DatasourceManager(QObject::tr("On-call categories"));
-  specialRemunDSM = new DatasourceManager(QObject::tr("Special Remunerations"));
-  trace(QObject::tr("available database drivers: %1.").arg(QSqlDatabase::drivers().join(", ")));
+  //FIXME: memory leak?
+  QList<Datasource*> *kontensources=new QList<Datasource*>();
+  QList<Datasource*> *bereitsources=new QList<Datasource*>();;
+  QList<Datasource*> *specialremunsources=new QList<Datasource*>();;
+  
   JSONReaderBase *jsonreader=NULL;
+#ifndef RESTONLY
+  trace(QObject::tr("available database drivers: %1.").arg(QSqlDatabase::drivers().join(", ")));
   if (!kontenPath.isEmpty())
-    kontenDSM->sources.append(new FileReader(kontenPath, "|", 15));
+    kontensources->append(new FileReader(kontenPath, "|", 15));
   if (!bereitPath.isEmpty())
-    bereitDSM->sources.append(new FileReader(bereitPath, "|", 2));
+    bereitsources->append(new FileReader(bereitPath, "|", 2));
   if (!specialremunPath.isEmpty())
-    specialRemunDSM->sources.append(new FileReader(specialremunPath, "|", 2));
+    specialremunsources->append(new FileReader(specialremunPath, "|", 2));
   if (!jsonPath.isEmpty()) {
     trace(QObject::tr("adding jsonreader: %1.").arg(jsonPath));
     jsonreader=new JSONReaderFile(jsonPath);
-    kontenDSM->sources.append(new JSONAccountSource(jsonreader));
-    bereitDSM->sources.append(new JSONOnCallSource(jsonreader));
-    specialRemunDSM->sources.append(new JSONSpecialRemunSource(jsonreader));
+    kontensources->append(new JSONAccountSource(jsonreader));
+    bereitsources->append(new JSONOnCallSource(jsonreader));
+    specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
   }
   QString dsname;
   foreach (dsname, datasourceNames) {
     if (dsname.compare("json") == 0) {
       jsonreader=new JSONReaderFile(configDir.filePath("sctime-offline.json"));
-      kontenDSM->sources.append(new JSONAccountSource(jsonreader));
-      bereitDSM->sources.append(new JSONOnCallSource(jsonreader));
-      specialRemunDSM->sources.append(new JSONSpecialRemunSource(jsonreader));
+      kontensources->append(new JSONAccountSource(jsonreader));
+      bereitsources->append(new JSONOnCallSource(jsonreader));
+      specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
     } else
     if (dsname.compare("file") == 0) {
-      kontenDSM->sources.append(new FileReader(configDir.filePath("zeitkonten.txt"), "|", 15));
-      bereitDSM->sources.append(new FileReader(configDir.filePath("zeitbereitls.txt"), "|", 2));
-      specialRemunDSM->sources.append(new FileReader(configDir.filePath("sonderzeitls.txt"), "|", 3));
+      kontensources->append(new FileReader(configDir.filePath("zeitkonten.txt"), "|", 15));
+      bereitsources->append(new FileReader(configDir.filePath("zeitbereitls.txt"), "|", 2));
+      specialremunsources->append(new FileReader(configDir.filePath("sonderzeitls.txt"), "|", 3));
     } 
     else if (dsname.compare("command") == 0) {
 #ifdef WIN32
       logError(QObject::tr("data source 'command' is not available on Windows"));
 #else
 #ifdef DEPRECATED_CMDS
-      kontenDSM->sources.append(new CommandReader("zeitkonten --mikrokonten --psp --sonderzeiten --separator='|'", "|", 15));
-      bereitDSM->sources.append(new CommandReader("zeitbereitls --separator='|'", "|", 2));
-      specialRemunDSM->sources.append(new CommandReader("sonderzeitls --separator='|'", "|", 3));
+      kontensources.append(new CommandReader("zeitkonten --mikrokonten --psp --sonderzeiten --separator='|'", "|", 15));
+      bereitsources.append(new CommandReader("zeitbereitls --separator='|'", "|", 2));
+      specialRemunsources.append(new CommandReader("sonderzeitls --separator='|'", "|", 3));
 #else
       jsonreader=new JSONReaderCommand("zeit-sctime-offline", NULL);
-      kontenDSM->sources.append(new JSONAccountSource(jsonreader));
-      bereitDSM->sources.append(new JSONOnCallSource(jsonreader));
-      specialRemunDSM->sources.append(new JSONSpecialRemunSource(jsonreader));
+      kontensources->append(new JSONAccountSource(jsonreader));
+      bereitsources->append(new JSONOnCallSource(jsonreader));
+      specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
 #endif
 #endif
-    } else {
+    } 
+    else {
       if (!QSqlDatabase::drivers().contains(dsname)) {
         logError(QObject::tr("database driver or data source not available: ") + dsname);
         continue;
@@ -198,9 +205,23 @@ void setupDatasources(const QStringList& datasourceNames,
 	pw = password();
       db.setPassword(pw);
 
-      kontenDSM->sources.append(new SqlReader(db, kontenQuery));
-      bereitDSM->sources.append(new SqlReader(db, bereitQuery));
-      specialRemunDSM->sources.append(new SqlReader(db, specialRemunQuery));
+      kontensources->append(new SqlReader(db, kontenQuery));
+      bereitsources->append(new SqlReader(db, bereitQuery));
+      specialremunsources->append(new SqlReader(db, specialRemunQuery));
     }
   }
+  if (dsname.compare("rest") == 0) {
+#endif // RESTONLY
+    auto env=QProcessEnvironment::systemEnvironment();
+    QString baseurl=env.value("SCTIME_BASE_URL");
+    jsonreader=new JSONReaderHttp(baseurl+"/../accountingmetadata");
+    kontensources->append(new JSONAccountSource(jsonreader));
+    bereitsources->append(new JSONOnCallSource(jsonreader));
+    specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
+#ifndef RESTONLY
+  }
+#endif
+  kontenDSM = new DatasourceManager(QObject::tr("Accounts"), kontensources);
+  bereitDSM = new DatasourceManager(QObject::tr("On-call categories"), bereitsources);
+  specialRemunDSM = new DatasourceManager(QObject::tr("Special Remunerations"), specialremunsources);
 }

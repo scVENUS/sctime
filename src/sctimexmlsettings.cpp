@@ -25,6 +25,7 @@
 #include <QDesktopWidget>
 #include <QMessageBox>
 #include <QApplication>
+#include <QProcessEnvironment>
 #include <QDebug>
 #ifndef WIN32
 #include <langinfo.h>
@@ -178,10 +179,32 @@ const char* SCTimeXMLSettings::charmap() {
 void SCTimeXMLSettings::readSettings(AbteilungsListe* abtList, PunchClockList* pcl)
 {
   abtList->clearKonten();
-  // Erst globale Einstellungen lesen
   readSettings(true, abtList, pcl);
-  // Dann die Tagesspezifischen
-  readSettings(false, abtList, pcl);
+}
+
+void SCTimeXMLSettings::continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
+{
+  /* we come here twice. first after reading the gobal settings, and then after reading the settings of the day. after that we send the finished signal*/
+  if (global) {
+    readSettings(false, abtList, pcl);
+  } else {
+    emit settingsRead();
+  }
+}
+
+void SCTimeXMLSettings::continueAfterWriting(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
+{
+  /* we come here twice. first after writing the gobal settings, and then after writing the settings of the day. after that we send the finished signal*/
+  if (global) {
+    writeSettings(false, abtList, pcl);
+  } else {
+    emit settingsWritten();
+  }
+}
+
+void XMLWriter::checkReply(QNetworkReply* input) {
+   SCTimeXMLSettings *settings=(SCTimeXMLSettings*)(parent());
+   emit settings->settingsPartWritten(global, abtList, pcl);
 }
 
 void SCTimeXMLSettings::readSettings()
@@ -223,8 +246,13 @@ int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
 
 void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
-  QDomDocument doc("settings");
-  QString filename;
+  XMLReader *reader = new XMLReader(this, global, abtList, pcl);
+  
+  reader->open();
+}
+
+void XMLReader::open() {
+   QString filename;
   if (global)
     filename="settings.xml";
   else {
@@ -239,34 +267,58 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
           abtList->setCheckInState(false);
     }
   }
-
+#ifndef RESTONLY
   QFile f(configDir.filePath(filename));
+  SCTimeXMLSettings *settings=(SCTimeXMLSettings*)(parent());
   if ( !f.open( QIODevice::ReadOnly ) ) {
     logError(f.fileName() + ": " + f.errorString());
     if (global || f.exists()) {
       // keine Fehlerausgabe, wenn "zeit-HEUTE.xml" fehlt
       QMessageBox::warning(NULL, QObject::tr("sctime: opening configuration file"),
                            QObject::tr("%1 : %2").arg(f.fileName(), f.errorString()));
-      if (global) backupSettingsXml = false;
+      if (global) settings->backupSettingsXml = false;
     }
     return;
   }
+  parse(&f);
+
+#else
+  auto env=QProcessEnvironment::systemEnvironment();
+  QString user=env.value("SCTIME_USER");
+  QString baseurl=env.value("SCTIME_BASE_URL");
+  auto request = QNetworkRequest(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename));
+  networkAccessManager.get(request);
+#endif
+}
+
+void XMLReader::parse(QIODevice* input) {
+  SCTimeXMLSettings *settings=(SCTimeXMLSettings*)(parent());
+  // TODO
+  /*if (input->error()!=QNetworkReply::NoError) {
+    emit settings->settingsPartRead(global, abtList, pcl); //TODO: we probably want a settingsReadFailedSignal instead
+    return;
+  }*/
+  QDomDocument doc("settings");
   QString errMsg;
   int errLine, errCol;
-  if (!doc.setContent(&f, &errMsg, &errLine, &errCol)) {
+  //QByteArray bytes=input->readAll();
+  if (!doc.setContent(input, &errMsg, &errLine, &errCol)) {
     QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
                           QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
-    if (global) backupSettingsXml = false;
+    if (global) settings->backupSettingsXml = false;
     return;
   }
-  f.close();
+#ifndef RESTONLY
+  // when closing a networkrequest, we get another finished signal. Not sure if this bug or feature - for now just dont close it
+  input->close();
+#endif
   QDomElement aktiveskontotag;
   QDomElement docElem = doc.documentElement();
   QString lastVersion=docElem.attribute("version");
   if (global) {
-    defaultcommentfiles.clear();
-    columnwidth.clear();
-    setUseCustomFont(false);
+    settings->defaultcommentfiles.clear();
+    settings->columnwidth.clear();
+    settings->setUseCustomFont(false);
   }
 
   for(QDomNode node1 = docElem.firstChild(); !node1.isNull(); node1 = node1.nextSibling()) {
@@ -282,7 +334,7 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
           abtList->setAbteilungFlags(abteilungstr,IS_CLOSED,FLAG_MODE_OR);
 
         if (!elem1.attribute("color").isEmpty()) {
-           abtList->setBgColor(str2color(elem1.attribute("color")),abteilungstr);
+           abtList->setBgColor(SCTimeXMLSettings::str2color(elem1.attribute("color")),abteilungstr);
         }
         for( QDomNode node2 = elem1.firstChild(); !node2.isNull(); node2 = node2.nextSibling() ) {
           QDomElement elem2 = node2.toElement();
@@ -297,7 +349,7 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
                 abtList->setKontoFlags(abteilungstr,kontostr,IS_CLOSED,FLAG_MODE_OR);
               abtList->moveKontoPersoenlich(abteilungstr,kontostr,(elem2.attribute("persoenlich")=="yes"));
               if (!elem2.attribute("color").isEmpty()) {
-                   abtList->setBgColor(str2color(elem2.attribute("color")),abteilungstr,kontostr);
+                   abtList->setBgColor(SCTimeXMLSettings::str2color(elem2.attribute("color")),abteilungstr,kontostr);
               }
 
               for( QDomNode node3 = elem2.firstChild(); !node3.isNull(); node3 = node3.nextSibling() ) {
@@ -317,7 +369,7 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
                       abtList->moveUnterKontoPersoenlich(abteilungstr,kontostr,unterkontostr,(elem3.attribute("persoenlich")=="yes"));
 
                     if (!elem3.attribute("color").isEmpty()) {
-                      abtList->setBgColor(str2color(elem3.attribute("color")),abteilungstr,kontostr,unterkontostr);
+                      abtList->setBgColor(SCTimeXMLSettings::str2color(elem3.attribute("color")),abteilungstr,kontostr,unterkontostr);
                     }
 
                     bool ukontPers=((abtList->getUnterKontoFlags(abteilungstr,kontostr,unterkontostr))
@@ -452,43 +504,43 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
             if (elem2.tagName()=="timeincrement") {
               QString secondsstr=elem2.attribute("seconds");
               if (secondsstr.isNull()) continue;
-              timeInc=secondsstr.toInt();
+              settings->timeInc=secondsstr.toInt();
             }
             if (elem2.tagName()=="fasttimeincrement") {
               QString secondsstr=elem2.attribute("seconds");
               if (secondsstr.isNull()) continue;
-              fastTimeInc=secondsstr.toInt();
+              settings->fastTimeInc=secondsstr.toInt();
             }
             if (elem2.tagName()=="zeitkommando") {
               QString kommandostr=elem2.firstChild().toCharacterData().data();
               if (kommandostr.isNull()) continue;
-              zeitKommando=kommandostr;
+              settings->zeitKommando=kommandostr;
             }
             if (elem2.tagName()=="zeitkontenkommando") {
               QString zeitkontenkommandostr=elem2.firstChild().toCharacterData().data();
               if (zeitkontenkommandostr.isNull()) continue;
-              setZeitKontenKommando(zeitkontenkommandostr);
+              settings->setZeitKontenKommando(zeitkontenkommandostr);
             }
             if (elem2.tagName()=="defcommentdisplay") {
               QString dmstring=elem2.attribute("mode");
               if (dmstring.isNull()) continue;
-              DefCommentDisplayModeEnum dm=DM_BOLD;
+              SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
               if (dmstring=="DefaultCommentsNotUsedBold") {
-                dm=DM_NOTUSEDBOLD;
+                dm=SCTimeXMLSettings::DM_NOTUSEDBOLD;
               } else
               if (dmstring=="NotBold") {
-                dm=DM_NOTBOLD;
+                dm=SCTimeXMLSettings::DM_NOTBOLD;
               }
-              setDefCommentDisplayMode(dm);
+              settings->setDefCommentDisplayMode(dm);
             }
             if (elem2.tagName()=="dragndrop") {
-              setDragNDrop(elem2.attribute("on")=="yes");
+              settings->setDragNDrop(elem2.attribute("on")=="yes");
             }
             if (elem2.tagName()=="persoenliche_kontensumme") {
-              setPersoenlicheKontensumme(elem2.attribute("on")=="yes");
+              settings->setPersoenlicheKontensumme(elem2.attribute("on")=="yes");
             }
             if (elem2.tagName()=="working_time_warnings") {
-              m_workingTimeWarnings=(elem2.attribute("on")!="no");
+              settings->m_workingTimeWarnings=(elem2.attribute("on")!="no");
             }
             if (elem2.tagName()=="aktives_konto") {
               aktiveskontotag=elem2; // Aktives Konto merken und zum Schluss setzen, damit es vorher erzeugt wurde
@@ -501,7 +553,7 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
 		    QPoint pos(x, y);		    
 		    QRect rootwinsize = QApplication::desktop()->screenGeometry();
 		    if (rootwinsize.contains(pos))  // Position nicht setzen, wenn Fenster sonst ausserhalb
-			mainwindowPosition = pos;
+			settings->mainwindowPosition = pos;
 		}
             }
             if (elem2.tagName()=="windowsize") {
@@ -509,59 +561,59 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
               if (xstr.isNull()) continue;
               QString ystr=elem2.attribute("height");
               if (ystr.isNull()) continue;
-              mainwindowSize=QSize(xstr.toInt(),ystr.toInt());
+              settings->mainwindowSize=QSize(xstr.toInt(),ystr.toInt());
             }
             if (elem2.tagName()=="saveeintrag") {
-              alwaysSaveEintrag=(elem2.attribute("always")=="yes");
+              settings->alwaysSaveEintrag=(elem2.attribute("always")=="yes");
             }
             if (elem2.tagName()=="typecolumn") {
-              m_showTypeColumn=(elem2.attribute("show")=="yes");
+              settings->m_showTypeColumn=(elem2.attribute("show")=="yes");
             }
             if (elem2.tagName()=="pccdata") {
-              m_currentPCCdata=elem2.attribute("current");
-              m_prevPCCdata=elem2.attribute("previous");
+              settings->m_currentPCCdata=elem2.attribute("current");
+              settings->m_prevPCCdata=elem2.attribute("previous");
             }
             if (elem2.tagName()=="pspcolumn") {
-              m_showPSPColumn=(elem2.attribute("show")=="yes");
+              settings->m_showPSPColumn=(elem2.attribute("show")=="yes");
             }
             if (elem2.tagName()=="specialremunselector") {
-                setShowSpecialRemunSelector(elem2.attribute("show")=="yes");
+                settings->setShowSpecialRemunSelector(elem2.attribute("show")=="yes");
             }
             if (elem2.tagName()=="usedefaultcommentifunique") {
-              m_useDefaultCommentIfUnique=(elem2.attribute("on")=="yes");
+              settings->m_useDefaultCommentIfUnique=(elem2.attribute("on")=="yes");
             }
             if (elem2.tagName()=="poweruserview") {
-              setPowerUserView((elem2.attribute("on")=="yes"));
+              settings->setPowerUserView((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="overtimeregulatedmode") {
-              setOvertimeRegulatedModeActive((elem2.attribute("on")=="yes"));
+              settings->setOvertimeRegulatedModeActive((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="overtimeothermode") {
-              setOvertimeOtherModeActive((elem2.attribute("on")=="yes"));
+              settings->setOvertimeOtherModeActive((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="nightmode") {
-              setNightModeActive((elem2.attribute("on")=="yes"));
+              settings->setNightModeActive((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="publicholidaymode") {
-              setPublicHolidayModeActive((elem2.attribute("on")=="yes"));
+              settings->setPublicHolidayModeActive((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="lastrecordedtimestamp") {
-              QDateTime ts = QDateTime::fromString(elem2.attribute("value"), timestampFormat());
-              setLastRecordedTimestamp(ts);
+              QDateTime ts = QDateTime::fromString(elem2.attribute("value"), SCTimeXMLSettings::timestampFormat());
+              settings->setLastRecordedTimestamp(ts);
             }
             if (elem2.tagName()=="customfont") {
-              setUseCustomFont(true);
-              setCustomFont(elem2.attribute("family"));
-              setCustomFontSize(elem2.attribute("size").toInt());
+              settings->setUseCustomFont(true);
+              settings->setCustomFont(elem2.attribute("family"));
+              settings->setCustomFontSize(elem2.attribute("size").toInt());
             }
             if (elem2.tagName()=="singleclickactivation") {
-              setSingleClickActivation((elem2.attribute("on")=="yes"));
+              settings->setSingleClickActivation((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="warnISO8859") {
-              setWarnISO8859((elem2.attribute("on")=="yes"));
+              settings->setWarnISO8859((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="sortByCommentText") {
-              setSortByCommentText((elem2.attribute("on")=="yes"));
+              settings->setSortByCommentText((elem2.attribute("on")=="yes"));
             }
             if (elem2.tagName()=="kontodlgwindowposition") {
               bool ok;
@@ -571,7 +623,7 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
                   QPoint pos(x, y);
                   QRect rootwinsize = QApplication::desktop()->screenGeometry();
                   if (rootwinsize.contains(pos))  // Position nicht setzen, wenn Fenster sonst ausserhalb
-                    unterKontoWindowPosition = pos;
+                    settings->unterKontoWindowPosition = pos;
               }
             }
             if (elem2.tagName()=="kontodlgwindowsize") {
@@ -579,29 +631,29 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
               if (xstr.isNull()) continue;
               QString ystr=elem2.attribute("height");
               if (ystr.isNull()) continue;
-              unterKontoWindowSize=QSize(xstr.toInt(),ystr.toInt());
+              settings->unterKontoWindowSize=QSize(xstr.toInt(),ystr.toInt());
             }
             if ((global) && (elem2.tagName()=="defaultcommentsfile")) {
-                defaultcommentfiles.push_back(elem2.attribute("name","defaultcomments.xml"));
+                settings->defaultcommentfiles.push_back(elem2.attribute("name","defaultcomments.xml"));
             }
             if ((global) && (elem2.tagName()=="column")) {
-                columnwidth.push_back(elem2.attribute("width","50").toInt());
+                settings->columnwidth.push_back(elem2.attribute("width","50").toInt());
             }
             if (global && elem2.tagName() == "backends") {
-              backends = elem2.attribute("names", defaultbackends);
-	      if (compVersion("0.80.1", lastVersion)!=-1) // in case of upgrade add new backend
+              settings->backends = elem2.attribute("names", settings->defaultbackends);
+	      if (SCTimeXMLSettings::compVersion("0.80.1", lastVersion)!=-1) // in case of upgrade add new backend
 	      {
-		  backends.replace("file", "json file");
+		  settings->backends.replace("file", "json file");
 	      }
 
               for( QDomNode node3 = elem2.firstChild(); !node3.isNull(); node3 = node3.nextSibling() ) {
                 QDomElement elem3 = node3.toElement();
                 if( !elem3.isNull() ) {
                   if ( elem3.tagName() == "database") {
-                    databaseserver = elem3.attribute("server", defaultdatabaseserver);
-                    database = elem3.attribute("name", defaultdatabase);
-                    databaseuser = elem3.attribute("user");
-                    databasepassword = elem3.attribute("password");
+                    settings->databaseserver = elem3.attribute("server", settings->defaultdatabaseserver);
+                    settings->database = elem3.attribute("name", settings->defaultdatabase);
+                    settings->databaseuser = elem3.attribute("user");
+                    settings->databasepassword = elem3.attribute("password");
 		  }
 		}
 	      }
@@ -619,6 +671,7 @@ void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, Punc
     int idx=aktiveskontotag.attribute("index").toInt();
     abtList->setAsAktiv(abtstr,kostr,ukostr,idx);
   }
+  emit settings->settingsPartRead(global, abtList, pcl);
 }
 
 /** Schreibt saemtliche Einstellungen und Eintraege auf Platte */
@@ -980,6 +1033,9 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
       }
   }
 
+  QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
+#ifndef RESTONLY
+  filename=configDir.filePath(filename);
   if (!global && pcl!=NULL) {
     QDomElement punchclocktag = doc.createElement( "punchclock" );
     for (auto pce: *pcl) {
@@ -994,7 +1050,6 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
     root.appendChild(punchclocktag);
   }
 
-  QString filename(configDir.filePath(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml"));
   QFile fnew(filename + ".tmp");
   QDateTime filemod = QFileInfo(filename).lastModified();
   if (!global && m_lastSave.isValid() && filemod.isValid() && filemod>m_lastSave.addSecs(30)) {
@@ -1043,11 +1098,34 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
   }
   #endif
 
-  #endif
+#else // RESTONLY
+  QByteArray ba;
+  const char xmlcharmap[] = "UTF-8";
+  QTextStream stream(&ba);
+  stream.setCodec(xmlcharmap);
+  stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
+  stream<<doc.toString()<<endl;
+  XMLWriter* writer=new XMLWriter(this, global, abtList);
+  auto env=QProcessEnvironment::systemEnvironment();
+  QString user=env.value("SCTIME_USER");
+  QString baseurl=env.value("SCTIME_BASE_URL");
+  writer->writeBytes(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename), ba);
+#endif // RESTONLY
+#endif //NO_XML
   if (!global) {
      m_lastSave = QDateTime::currentDateTime();
   }
   return true;
+}
+
+void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
+  auto request = QNetworkRequest(url);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+#ifdef RESTONLY
+  networkAccessManager.put(request, ba);
+#else
+  //TODO
+#endif
 }
 
 QString SCTimeXMLSettings::color2str(const QColor& color)

@@ -69,9 +69,15 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
   m_lock=lock;
   m_accountLink=accountlink;
   SCTimeXMLSettings settings;
+#ifndef RESTONLY
   settings.readSettings();
-  if (dataSourceNames.isEmpty()) dataSourceNames = settings.backends.split(" ");
-  setupDatasources(dataSourceNames, settings, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
+  if (dataSourceNames.isEmpty()) 
+#endif
+  {
+     dataSourceNames = settings.backends.split(" "); 
+     setupDatasources(dataSourceNames, settings, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
+  }
+
   mainWindow = new TimeMainWindow(m_lock, logfile);
 #ifndef WIN32
   term = new SignalHandler(SIGTERM);

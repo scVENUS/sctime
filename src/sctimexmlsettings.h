@@ -18,20 +18,28 @@
 #ifndef SCTIMESETTINGS_H
 #define  SCTIMESETTINGS_H
 
+#include <QObject>
+#include <QIODevice>
 #include <QDateTime>
 #include <QPoint>
 #include <QSize>
 #include <QColor>
 #include <vector>
 #include <QString>
+#include <QNetworkAccessManager>
+#include "abteilungsliste.h"
+#include <QNetworkReply>
+#include "punchclock.h"
 
 class AbteilungsListe;
 class QTextStream;
+class XMLReader;
 class PunchClockEntry;
-class PunchClockList;
 
-class SCTimeXMLSettings
+class SCTimeXMLSettings: public QObject
 {
+   Q_OBJECT;
+   friend class XMLReader;
 public:
     enum DefCommentDisplayModeEnum{DM_BOLD,DM_NOTUSEDBOLD,DM_NOTBOLD};
 
@@ -87,6 +95,9 @@ public:
       m_publicHolidayModeActive = false;
 
       m_lastSave = QDateTime();
+
+      connect(this, &SCTimeXMLSettings::settingsPartRead, this, &SCTimeXMLSettings::continueAfterReading);
+      connect(this, &SCTimeXMLSettings::settingsPartWritten, this, &SCTimeXMLSettings::continueAfterWriting);
 
 #ifdef ATOS_ETV_2018
       m_overtimeRegulatedSR = "sc_angeordnete_regulierte_mehrarbeit";
@@ -414,7 +425,7 @@ public:
     };
 
     /* the format in which timestamps are written into the configuration file */
-    QString timestampFormat() {
+    static QString timestampFormat() {
         return "yyyy-MM-dd HH:mm:ss";
     }
 
@@ -449,11 +460,11 @@ public:
 
     void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     
-    int compVersion(const QString& version1, const QString& version2);
+    static int compVersion(const QString& version1, const QString& version2);
 
-    QString color2str(const QColor& color);
+    static QString color2str(const QColor& color);
 
-    QColor str2color(const QString& str);
+    static QColor str2color(const QString& str);
 
     QString zeitKommando;
     QString m_zeitKontenKommando;
@@ -510,6 +521,67 @@ public:
 
     QString m_currentPCCdata;
     QString m_prevPCCdata;
+
+    private slots:
+       void continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+       void continueAfterWriting(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+
+    signals:
+        void settingsRead();
+        void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+        void settingsWritten();
+        void settingsPartWritten(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+        void settingsWriteFailed(QString reason);
+};
+
+class XMLReader: public QObject
+{
+       Q_OBJECT;
+     public:
+       XMLReader(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
+               #ifdef RESTONLY
+               connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLReader::parse);
+               #endif 
+       };
+    public: 
+      virtual void open();      
+
+    public slots:
+      virtual void parse(QIODevice* input);
+    /*private signals:
+      void deviceOpenedForReading(QIODevice*);*/
+    private:
+      bool global;
+      AbteilungsListe* abtList;
+      PunchClockList* pcl;
+      #ifdef RESTONLY
+        QNetworkAccessManager networkAccessManager;
+      #endif
+};
+
+class XMLWriter: public QObject
+{
+     Q_OBJECT;
+     public:
+       XMLWriter(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
+               #ifdef RESTONLY
+               connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLWriter::checkReply);
+               #endif 
+       };
+    public: 
+      virtual void writeBytes(QUrl url, QByteArray bytes);
+
+    public slots:
+      virtual void checkReply(QNetworkReply* input);
+    /*private signals:
+      void deviceOpenedForReading(QIODevice*);*/
+    private:
+      bool global;
+      AbteilungsListe* abtList;
+      PunchClockList* pcl;
+      #ifdef RESTONLY
+        QNetworkAccessManager networkAccessManager;
+      #endif
 };
 
 
