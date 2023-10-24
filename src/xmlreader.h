@@ -1,0 +1,36 @@
+#ifndef xmlreader_h
+#define xmlreader_h
+
+#include <QObject>
+#include "sctimexmlsettings.h"
+
+class AbteilungsListe;
+class PunchClockList;
+class QIODevice;
+
+class XMLReader: public QObject
+{
+     Q_OBJECT;
+     public:
+       XMLReader(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
+               #ifdef RESTONLY
+               connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLReader::parse);
+               #endif 
+       };
+    public: 
+      virtual void open();      
+
+    public slots:
+      virtual void parse(QIODevice* input);
+    /*private signals:
+      void deviceOpenedForReading(QIODevice*);*/
+    private:
+      bool global;
+      AbteilungsListe* abtList;
+      PunchClockList* pcl;
+      #ifdef RESTONLY
+        QNetworkAccessManager networkAccessManager;
+      #endif
+};
+
+#endif
