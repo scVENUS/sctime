@@ -244,11 +244,8 @@ int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
 void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
   XMLReader *reader = new XMLReader(this, global, abtList, pcl);
-  
   reader->open();
 }
-
-
 
 /** Schreibt saemtliche Einstellungen und Eintraege auf Platte */
 bool SCTimeXMLSettings::writeSettings(AbteilungsListe* abtList, PunchClockList* pcl)
@@ -610,7 +607,7 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
   }
 
   QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
-#ifndef RESTONLY
+#ifndef RESTCONFIG
   filename=configDir.filePath(filename);
   if (!global && pcl!=NULL) {
     QDomElement punchclocktag = doc.createElement( "punchclock" );
@@ -657,6 +654,7 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
     else
       backupSettingsXml = false;
   }
+  emit settingsPartWritten(global, abtList, pcl);
 #ifndef WIN32
   // unter Windows funktioniert kein "rename", wenn es den Zielnamen schon gibt.
   // Doch unter UNIX kann ich damit Dateien atomar ersetzen.
@@ -674,7 +672,7 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
   }
   #endif
 
-#else // RESTONLY
+#else // RESTCONFIG
   QByteArray ba;
   const char xmlcharmap[] = "UTF-8";
   QTextStream stream(&ba);
@@ -686,7 +684,7 @@ bool SCTimeXMLSettings::writeSettings(bool global, AbteilungsListe* abtList, Pun
   QString user=env.value("SCTIME_USER");
   QString baseurl=env.value("SCTIME_BASE_URL");
   writer->writeBytes(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename), ba);
-#endif // RESTONLY
+#endif // RESTCONFIG
 #endif //NO_XML
   if (!global) {
      m_lastSave = QDateTime::currentDateTime();

@@ -145,7 +145,7 @@ void setupDatasources(const QStringList& datasourceNames,
     specialremunsources->append(new FileReader(specialremunPath, "|", 2));
   if (!jsonPath.isEmpty()) {
     trace(QObject::tr("adding jsonreader: %1.").arg(jsonPath));
-    jsonreader=new JSONReaderFile(jsonPath);
+    jsonreader=new JSONReaderUrl("file://"+jsonPath);
     kontensources->append(new JSONAccountSource(jsonreader));
     bereitsources->append(new JSONOnCallSource(jsonreader));
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
@@ -153,7 +153,7 @@ void setupDatasources(const QStringList& datasourceNames,
   QString dsname;
   foreach (dsname, datasourceNames) {
     if (dsname.compare("json") == 0) {
-      jsonreader=new JSONReaderFile(configDir.filePath("sctime-offline.json"));
+      jsonreader=new JSONReaderUrl("file://"+configDir.filePath("sctime-offline.json"));
       kontensources->append(new JSONAccountSource(jsonreader));
       bereitsources->append(new JSONOnCallSource(jsonreader));
       specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
@@ -214,7 +214,7 @@ void setupDatasources(const QStringList& datasourceNames,
 #endif // RESTONLY
     auto env=QProcessEnvironment::systemEnvironment();
     QString baseurl=env.value("SCTIME_BASE_URL");
-    jsonreader=new JSONReaderHttp(baseurl+"/../accountingmetadata");
+    jsonreader=new JSONReaderUrl(baseurl+"/../accountingmetadata");
     kontensources->append(new JSONAccountSource(jsonreader));
     bereitsources->append(new JSONOnCallSource(jsonreader));
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));

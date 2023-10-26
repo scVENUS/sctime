@@ -133,15 +133,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   setWindowIcon(windowIcon);
 #endif
 
-  setCentralWidget(kontoTree);
-
-  if (!settings->showTypeColumn()) {
-    kontoTree->hideColumn(KontoTreeItem::COL_TYPE);
-  }
-  if (!settings->showPSPColumn()) {
-    kontoTree->hideColumn(KontoTreeItem::COL_PSP);
-  }
-
   toolBar   = new QToolBar(tr("Main toolbar"), this);
   toolBar->setIconSize(QSize(22,22));
   QMenu * kontomenu = menuBar()->addMenu(tr("&Account"));
@@ -154,21 +145,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
-  minutenTimer = new QTimer(this);
-  connect( minutenTimer,SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
-  lastMinuteTick = startTime;
-  minutenTimer->setInterval(60000); //Alle 60 Sekunden ticken
-  minutenTimer->start();
-  // Timer für "angebrochene" Minuten nach einer Pause
-  restTimer = new QTimer(this);
-  restTimer->setSingleShot(true);
-  connect(restTimer, SIGNAL(timeout()), minutenTimer, SLOT(start()));
-  connect(restTimer, SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
-
-  autosavetimer=new QTimer(this);
-  connect( autosavetimer,SIGNAL(timeout()), this, SLOT(save()));
-  autosavetimer->setInterval(300000); //Alle 5 Minuten ticken.
-  autosavetimer->start();
   QAction* pauseAction = new QAction( QIcon(":/hi22_action_player_pause"), tr("&Pause"), this);
   pauseAction->setShortcut(Qt::CTRL+Qt::Key_P);
   connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));

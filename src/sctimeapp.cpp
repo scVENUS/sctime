@@ -69,7 +69,7 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
   m_lock=lock;
   m_accountLink=accountlink;
   SCTimeXMLSettings settings;
-#ifndef RESTONLY
+#ifdef RESTONLY_FIXME
   settings.readSettings();
   if (dataSourceNames.isEmpty()) 
 #endif

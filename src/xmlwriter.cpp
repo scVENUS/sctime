@@ -12,9 +12,5 @@ void XMLWriter::checkReply(QNetworkReply* input) {
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   auto request = QNetworkRequest(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-#ifdef RESTONLY
   networkAccessManager.put(request, ba);
-#else
-  //TODO
-#endif
 }

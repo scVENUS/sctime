@@ -216,46 +216,26 @@ bool JSONSpecialRemunSource::convertData(DSResult* const result) {
   return true;
 }
 
-#ifndef RESTONLY
-void JSONReaderFile::requestData()
-{
-  QFile loadFile(path);
-
-  if (!loadFile.open(QIODevice::ReadOnly)) {
-      trace(QObject::tr("Couldn't open json file %1.").arg(path));
-      loadFile.close();
-      emit aborted();
-  }
-
-  QByteArray byteData = loadFile.readAll();
-  loadFile.close();
-  processByteArray(byteData);
-  emit finished();
-}
-
-JSONReaderFile::JSONReaderFile(const QString& _path): JSONReaderBase(), path(_path) {
-};
-#endif
-
-void JSONReaderHttp::requestData()
+void JSONReaderUrl::requestData()
 {
   auto request = QNetworkRequest(QUrl(uri));
   networkAccessManager.get(request);
 }
 
-void JSONReaderHttp::receiveData(QNetworkReply *reply)
+void JSONReaderUrl::receiveData(QNetworkReply *reply)
 {
   auto err=reply->error();
   if (err!=QNetworkReply::NoError) {
         trace(tr("Couldn't open json from uri %1.").arg(uri));
         emit aborted();
+        return;
   }
   QByteArray byteData = reply->readAll();
   processByteArray(byteData);
   emit finished();
 }
 
-JSONReaderHttp::JSONReaderHttp(const QString& _uri): JSONReaderBase(), uri(_uri) {
+JSONReaderUrl::JSONReaderUrl(const QString& _uri): JSONReaderBase(), uri(_uri) {
         connect(&networkAccessManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(receiveData(QNetworkReply *)));
 };
 
@@ -269,11 +249,13 @@ void JSONReaderCommand::requestData()
     logError(QObject::tr("Cannot run command '%1': %2").arg(command).arg(process->error()));
     delete process;
     emit aborted();
+    return;
   }
   if (process->exitCode()) {
     logError(QObject::tr("Command '%1' has non-zero exitcode: %s2").arg(command, process->exitCode()));
     delete process;
     emit aborted();
+    return;
   }
   QByteArray byteData = process->readAllStandardOutput();
   delete process;

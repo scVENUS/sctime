@@ -13,9 +13,7 @@ class XMLReader: public QObject
      Q_OBJECT;
      public:
        XMLReader(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
-               #ifdef RESTONLY
                connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLReader::parse);
-               #endif 
        };
     public: 
       virtual void open();      
@@ -28,9 +26,7 @@ class XMLReader: public QObject
       bool global;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
-      #ifdef RESTONLY
-        QNetworkAccessManager networkAccessManager;
-      #endif
+      QNetworkAccessManager networkAccessManager;
 };
 
 #endif

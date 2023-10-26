@@ -28,7 +28,7 @@ void XMLReader::open()
                 abtList->setCheckInState(false);
         }
     }
-#ifndef RESTONLY
+#ifndef RESTCONFIG // TODO: we might also use networkAccessManager for local files and get rid of the ifdef
     QFile f(configDir.filePath(filename));
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
     if (!f.open(QIODevice::ReadOnly))
@@ -42,7 +42,7 @@ void XMLReader::open()
             if (global)
                 settings->backupSettingsXml = false;
         }
-        return;
+        emit settings->settingsPartRead(global, abtList, pcl); //FIXME: right signal?
     }
     parse(&f);
 
@@ -73,9 +73,9 @@ void XMLReader::parse(QIODevice *input)
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
         if (global)
             settings->backupSettingsXml = false;
-        return;
+        emit settings->settingsPartRead(global, abtList, pcl); //FIXME: right signal?
     }
-#ifndef RESTONLY
+#ifndef RESTCONFIG
     // when closing a networkrequest, we get another finished signal. Not sure if this bug or feature - for now just dont close it
     input->close();
 #endif

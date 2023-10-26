@@ -45,25 +45,13 @@ protected:
   QNetworkAccessManager networkAccessManager;
 };
 
-#ifndef RESTONLY
-class JSONReaderFile: public JSONReaderBase
-{
-public:
-  JSONReaderFile(const QString& path);
-  virtual void requestData();
-  virtual ~JSONReaderFile() {};
-private:
-  const QString path;
-};
-#endif //RESTONLY
-
-class JSONReaderHttp: public JSONReaderBase
+class JSONReaderUrl: public JSONReaderBase
 {
 Q_OBJECT
 public:
-  JSONReaderHttp(const QString& uri);
+  JSONReaderUrl(const QString& uri);
   virtual void requestData();
-  virtual ~JSONReaderHttp() {};
+  virtual ~JSONReaderUrl() {};
 public slots:
   virtual void receiveData(QNetworkReply *reply);
 private:

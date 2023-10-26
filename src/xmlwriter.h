@@ -16,9 +16,7 @@ class XMLWriter: public QObject
      Q_OBJECT;
      public:
        XMLWriter(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
-               #ifdef RESTONLY
                connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLWriter::checkReply);
-               #endif 
        };
     public: 
       virtual void writeBytes(QUrl url, QByteArray bytes);
@@ -31,9 +29,7 @@ class XMLWriter: public QObject
       bool global;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
-      #ifdef RESTONLY
-        QNetworkAccessManager networkAccessManager;
-      #endif
+      QNetworkAccessManager networkAccessManager;
 };
 
 #endif
