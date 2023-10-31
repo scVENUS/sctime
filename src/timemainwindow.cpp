@@ -72,6 +72,7 @@
 #include "accountlistcommiter.h"
 #include "punchclockchecker.h"
 #include "pausedialog.h"
+#include "datechanger.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -124,6 +125,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   inPersoenlicheKontenAllowed=true;
   powerToolBar = NULL;
   cantSaveDialog = NULL;
+  m_dateChanger = NULL;
 
   statusBar = new StatusBar(this);
   setStatusBar(statusBar);
@@ -1210,132 +1212,58 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
  */
 void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool changeToday)
 {
-    //FIXME
-    return;
-    if (checkConfigDir())
+  if (checkConfigDir()||m_dateChanger!=NULL)
+  {
+    checkLock();
+
+    kontoTree->flagClosedPersoenlicheItems();
+    std::vector<int> columnwidthlist;
+    kontoTree->getColumnWidthList(columnwidthlist);
+    settings->setColumnWidthList(columnwidthlist);
+    m_dateChanger = new DateChanger(this, datum, changeVisible, changeToday);
+    connect(m_dateChanger, &DateChanger::finished, this, &TimeMainWindow::changeDateFinished);
+    m_dateChanger->start();
+  }
+  else
+  {
+    callSwitchDateErrorDialog();
+  }
+}
+
+void TimeMainWindow::changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel)
+{
+  kontoTree->load(abtList);
+  kontoTree->closeFlaggedPersoenlicheItems();
+  kontoTree->showAktivesProjekt();
+  if (changeToday)
+  {
+    loadPCCData(settings->previousPCCData());
+    loadPCCData(settings->currentPCCData());
+    m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay() / 1000, m_PCSYesterday);
+    m_PCSToday->date = abtListToday->getDatum();
+    updateSpecialModes(false);
+  }
+  zeitChanged();
+  emit(currentDateSelected(currentDateSel));
+  statusBar->dateWarning((abtList != abtListToday), abtList->getDatum());
+  if (changeVisible)
+  {
+    trace(tr("Visible day set to: ") + date.toString());
+  }
+  if (changeToday)
+  {
+    trace(tr("Today is now: ") + date.toString());
+  }
+  // Append Warning if current file is checked in
+  if (!currentDateSel)
+  {
+    if (abtList->checkInState())
     {
-        checkLock();
-        QDate currentDate = QDate::currentDate();
-        bool currentDateSel = (datum == currentDate);
-        kontoTree->flagClosedPersoenlicheItems();
-        std::vector<int> columnwidthlist;
-        kontoTree->getColumnWidthList(columnwidthlist);
-        settings->setColumnWidthList(columnwidthlist);
-
-        QString abt,ko,uko;
-        int idx;
-
-        abtListToday->getAktiv(abt,ko,uko,idx);
-
-        if (abtListToday->getDatum().addDays(1)==currentDate) {
-            m_PCSToday->date=abtListToday->getDatum();
-            settings->setPreviousPCCData(m_PCSToday->serialize());
-        }
-
-        if (abtListToday != abtList)
-        {
-            if (!(settings->writeSettings(abtListToday, m_punchClockListToday) &&
-                 settings->writeSettings(abtList, m_punchClockList)
-                 )) {
-                   return;
-                 }
-            settings->writeShellSkript(abtListToday, m_punchClockListToday);
-            settings->writeShellSkript(abtList, m_punchClockList);
-            if (changeVisible) {
-              delete abtList;
-              abtList=NULL;
-              delete m_punchClockList;
-              m_punchClockList=NULL;
-            }
-        }
-        else
-        {
-            if (!settings->writeSettings(abtList, m_punchClockList)) {
-                return;
-            }
-            settings->writeShellSkript(abtList, m_punchClockList);
-        }
-        if ((datum==abtListToday->getDatum())&&changeVisible)
-        {
-            abtList = abtListToday;
-            m_punchClockList = m_punchClockListToday;
-        }
-        if (!(datum==abtListToday->getDatum())&&changeVisible) {
-            abtList = new AbteilungsListe(datum, abtListToday);
-            m_punchClockList = new PunchClockList();
-        }
-        if (changeToday) {
-            if (abtListToday->getDatum() != currentDate)
-            {
-               if (abtList->getDatum() == currentDate) {
-                 abtListToday=abtList;
-                 m_punchClockListToday=m_punchClockList;
-               } else {
-                 // if an entry of today is being edited, we don't switch the view to the current date
-                 if (entryBeingEdited&&(abtListToday == abtList)) {
-                   abtListToday = new AbteilungsListe(datum, abtListToday);
-                 } else {
-                   abtListToday->setDatum(datum);
-                 }
-               }
-            }
-        }
-
-        if (changeToday&&(abtListToday != abtList)) {
-            abtListToday->clearKonten();
-            m_punchClockListToday->clear();
-            settings->readSettings(abtListToday, m_punchClockListToday);
-        }
-
-        abtList->clearKonten();
-        m_punchClockList->clear();
-        settings->readSettings(abtList, m_punchClockList);
-
-        auto lastentry = std::prev(m_punchClockListToday->end());
-        auto now=QDateTime::currentDateTime();
-        int diff=now.time().msecsSinceStartOfDay()/1000-(lastentry->second);
-        if ((diff<=90) && (diff>=-90)) {
-          logError("change date in range");
-          m_punchClockListToday->setCurrentEntry(lastentry);
-        } else {
-          logError("change date out of range");
-          m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
-          m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
-        }
-
-        abtListToday->setAsAktiv(abt,ko,uko,idx);
-
-        kontoTree->load(abtList);
-        kontoTree->closeFlaggedPersoenlicheItems();
-        kontoTree->showAktivesProjekt();
-        if (changeToday)
-        {
-            loadPCCData(settings->previousPCCData());
-            loadPCCData(settings->currentPCCData());
-            m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
-            m_PCSToday->date=abtListToday->getDatum();
-            updateSpecialModes(false);
-        }
-        zeitChanged();
-        emit(currentDateSelected(currentDateSel));
-        statusBar->dateWarning((abtList!=abtListToday), abtList->getDatum());
-        if (changeVisible) {
-          trace(tr("Visible day set to: ") + datum.toString());
-        }
-        if (changeToday) {
-          trace(tr("Today is now: ") + datum.toString());
-        }
-        //Append Warning if current file is checked in
-        if (!currentDateSel)
-        {
-            if (abtList->checkInState())
-            {
-                statusBar->appendWarning(!currentDateSel, tr(" -- This day has already been checked in!"));
-            }
-        }
-    } else {
-      callSwitchDateErrorDialog();
+      statusBar->appendWarning(!currentDateSel, tr(" -- This day has already been checked in!"));
     }
+  }
+  m_dateChanger->deleteLater();
+  m_dateChanger=NULL;
 }
 
 // changes the visible date and updates todays date if we are not on the current date

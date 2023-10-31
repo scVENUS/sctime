@@ -59,6 +59,7 @@ AbteilungsListe::AbteilungsListe(const QDate& _datum, AbteilungsListe* abtlist):
   zeitDifferenz=0;
   datum=_datum;
   kontoDatenInfo = abtlist->kontoDatenInfo;
+  checkedIn=false;
   
   // Copy golbal special remunerations
   setGlobalSpecialRemunNames(abtlist->getGlobalSpecialRemunNames());

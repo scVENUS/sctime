@@ -35,6 +35,7 @@ class EintragsListe;
 class StatusBar;
 class QTextBrowser;
 class QLocalServer;
+class DateChanger;
 
 
 #include "defaultcommentreader.h"
@@ -56,6 +57,8 @@ public:
     virtual ~TimeMainWindow();
     SCTimeXMLSettings* settings;
     void infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links=false);
+
+    friend class DateChanger;
     
   public slots:
 
@@ -189,6 +192,7 @@ public:
     void readIPCMessage();
     void showContextMenu(const QPoint &pos);
     void cleanupUnterKontoDialog(int result);
+    void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -263,7 +267,7 @@ public:
     QIcon pausedWindowIcon;
     UnterKontoDialog* m_unterKontoDialog;
     QMetaObject::Connection m_unterKontoDialogTimerConnection;
-
+    DateChanger * m_dateChanger;
 };
 
 
