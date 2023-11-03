@@ -59,10 +59,17 @@ void XMLReader::parse(QIODevice *input)
 {
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
     // TODO
-    /*if (input->error()!=QNetworkReply::NoError) {
-      emit settings->settingsPartRead(global, abtList, pcl); //TODO: we probably want a settingsReadFailedSignal instead
+
+    QNetworkReply* netinput = dynamic_cast<QNetworkReply*>(input);
+    QFile* fileinput = dynamic_cast<QFile*>(input);
+    if (netinput!=NULL && netinput->error()!=QNetworkReply::NoError) {
+      emit settings->settingsPartRead(global, abtList, pcl); 
       return;
-    }*/
+    }
+    if (fileinput!=NULL && !fileinput->exists()) {
+      emit settings->settingsPartRead(global, abtList, pcl); 
+      return;
+    }
     QDomDocument doc("settings");
     QString errMsg;
     int errLine, errCol;
