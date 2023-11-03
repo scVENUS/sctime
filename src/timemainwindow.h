@@ -207,7 +207,7 @@ public:
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
-    void changeDate(const QDate& datum, bool changeVisible, bool changeToday);
+    void changeDate(QDate datum, bool changeVisible, bool changeToday);
     void loadPCCData(const QString& pccdata);
     KontoTreeView* kontoTree;
     Lock *m_lock;

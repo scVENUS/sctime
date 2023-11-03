@@ -4,6 +4,8 @@
 #include <QObject>
 #include "timemainwindow.h"
 
+class XMLWriter;
+
 class DateChanger: public QObject {
         Q_OBJECT;
 public:
@@ -19,6 +21,7 @@ private slots:
 signals:
        void finished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
 private:
+       void write(AbteilungsListe* abtlist, PunchClockList* pcl);
        TimeMainWindow *m_timeMainWindow;
        QMetaObject::Connection lastconn;
        int expectedActions;

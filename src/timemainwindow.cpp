@@ -73,6 +73,7 @@
 #include "punchclockchecker.h"
 #include "pausedialog.h"
 #include "datechanger.h"
+#include "xmlwriter.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -960,10 +961,16 @@ void TimeMainWindow::save()
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    settings->writeSettings(abtListToday, m_punchClockListToday);
+    XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday);
+    connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
+    connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+    writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
-      settings->writeSettings(abtList, m_punchClockList);
+      writer=new XMLWriter(settings, abtList, m_punchClockList);
+      connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
+      connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+      writer->writeAllSettings();
       settings->writeShellSkript(abtList, m_punchClockList);
     }
   }
@@ -1210,7 +1217,7 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
  * Aendert das Datum: dazu werden zuerst die aktuellen Zeiten und Einstellungen gespeichert,
  * sodann die Daten fuer das angegebene Datum neu eingelesen.
  */
-void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool changeToday)
+void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToday)
 {
   if (checkConfigDir()||m_dateChanger!=NULL)
   {

@@ -3,6 +3,7 @@
 #include <QDate>
 #include "abteilungsliste.h"
 #include "sctimexmlsettings.h"
+#include "xmlwriter.h"
 #include "globals.h"
 
 void DateChanger::start()
@@ -20,21 +21,28 @@ void DateChanger::start()
 
     if (m_timeMainWindow->abtListToday != m_timeMainWindow->abtList)
     {
-        lastconn = connect(m_timeMainWindow->settings, &SCTimeXMLSettings::settingsPartWritten, this, &DateChanger::resetLists);
-        expectedActions = 4;
-        m_timeMainWindow->settings->writeSettings(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
-        m_timeMainWindow->settings->writeSettings(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+        expectedActions = 2;
+        
+        write(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        write(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
         // TODO: shell scripts are not written asynchronously
         m_timeMainWindow->settings->writeShellSkript(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
         m_timeMainWindow->settings->writeShellSkript(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
     }
     else
     {
-        lastconn = connect(m_timeMainWindow->settings, &SCTimeXMLSettings::settingsPartWritten, this, &DateChanger::resetLists);
-        expectedActions = 2;
-        m_timeMainWindow->settings->writeSettings(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+        expectedActions = 1;
+        write(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
         m_timeMainWindow->settings->writeShellSkript(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
     }
+}
+
+void DateChanger::write(AbteilungsListe* abtlist, PunchClockList* pcl) {
+    XMLWriter *writer=new XMLWriter(m_timeMainWindow->settings, abtlist, pcl);
+    connect(writer, &XMLWriter::settingsWritten, this, &DateChanger::resetLists);
+    connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
+    connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+    writer->writeAllSettings();
 }
 
 void DateChanger::resetLists()
@@ -42,7 +50,6 @@ void DateChanger::resetLists()
     expectedActions--;
     if (expectedActions > 0)
         return;
-    disconnect(lastconn);
     if (changeVisible && (m_timeMainWindow->abtListToday != m_timeMainWindow->abtList))
     {
         delete m_timeMainWindow->abtList;

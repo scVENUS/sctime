@@ -15,21 +15,33 @@ class XMLWriter: public QObject
 {
      Q_OBJECT;
      public:
-       XMLWriter(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
+       XMLWriter(SCTimeXMLSettings* settings, AbteilungsListe* abtList, PunchClockList* pcl): settings(settings), abtList(abtList), pcl(pcl) {
                connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLWriter::checkReply);
+               connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
+               writeAll=false;
        };
-    public: 
+    public:
+      virtual void writeAllSettings();
+      virtual void writeSettings(bool global);
       virtual void writeBytes(QUrl url, QByteArray bytes);
 
     public slots:
       virtual void checkReply(QNetworkReply* input);
     /*private signals:
       void deviceOpenedForReading(QIODevice*);*/
+    private slots:
+      void continueAfterWriting(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     private:
+      SCTimeXMLSettings* settings;
+      bool writeAll;
       bool global;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager networkAccessManager;
+    signals:
+        void settingsWritten();
+        void settingsPartWritten(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+        void settingsWriteFailed(QString reason);
 };
 
 #endif

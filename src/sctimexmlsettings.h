@@ -40,6 +40,7 @@ class SCTimeXMLSettings: public QObject
 {
    Q_OBJECT;
    friend class XMLReader;
+   friend class XMLWriter;
 public:
     enum DefCommentDisplayModeEnum{DM_BOLD,DM_NOTUSEDBOLD,DM_NOTBOLD};
 
@@ -97,7 +98,6 @@ public:
       m_lastSave = QDateTime();
 
       connect(this, &SCTimeXMLSettings::settingsPartRead, this, &SCTimeXMLSettings::continueAfterReading);
-      connect(this, &SCTimeXMLSettings::settingsPartWritten, this, &SCTimeXMLSettings::continueAfterWriting);
 
 #ifdef ATOS_ETV_2018
       m_overtimeRegulatedSR = "sc_angeordnete_regulierte_mehrarbeit";
@@ -110,8 +110,6 @@ public:
 #endif
      
     }
-
-    bool writeSettings(AbteilungsListe* abtList, PunchClockList* pcl);
 
     void readSettings();
 
@@ -524,14 +522,10 @@ public:
 
     private slots:
        void continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
-       void continueAfterWriting(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
 
     signals:
         void settingsRead();
         void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
-        void settingsWritten();
-        void settingsPartWritten(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
-        void settingsWriteFailed(QString reason);
 };
 
 #endif
