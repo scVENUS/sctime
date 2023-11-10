@@ -27,7 +27,7 @@ private:
        int expectedActions;
        QString abt, ko, uko;
        int idx;
-       const QDate &targetDate;
+       QDate targetDate;
        QDate currentDate;
        bool changeVisible;
        bool changeToday;

@@ -6,6 +6,7 @@
 #include <QDomElement>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QProcessEnvironment>
 #include "globals.h"
 
 void XMLReader::open()
@@ -62,9 +63,14 @@ void XMLReader::parse(QIODevice *input)
 
     QNetworkReply* netinput = dynamic_cast<QNetworkReply*>(input);
     QFile* fileinput = dynamic_cast<QFile*>(input);
-    if (netinput!=NULL && netinput->error()!=QNetworkReply::NoError) {
-      emit settings->settingsPartRead(global, abtList, pcl); 
-      return;
+    if (netinput!=NULL) {
+        if (netinput->error()!=QNetworkReply::NoError) {
+        emit settings->settingsPartRead(global, abtList, pcl); 
+        return;
+        }
+        if (!netinput->isFinished()) {
+            return;
+        }
     }
     if (fileinput!=NULL && !fileinput->exists()) {
       emit settings->settingsPartRead(global, abtList, pcl); 

@@ -5,11 +5,15 @@
 #include <QApplication>
 #include <QDomDocument>
 #include <QMessageBox>
+#include <QTextStream>
+#include <QProcessEnvironment>
 #include "sctimexmlsettings.h"
 #include "globals.h"
 
 void XMLWriter::checkReply(QNetworkReply* input) {
-   emit settingsPartWritten(global, abtList, pcl);
+   if (input->isFinished()) {
+     emit settingsPartWritten(global, abtList, pcl);
+   }
 }
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
@@ -88,8 +92,8 @@ void XMLWriter::writeSettings(bool global) {
     QDomElement defcommentdm = doc.createElement("defcommentdisplay");
     QString dm;
     switch(settings->defCommentDisplayMode()) {
-      case settings->DM_NOTUSEDBOLD: dm="DefaultCommentsNotUsedBold"; break;
-      case settings->DM_NOTBOLD: dm="NotBold"; break;
+      case SCTimeXMLSettings::DM_NOTUSEDBOLD: dm="DefaultCommentsNotUsedBold"; break;
+      case SCTimeXMLSettings::DM_NOTBOLD: dm="NotBold"; break;
       default: dm ="DefaultCommentsBold"; break;
     }
     defcommentdm.setAttribute("mode",dm);
@@ -443,11 +447,10 @@ void XMLWriter::writeSettings(bool global) {
   stream.setCodec(xmlcharmap);
   stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
   stream<<doc.toString()<<endl;
-  XMLWriter* writer=new XMLWriter(this, global, abtList);
   auto env=QProcessEnvironment::systemEnvironment();
   QString user=env.value("SCTIME_USER");
   QString baseurl=env.value("SCTIME_BASE_URL");
-  writer->writeBytes(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename), ba);
+  writeBytes(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename), ba);
 #endif // RESTCONFIG
 #endif //NO_XML
   if (!global) {
