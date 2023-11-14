@@ -435,7 +435,7 @@ void XMLWriter::writeSettings(bool global) {
   if (!fnew.rename(filename)) {
     QMessageBox::critical(NULL, QObject::tr("sctime: saving settings"),
                          QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, fnew.errorString()));
-    emit settingsWriteFailed;
+    emit settingsWriteFailed("rename error");
     return;
   }
   #endif
