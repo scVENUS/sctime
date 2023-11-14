@@ -69,16 +69,10 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
   m_lock=lock;
   m_accountLink=accountlink;
   SCTimeXMLSettings settings;
-#ifdef RESTONLY_FIXME
-  settings.readSettings();
-  if (dataSourceNames.isEmpty()) 
-#endif
-  {
-     dataSourceNames = settings.backends.split(" "); 
-     setupDatasources(dataSourceNames, settings, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
-  }
 
-  mainWindow = new TimeMainWindow(m_lock, logfile);
+  DSM* dsm=new DSM(dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
+
+  mainWindow = new TimeMainWindow(m_lock, dsm, logfile);
 #ifndef WIN32
   term = new SignalHandler(SIGTERM);
   connect(term, SIGNAL(received()), this, SLOT(closeAllWindows()));
@@ -108,8 +102,6 @@ void SctimeApp::cleanup() {
 
 SctimeApp::~SctimeApp() {
   delete mainWindow;
-  delete kontenDSM;
-  delete bereitDSM;
 #ifndef WIN32
   delete term;
   delete hup;

@@ -19,15 +19,34 @@
 #ifndef SETUPDSM_H
 #define SETUPDSM_H
 
+#include <QString>
+#include <QStringList>
+
 class SCTimeXMLSettings;
 class DatasourceManager;
-class QString;
-class QStringList;
-void setupDatasources(const QStringList& datasourceNames,
-                      const SCTimeXMLSettings& settings,
-                      const QString &kontenPath, const QString &bereitPath, const QString& specialremunfile, const QString& jsonfile);
-extern DatasourceManager* kontenDSM;
-extern DatasourceManager* bereitDSM;
-extern DatasourceManager* specialRemunDSM;
+
+class DSM {
+public:
+   DSM(QStringList& userDataSourceNames, const QString &kontenPath, const QString &bereitPath, const QString& specialremunPath, const QString& jsonPath): 
+      userDataSourceNames(userDataSourceNames), kontenPath(kontenPath),bereitPath(bereitPath), specialremunPath(specialremunPath), jsonPath(jsonPath) {   
+   }
+
+   void setup(SCTimeXMLSettings* settings);
+   DatasourceManager* kontenDSM;
+   DatasourceManager* bereitDSM;
+   DatasourceManager* specialRemunDSM;
+private:
+   QStringList userDataSourceNames;
+   QString kontenPath;
+   QString bereitPath;
+   QString specialremunPath;
+   QString jsonPath;
+
+   static QString kontenQuery;
+   static const QString bereitQuery;
+   static const QString specialRemunQuery;
+   static QString username();
+   static QString password();
+};
 
 #endif // SETUPDSM_H

@@ -24,7 +24,6 @@
 #else
 # include <unistd.h>
 #endif
-#include <QStringList>
 #include <QProcessEnvironment>
 #ifndef RESTONLY
 #include <QSqlDatabase>
@@ -39,12 +38,8 @@
 #include "datasource.h"
 #include "globals.h"
 
-DatasourceManager* kontenDSM;
-DatasourceManager* bereitDSM;
-DatasourceManager* specialRemunDSM;
 
-static const
-QString kontenQuery(
+QString DSM::kontenQuery(
   "Select  "
   "   gb.name, " // 0
   "   team.kostenstelle, "
@@ -72,9 +67,9 @@ QString kontenQuery(
   " u.eintragbar "
   "Order By gb.name, konto.name, u.name, uk.kommentar ");
 
-static const QString bereitQuery("SELECT kategorie, beschreibung FROM v_bereitschaft_sctime");
+const QString DSM::bereitQuery("SELECT kategorie, beschreibung FROM v_bereitschaft_sctime");
 
-static const QString specialRemunQuery(
+const QString DSM::specialRemunQuery(
   "Select "
   "    sz.kategorie, "
   "    sz.beschreibung, "
@@ -83,7 +78,7 @@ static const QString specialRemunQuery(
   "    v_sonderzeiten_sctime sz "
   "    order by sz.kategorie");
 
-static QString username() {
+QString DSM::username() {
   static QString result;
   if (!result.isNull())
     return result;
@@ -104,7 +99,7 @@ static QString username() {
     return result;
 }
 
-static QString password() {
+QString DSM::password() {
   static QString result;
   if (!result.isNull())
     return result;
@@ -125,15 +120,21 @@ static QString password() {
   return result;
 }
 
-void setupDatasources(const QStringList& datasourceNames,
-                      const SCTimeXMLSettings& settings,
-                      const QString &kontenPath, const QString &bereitPath, const QString &specialremunPath, const QString &jsonPath)
+void DSM::setup(SCTimeXMLSettings* settings)
 {
   //FIXME: memory leak?
   QList<Datasource*> *kontensources=new QList<Datasource*>();
   QList<Datasource*> *bereitsources=new QList<Datasource*>();;
-  QList<Datasource*> *specialremunsources=new QList<Datasource*>();;
+  QList<Datasource*> *specialremunsources=new QList<Datasource*>();
+
+  QStringList dataSourceNames;
   
+  if (userDataSourceNames.isEmpty()) {
+    dataSourceNames = settings->backends.split(" "); 
+  } else {
+    dataSourceNames = userDataSourceNames;
+  }
+
   JSONReaderBase *jsonreader=NULL;
 #ifndef RESTONLY
   trace(QObject::tr("available database drivers: %1.").arg(QSqlDatabase::drivers().join(", ")));
@@ -151,7 +152,7 @@ void setupDatasources(const QStringList& datasourceNames,
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
   }
   QString dsname;
-  foreach (dsname, datasourceNames) {
+  foreach (dsname, dataSourceNames) {
     if (dsname.compare("json") == 0) {
       jsonreader=new JSONReaderUrl("file://"+configDir.filePath("sctime-offline.json"));
       kontensources->append(new JSONAccountSource(jsonreader));
@@ -192,15 +193,15 @@ void setupDatasources(const QStringList& datasourceNames,
       db.setDatabaseName(
 	  dsname.startsWith("QODBC") 
 	    ? "DSN=Postgres_Zeit;DRIVER=PostgreSQL UNICODE" 
-	    : settings.database);
-      db.setHostName(settings.databaseserver);
+	    : settings->database);
+      db.setHostName(settings->databaseserver);
 
-      QString un = settings.databaseuser;
+      QString un = settings->databaseuser;
       if (un.isEmpty())
 	un = username();
       db.setUserName(un);
 
-      QString pw = settings.databasepassword;
+      QString pw = settings->databasepassword;
       if (pw.isEmpty())
 	pw = password();
       db.setPassword(pw);

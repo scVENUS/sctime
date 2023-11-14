@@ -36,6 +36,7 @@ class StatusBar;
 class QTextBrowser;
 class QLocalServer;
 class DateChanger;
+class DSM;
 
 
 #include "defaultcommentreader.h"
@@ -52,7 +53,7 @@ class TimeMainWindow: public QMainWindow
 {
     Q_OBJECT
 public:
-    TimeMainWindow(Lock* lock, QString logfile);
+    TimeMainWindow(Lock* lock, DSM* dsm, QString logfile);
     QTreeWidget* getKontoTree();
     virtual ~TimeMainWindow();
     SCTimeXMLSettings* settings;
@@ -268,6 +269,7 @@ public:
     UnterKontoDialog* m_unterKontoDialog;
     QMetaObject::Connection m_unterKontoDialogTimerConnection;
     DateChanger * m_dateChanger;
+    DSM* m_dsm;
 };
 
 

@@ -95,7 +95,7 @@ void logError(const QString &msg) {
 }
 
 /** Erzeugt ein neues TimeMainWindow, das seine Daten aus abtlist bezieht. */
-TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
+TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
      windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused")  {
   if (!logfile.isNull() && !logfile.isEmpty()) {
     logFile = new QFile(logfile);
@@ -106,6 +106,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
     }
   }
   m_lock = lock;
+  m_dsm=dsm;
   paused = false;
   entryBeingEdited = false;
   sekunden = 0;
@@ -473,17 +474,20 @@ void TimeMainWindow::initialSettingsRead() {
   //selected
   kontoTree->closeFlaggedPersoenlicheItems();
   showAdditionalButtons(settings->powerUserView());
-  connect(kontenDSM, SIGNAL(finished(DSResult)), this, SLOT(commitKontenliste(DSResult)));
-  connect(bereitDSM, SIGNAL(finished(DSResult)), this, SLOT(commitBereit(DSResult)));
-  connect(specialRemunDSM, SIGNAL(finished(DSResult)), this, SLOT(commitSpecialRemun(DSResult)));
-  connect(kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  connect(bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  connect(specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+
+  m_dsm->setup(settings);
+
+  connect(m_dsm->kontenDSM, SIGNAL(finished(DSResult)), this, SLOT(commitKontenliste(DSResult)));
+  connect(m_dsm->bereitDSM, SIGNAL(finished(DSResult)), this, SLOT(commitBereit(DSResult)));
+  connect(m_dsm->specialRemunDSM, SIGNAL(finished(DSResult)), this, SLOT(commitSpecialRemun(DSResult)));
+  connect(m_dsm->kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+  connect(m_dsm->bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+  connect(m_dsm->specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
   connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
-  QMetaObject::invokeMethod(bereitDSM, "start", Qt::QueuedConnection);
+  QMetaObject::invokeMethod(m_dsm->bereitDSM, "start", Qt::QueuedConnection);
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
-  QMetaObject::invokeMethod(specialRemunDSM, "start", Qt::QueuedConnection);
+  QMetaObject::invokeMethod(m_dsm->specialRemunDSM, "start", Qt::QueuedConnection);
   specialRemunAction->setEnabled(false);
 
   m_ipcserver = new QLocalServer(this);
@@ -1287,7 +1291,7 @@ void TimeMainWindow::changeTodaysDate(const QDate &date) {
 void TimeMainWindow::refreshKontoListe() {
   statusBar->showMessage(tr("Reading account list..."));
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-  QTimer::singleShot(100, kontenDSM, SLOT(start()));
+  QTimer::singleShot(100, m_dsm->kontenDSM, SLOT(start()));
 }
 
 void TimeMainWindow::commitKontenliste(DSResult data) {
