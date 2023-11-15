@@ -420,7 +420,6 @@ void XMLWriter::writeSettings(bool global) {
     else
       settings->backupSettingsXml = false;
   }
-  emit settingsPartWritten(global, abtList, pcl);
 #ifndef WIN32
   // unter Windows funktioniert kein "rename", wenn es den Zielnamen schon gibt.
   // Doch unter UNIX kann ich damit Dateien atomar ersetzen.
@@ -439,6 +438,7 @@ void XMLWriter::writeSettings(bool global) {
     return;
   }
   #endif
+  emit settingsPartWritten(global, abtList, pcl);
 
 #else // RESTCONFIG
   QByteArray ba;
