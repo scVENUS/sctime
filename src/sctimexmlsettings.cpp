@@ -235,6 +235,8 @@ int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
 void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
   XMLReader *reader = new XMLReader(this, global, abtList, pcl);
+  connect(reader, &XMLReader::settingsPartRead, this, &SCTimeXMLSettings::continueAfterReading);
+  connect(this, &SCTimeXMLSettings::settingsRead, reader, &XMLReader::deleteLater);
   reader->open();
 }
 

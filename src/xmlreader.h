@@ -2,6 +2,7 @@
 #define xmlreader_h
 
 #include <QObject>
+#include <QString>
 #include "sctimexmlsettings.h"
 
 class AbteilungsListe;
@@ -27,6 +28,8 @@ class XMLReader: public QObject
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager networkAccessManager;
+    signals:
+      void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl, bool success, QString message);
 };
 
 #endif

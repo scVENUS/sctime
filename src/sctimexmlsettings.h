@@ -97,8 +97,6 @@ public:
 
       m_lastSave = QDateTime();
 
-      connect(this, &SCTimeXMLSettings::settingsPartRead, this, &SCTimeXMLSettings::continueAfterReading);
-
 #ifdef ATOS_ETV_2018
       m_overtimeRegulatedSR = "sc_angeordnete_regulierte_mehrarbeit";
       m_overtimeOtherSR = "sc_angeordnete_sonstige_mehrarbeit";
@@ -525,7 +523,6 @@ public:
 
     signals:
         void settingsRead();
-        void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
 };
 
 #endif

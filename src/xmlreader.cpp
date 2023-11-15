@@ -43,7 +43,7 @@ void XMLReader::open()
             if (global)
                 settings->backupSettingsXml = false;
         }
-        emit settings->settingsPartRead(global, abtList, pcl); //FIXME: right signal?
+        emit settingsPartRead(global, abtList, pcl, false, ""); 
     }
     parse(&f);
 
@@ -59,21 +59,23 @@ void XMLReader::open()
 void XMLReader::parse(QIODevice *input)
 {
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
-    // TODO
-
     QNetworkReply* netinput = dynamic_cast<QNetworkReply*>(input);
     QFile* fileinput = dynamic_cast<QFile*>(input);
     if (netinput!=NULL) {
         if (netinput->error()!=QNetworkReply::NoError) {
-        emit settings->settingsPartRead(global, abtList, pcl); 
-        return;
+            QString msg="";
+            if (netinput->error()!=QNetworkReply::ContentNotFoundError) {
+                msg="Error on reading settings";
+            }
+            emit settingsPartRead(global, abtList, pcl, false, msg); 
+            return;
         }
         if (!netinput->isFinished()) {
             return;
         }
     }
     if (fileinput!=NULL && !fileinput->exists()) {
-      emit settings->settingsPartRead(global, abtList, pcl); 
+      emit settingsPartRead(global, abtList, pcl, false, ""); 
       return;
     }
     QDomDocument doc("settings");
@@ -86,7 +88,7 @@ void XMLReader::parse(QIODevice *input)
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
         if (global)
             settings->backupSettingsXml = false;
-        emit settings->settingsPartRead(global, abtList, pcl); //FIXME: right signal?
+        emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file");
     }
 #ifndef RESTCONFIG
     // when closing a networkrequest, we get another finished signal. Not sure if this bug or feature - for now just dont close it
@@ -540,5 +542,5 @@ void XMLReader::parse(QIODevice *input)
         int idx = aktiveskontotag.attribute("index").toInt();
         abtList->setAsAktiv(abtstr, kostr, ukostr, idx);
     }
-    emit settings->settingsPartRead(global, abtList, pcl);
+    emit settingsPartRead(global, abtList, pcl, true, "");
 }

@@ -90,13 +90,13 @@ void DateChanger::resetLists()
             }
         }
     }
-    expectedActions = 2;
-    lastconn = connect(m_timeMainWindow->settings, &SCTimeXMLSettings::settingsPartRead, this, &DateChanger::updatePunchClock);
+    expectedActions = 1;
+    lastconn = connect(m_timeMainWindow->settings, &SCTimeXMLSettings::settingsRead, this, &DateChanger::updatePunchClock);
     if (changeToday && (m_timeMainWindow->abtListToday != m_timeMainWindow->abtList))
     {
         m_timeMainWindow->abtListToday->clearKonten();
         m_timeMainWindow->m_punchClockListToday->clear();
-        expectedActions+=2;
+        expectedActions++;
         m_timeMainWindow->settings->readSettings(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
     }
 
