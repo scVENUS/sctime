@@ -33,6 +33,7 @@ void XMLWriter::writeSettings(bool global) {
       trace(QObject::tr("zeit-DAY.sh not written because it has already been checked in"));
       // nothing to do, so just emit success signal
       emit settingsPartWritten(global, abtList, pcl);
+      return;
   }
   #ifndef NO_XML
   QDomDocument doc("settings");
