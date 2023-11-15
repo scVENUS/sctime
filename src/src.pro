@@ -4,24 +4,25 @@ CONFIG += c++11
 # you have to explicitly recompile sctime.cpp whenever you change this value
 VERSION = $$system(git describe --always||echo UNDEFINED)
 DEFINES += APP_VERSION=$$VERSION
-QT += xml gui core network sql widgets
+
+QT += xml gui core network widgets
 TARGET = sctime
 CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
-SOURCES = abteilungsliste.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
-          datasource.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
+SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
+          datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
           specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
-          textviewerdialog.cpp sctimeapp.cpp
-HEADERS = abteilungsliste.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
-          datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h eintragsliste.h\
+          textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
+HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
+          datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
           pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
           setupdsm.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
           unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
-          specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h
+          specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
 FORMS = datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui punchclockdialogbase.ui pausedialogbase.ui
@@ -100,6 +101,15 @@ lrelease.commands = "$$QMAKE_LRELEASE" "${QMAKE_FILE_IN}" -qm "${QMAKE_FILE_OUT}
 lrelease.variable_out = RELEASED_TRANSLATIONS
 lrelease.CONFIG += no_link
 QMAKE_EXTRA_COMPILERS += lrelease
+
+wasm {
+  QTPLUGIN.imageformats = qico qgif
+  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=http://127.0.0.1:8000/app/sctime.wasm.debug.wasm
+  DEFINES += RESTONLY
+}
+!wasm {
+  QT += sql
+}
 
 win32-msvc*{
   CONFIG += embed_manifest_exe

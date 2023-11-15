@@ -35,6 +35,9 @@ class EintragsListe;
 class StatusBar;
 class QTextBrowser;
 class QLocalServer;
+class DateChanger;
+class DSM;
+
 
 #include "defaultcommentreader.h"
 #include "datasource.h"
@@ -50,11 +53,13 @@ class TimeMainWindow: public QMainWindow
 {
     Q_OBJECT
 public:
-    TimeMainWindow(Lock* lock, QString logfile);
+    TimeMainWindow(Lock* lock, DSM* dsm, QString logfile);
     QTreeWidget* getKontoTree();
     virtual ~TimeMainWindow();
     SCTimeXMLSettings* settings;
     void infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links=false);
+
+    friend class DateChanger;
     
   public slots:
 
@@ -117,6 +122,7 @@ public:
     void showWorkdayWarning();
     void checkComment(const QString& abt, const QString& ko , const QString& uko,int idx);
     void commitKontenliste(DSResult data);
+    void commitKontenlisteFinished();
     void displayLastLogEntry();
     void resume(); // APM event
     void suspend(); // APM event
@@ -183,9 +189,11 @@ public:
     void callNightTimeEndDialog();
     void callCantSaveDialog();
     void callSwitchDateErrorDialog();
+    void initialSettingsRead();
     void readIPCMessage();
     void showContextMenu(const QPoint &pos);
     void cleanupUnterKontoDialog(int result);
+    void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -200,7 +208,7 @@ public:
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
-    void changeDate(const QDate& datum, bool changeVisible, bool changeToday);
+    void changeDate(QDate datum, bool changeVisible, bool changeToday);
     void loadPCCData(const QString& pccdata);
     KontoTreeView* kontoTree;
     Lock *m_lock;
@@ -260,6 +268,10 @@ public:
     QIcon pausedWindowIcon;
     UnterKontoDialog* m_unterKontoDialog;
     QMetaObject::Connection m_unterKontoDialogTimerConnection;
-
+    DateChanger * m_dateChanger;
+    DSM* m_dsm;
 };
+
+
+
 #endif

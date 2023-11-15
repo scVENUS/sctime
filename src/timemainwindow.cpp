@@ -69,8 +69,11 @@
 #include "specialremunerationsdialog.h"
 #include "util.h"
 #include "textviewerdialog.h"
+#include "accountlistcommiter.h"
 #include "punchclockchecker.h"
 #include "pausedialog.h"
+#include "datechanger.h"
+#include "xmlwriter.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -92,7 +95,7 @@ void logError(const QString &msg) {
 }
 
 /** Erzeugt ein neues TimeMainWindow, das seine Daten aus abtlist bezieht. */
-TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
+TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
      windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused")  {
   if (!logfile.isNull() && !logfile.isEmpty()) {
     logFile = new QFile(logfile);
@@ -103,11 +106,11 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
     }
   }
   m_lock = lock;
+  m_dsm=dsm;
   paused = false;
   entryBeingEdited = false;
   sekunden = 0;
   setObjectName(tr("sctime"));
-  std::vector<QString> xmlfilelist;
   QDate heute;
   abtListToday=new AbteilungsListe(heute.currentDate(), zk);
   abtList=abtListToday;
@@ -124,60 +127,18 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   inPersoenlicheKontenAllowed=true;
   powerToolBar = NULL;
   cantSaveDialog = NULL;
-  settings=new SCTimeXMLSettings();
-  settings->readSettings(abtList, m_punchClockList);
-
-  settings->getDefaultCommentFiles(xmlfilelist);
-  qtDefaultFont=QApplication::font();
-  if (settings->useCustomFont())
-  {
-    QString custFont=settings->customFont();
-    int custFontSize=settings->customFontSize();
-    QApplication::setFont(QFont(custFont,custFontSize));
-  }
-
-  additionalLicensesFile = QCoreApplication::applicationDirPath()+
-                           "/licenses/overview.html";
-  QFileInfo infofile(additionalLicensesFile);
-
-  defaultCommentReader.read(abtList,xmlfilelist);
-  DefaultTagReader defaulttagreader;
-  defaulttagreader.read(&defaultTags);
-
-  // restore size+position
-  QSize size = QSize(700,400);
-  QPoint pos = QPoint(0,0);
-  settings->getMainWindowGeometry(pos,size);
-  resize(size);
-  move(pos);
+  m_dateChanger = NULL;
 
   statusBar = new StatusBar(this);
   setStatusBar(statusBar);
   std::vector<int> columnwidthlist;
 
-  settings->getColumnWidthList(columnwidthlist);
-
-  kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
-  kontoTree->closeFlaggedPersoenlicheItems();
-  kontoTree->showPersoenlicheKontenSummenzeit(settings->persoenlicheKontensumme());
 #ifndef Q_OS_MAC
   setWindowIcon(windowIcon);
 #endif
 
-  setCentralWidget(kontoTree);
-
-  if (!settings->showTypeColumn()) {
-    kontoTree->hideColumn(KontoTreeItem::COL_TYPE);
-  }
-  if (!settings->showPSPColumn()) {
-    kontoTree->hideColumn(KontoTreeItem::COL_PSP);
-  }
-
   toolBar   = new QToolBar(tr("Main toolbar"), this);
   toolBar->setIconSize(QSize(22,22));
-
-  configClickMode(settings->singleClickActivation());
-
   QMenu * kontomenu = menuBar()->addMenu(tr("&Account"));
   QMenu * zeitmenu = menuBar()->addMenu(tr("&Time"));
   QMenu * remunmenu = menuBar()->addMenu(tr("&Remuneration"));
@@ -188,24 +149,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
-  loadPCCData(settings->previousPCCData());
-  loadPCCData(settings->currentPCCData());
-
-  minutenTimer = new QTimer(this);
-  connect( minutenTimer,SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
-  lastMinuteTick = startTime;
-  minutenTimer->setInterval(60000); //Alle 60 Sekunden ticken
-  minutenTimer->start();
-  // Timer für "angebrochene" Minuten nach einer Pause
-  restTimer = new QTimer(this);
-  restTimer->setSingleShot(true);
-  connect(restTimer, SIGNAL(timeout()), minutenTimer, SLOT(start()));
-  connect(restTimer, SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
-
-  autosavetimer=new QTimer(this);
-  connect( autosavetimer,SIGNAL(timeout()), this, SLOT(save()));
-  autosavetimer->setInterval(300000); //Alle 5 Minuten ticken.
-  autosavetimer->start();
   QAction* pauseAction = new QAction( QIcon(":/hi22_action_player_pause"), tr("&Pause"), this);
   pauseAction->setShortcut(Qt::CTRL+Qt::Key_P);
   connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));
@@ -337,9 +280,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   QAction* min5MinusAction = new QAction(QIcon(":/hi22_action_1downarrow" ),
                                             tr("Decrease time"), this);
 
-  QAction* min1MinusAction = new QAction(tr("Minimal decrease time"), this);
-  min1MinusAction->setShortcut(Qt::CTRL+Qt::Key_Comma);
-
   QAction* fastPlusAction = new QAction(QIcon(":/hi22_action_2uparrow" ),
                                            tr("Increase time fast"), this);
   QAction* fastMinusAction = new QAction(QIcon(":/hi22_action_2downarrow" ),
@@ -370,11 +310,8 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   publicHolidayModeAction->setCheckable(true);
   connect(publicHolidayModeAction, SIGNAL(toggled(bool)), this, SLOT(switchPublicHolidayMode(bool)));
 
-  connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
-
   connect(min5PlusAction, SIGNAL(triggered()), this, SLOT(addTimeInc()));
   connect(min5MinusAction, SIGNAL(triggered()), this, SLOT(subTimeInc()));
-  connect(min1MinusAction, SIGNAL(triggered()), this, SLOT(subMinimalTimeInc()));
   connect(fastPlusAction, SIGNAL(triggered()), this, SLOT(addFastTimeInc()));
   connect(fastMinusAction, SIGNAL(triggered()), this, SLOT(subFastTimeInc()));
 
@@ -390,8 +327,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   connect(this,SIGNAL(unterkontoSelected(bool)), bereitschaftsAction, SLOT(setEnabled(bool)));
 
   connect(this,SIGNAL(aktivierbarerEintragSelected(bool)), eintragActivateAction, SLOT(setEnabled(bool)));
-
-  updateSpecialModes(true);
 
   toolBar->addAction(editUnterKontoAction);
   toolBar->addAction(saveAction);
@@ -438,6 +373,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   hilfemenu->addAction(helpAction);
   hilfemenu->addAction(aboutAction);
   hilfemenu->addAction(qtAction);
+  additionalLicensesFile = QCoreApplication::applicationDirPath()+
+                           "/licenses/overview.html";
+  QFileInfo infofile(additionalLicensesFile);
+
   if (infofile.exists()) {
     hilfemenu->addAction(addlicAction);
   }
@@ -445,12 +384,89 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   hilfemenu->addAction(logAction);
 
   addToolBar(toolBar);
+
+  settings=new SCTimeXMLSettings();
+  connect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+  settings->readSettings(abtList, m_punchClockList);
+}
+
+void TimeMainWindow::initialSettingsRead() {
+  disconnect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+  std::vector<QString> xmlfilelist;
+  std::vector<int> columnwidthlist;
+  settings->getDefaultCommentFiles(xmlfilelist);
+  qtDefaultFont=QApplication::font();
+  if (settings->useCustomFont())
+  {
+    QString custFont=settings->customFont();
+    int custFontSize=settings->customFontSize();
+    QApplication::setFont(QFont(custFont,custFontSize));
+  }
+  
+  defaultCommentReader.read(abtList,xmlfilelist);
+  DefaultTagReader defaulttagreader;
+  defaulttagreader.read(&defaultTags);
+
+  // restore size+position
+  #ifndef RESTONLY
+  QSize size = QSize(700,400);
+  QPoint pos = QPoint(0,0);
+  settings->getMainWindowGeometry(pos,size);
+  resize(size);
+  move(pos);
+  #endif
+
+  settings->getColumnWidthList(columnwidthlist);
+
+  QAction* min1MinusAction = new QAction(tr("Minimal decrease time"), this);
+  min1MinusAction->setShortcut(Qt::CTRL+Qt::Key_Comma);
+  connect(min1MinusAction, SIGNAL(triggered()), this, SLOT(subMinimalTimeInc()));
+
+  kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
+  connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
+  kontoTree->closeFlaggedPersoenlicheItems();
+  kontoTree->showPersoenlicheKontenSummenzeit(settings->persoenlicheKontensumme());
+  kontoTree->addAction(min1MinusAction);
+#ifndef Q_OS_MAC
+  setWindowIcon(QIcon(":/window_icon"));
+#endif
+
+  setCentralWidget(kontoTree);
+
+  if (!settings->showTypeColumn()) {
+    kontoTree->hideColumn(KontoTreeItem::COL_TYPE);
+  }
+  if (!settings->showPSPColumn()) {
+    kontoTree->hideColumn(KontoTreeItem::COL_PSP);
+  }
+
+  configClickMode(settings->singleClickActivation());
+  updateSpecialModes(true);
+
+  loadPCCData(settings->previousPCCData());
+  loadPCCData(settings->currentPCCData());
+
+  minutenTimer = new QTimer(this);
+  connect( minutenTimer,SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
+  lastMinuteTick = startTime;
+  minutenTimer->setInterval(60000); //Alle 60 Sekunden ticken
+  minutenTimer->start();
+  // Timer für "angebrochene" Minuten nach einer Pause
+  restTimer = new QTimer(this);
+  restTimer->setSingleShot(true);
+  connect(restTimer, SIGNAL(timeout()), minutenTimer, SLOT(start()));
+  connect(restTimer, SIGNAL(timeout()), this, SLOT(minuteHochzaehlen()));
+
+  autosavetimer=new QTimer(this);
+  connect( autosavetimer,SIGNAL(timeout()), this, SLOT(save()));
+  autosavetimer->setInterval(300000); //Alle 5 Minuten ticken.
+  autosavetimer->start();
+  
   zeitChanged();
   changeShortCutSettings(NULL); // Unterkontenmenues deaktivieren...
 
   updateCaption();
   kontoTree->setAcceptDrops(settings->dragNDrop());
-  kontoTree->addAction(min1MinusAction);
   kontoTree->showAktivesProjekt();
   kontoTree->updateColumnWidth();
   kontoTree->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -458,16 +474,20 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QString logfile):QMainWindow(), start
   //selected
   kontoTree->closeFlaggedPersoenlicheItems();
   showAdditionalButtons(settings->powerUserView());
-  connect(kontenDSM, SIGNAL(finished(DSResult)), this, SLOT(commitKontenliste(DSResult)));
-  connect(bereitDSM, SIGNAL(finished(DSResult)), this, SLOT(commitBereit(DSResult)));
-  connect(specialRemunDSM, SIGNAL(finished(DSResult)), this, SLOT(commitSpecialRemun(DSResult)));
-  connect(kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  connect(bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  connect(specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+
+  m_dsm->setup(settings);
+
+  connect(m_dsm->kontenDSM, SIGNAL(finished(DSResult)), this, SLOT(commitKontenliste(DSResult)));
+  connect(m_dsm->bereitDSM, SIGNAL(finished(DSResult)), this, SLOT(commitBereit(DSResult)));
+  connect(m_dsm->specialRemunDSM, SIGNAL(finished(DSResult)), this, SLOT(commitSpecialRemun(DSResult)));
+  connect(m_dsm->kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+  connect(m_dsm->bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+  connect(m_dsm->specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
+  QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
   connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
-  QMetaObject::invokeMethod(bereitDSM, "start", Qt::QueuedConnection);
+  QMetaObject::invokeMethod(m_dsm->bereitDSM, "start", Qt::QueuedConnection);
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
-  QMetaObject::invokeMethod(specialRemunDSM, "start", Qt::QueuedConnection);
+  QMetaObject::invokeMethod(m_dsm->specialRemunDSM, "start", Qt::QueuedConnection);
   specialRemunAction->setEnabled(false);
 
   m_ipcserver = new QLocalServer(this);
@@ -945,10 +965,16 @@ void TimeMainWindow::save()
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    settings->writeSettings(abtListToday, m_punchClockListToday);
+    XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday);
+    connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
+    connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+    writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
-      settings->writeSettings(abtList, m_punchClockList);
+      writer=new XMLWriter(settings, abtList, m_punchClockList);
+      connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
+      connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+      writer->writeAllSettings();
       settings->writeShellSkript(abtList, m_punchClockList);
     }
   }
@@ -1195,132 +1221,60 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
  * Aendert das Datum: dazu werden zuerst die aktuellen Zeiten und Einstellungen gespeichert,
  * sodann die Daten fuer das angegebene Datum neu eingelesen.
  */
-void TimeMainWindow::changeDate(const QDate &datum, bool changeVisible, bool changeToday)
+void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToday)
 {
-    if (checkConfigDir())
+  if (checkConfigDir()||m_dateChanger!=NULL)
+  {
+    checkLock();
+
+    kontoTree->flagClosedPersoenlicheItems();
+    std::vector<int> columnwidthlist;
+    kontoTree->getColumnWidthList(columnwidthlist);
+    settings->setColumnWidthList(columnwidthlist);
+    m_dateChanger = new DateChanger(this, datum, changeVisible, changeToday);
+    connect(m_dateChanger, &DateChanger::finished, this, &TimeMainWindow::changeDateFinished);
+    m_dateChanger->start();
+  }
+  else
+  {
+    callSwitchDateErrorDialog();
+  }
+}
+
+void TimeMainWindow::changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel)
+{
+  kontoTree->load(abtList);
+  kontoTree->closeFlaggedPersoenlicheItems();
+  kontoTree->showAktivesProjekt();
+  if (changeToday)
+  {
+    loadPCCData(settings->previousPCCData());
+    loadPCCData(settings->currentPCCData());
+    m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay() / 1000, m_PCSYesterday);
+    m_PCSToday->date = abtListToday->getDatum();
+    updateSpecialModes(false);
+  }
+  zeitChanged();
+  emit(currentDateSelected(currentDateSel));
+  statusBar->dateWarning((abtList != abtListToday), abtList->getDatum());
+  if (changeVisible)
+  {
+    trace(tr("Visible day set to: ") + date.toString());
+  }
+  if (changeToday)
+  {
+    trace(tr("Today is now: ") + date.toString());
+  }
+  // Append Warning if current file is checked in
+  if (!currentDateSel)
+  {
+    if (abtList->checkInState())
     {
-        checkLock();
-        QDate currentDate = QDate::currentDate();
-        bool currentDateSel = (datum == currentDate);
-        kontoTree->flagClosedPersoenlicheItems();
-        std::vector<int> columnwidthlist;
-        kontoTree->getColumnWidthList(columnwidthlist);
-        settings->setColumnWidthList(columnwidthlist);
-
-        QString abt,ko,uko;
-        int idx;
-
-        abtListToday->getAktiv(abt,ko,uko,idx);
-
-        if (abtListToday->getDatum().addDays(1)==currentDate) {
-            m_PCSToday->date=abtListToday->getDatum();
-            settings->setPreviousPCCData(m_PCSToday->serialize());
-        }
-
-        if (abtListToday != abtList)
-        {
-            if (!(settings->writeSettings(abtListToday, m_punchClockListToday) &&
-                 settings->writeSettings(abtList, m_punchClockList)
-                 )) {
-                   return;
-                 }
-            settings->writeShellSkript(abtListToday, m_punchClockListToday);
-            settings->writeShellSkript(abtList, m_punchClockList);
-            if (changeVisible) {
-              delete abtList;
-              abtList=NULL;
-              delete m_punchClockList;
-              m_punchClockList=NULL;
-            }
-        }
-        else
-        {
-            if (!settings->writeSettings(abtList, m_punchClockList)) {
-                return;
-            }
-            settings->writeShellSkript(abtList, m_punchClockList);
-        }
-        if ((datum==abtListToday->getDatum())&&changeVisible)
-        {
-            abtList = abtListToday;
-            m_punchClockList = m_punchClockListToday;
-        }
-        if (!(datum==abtListToday->getDatum())&&changeVisible) {
-            abtList = new AbteilungsListe(datum, abtListToday);
-            m_punchClockList = new PunchClockList();
-        }
-        if (changeToday) {
-            if (abtListToday->getDatum() != currentDate)
-            {
-               if (abtList->getDatum() == currentDate) {
-                 abtListToday=abtList;
-                 m_punchClockListToday=m_punchClockList;
-               } else {
-                 // if an entry of today is being edited, we don't switch the view to the current date
-                 if (entryBeingEdited&&(abtListToday == abtList)) {
-                   abtListToday = new AbteilungsListe(datum, abtListToday);
-                 } else {
-                   abtListToday->setDatum(datum);
-                 }
-               }
-            }
-        }
-
-        if (changeToday&&(abtListToday != abtList)) {
-            abtListToday->clearKonten();
-            m_punchClockListToday->clear();
-            settings->readSettings(abtListToday, m_punchClockListToday);
-        }
-
-        abtList->clearKonten();
-        m_punchClockList->clear();
-        settings->readSettings(abtList, m_punchClockList);
-
-        auto lastentry = std::prev(m_punchClockListToday->end());
-        auto now=QDateTime::currentDateTime();
-        int diff=now.time().msecsSinceStartOfDay()/1000-(lastentry->second);
-        if ((diff<=90) && (diff>=-90)) {
-          logError("change date in range");
-          m_punchClockListToday->setCurrentEntry(lastentry);
-        } else {
-          logError("change date out of range");
-          m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
-          m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
-        }
-
-        abtListToday->setAsAktiv(abt,ko,uko,idx);
-
-        kontoTree->load(abtList);
-        kontoTree->closeFlaggedPersoenlicheItems();
-        kontoTree->showAktivesProjekt();
-        if (changeToday)
-        {
-            loadPCCData(settings->previousPCCData());
-            loadPCCData(settings->currentPCCData());
-            m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
-            m_PCSToday->date=abtListToday->getDatum();
-            updateSpecialModes(false);
-        }
-        zeitChanged();
-        emit(currentDateSelected(currentDateSel));
-        statusBar->dateWarning((abtList!=abtListToday), abtList->getDatum());
-        if (changeVisible) {
-          trace(tr("Visible day set to: ") + datum.toString());
-        }
-        if (changeToday) {
-          trace(tr("Today is now: ") + datum.toString());
-        }
-        //Append Warning if current file is checked in
-        if (!currentDateSel)
-        {
-            if (abtList->checkInState())
-            {
-                statusBar->appendWarning(!currentDateSel, tr(" -- This day has already been checked in!"));
-            }
-        }
-    } else {
-      callSwitchDateErrorDialog();
+      statusBar->appendWarning(!currentDateSel, tr(" -- This day has already been checked in!"));
     }
+  }
+  m_dateChanger->deleteLater();
+  m_dateChanger=NULL;
 }
 
 // changes the visible date and updates todays date if we are not on the current date
@@ -1337,35 +1291,29 @@ void TimeMainWindow::changeTodaysDate(const QDate &date) {
 void TimeMainWindow::refreshKontoListe() {
   statusBar->showMessage(tr("Reading account list..."));
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
-  QTimer::singleShot(100, kontenDSM, SLOT(start()));
+  QTimer::singleShot(100, m_dsm->kontenDSM, SLOT(start()));
 }
 
 void TimeMainWindow::commitKontenliste(DSResult data) {
-  abtList->kontoDatenInfoSuccess = true;
-  kontoTree->flagClosedPersoenlicheItems();
-  std::vector<int> columnwidthlist;
-  kontoTree->getColumnWidthList(columnwidthlist);
-  settings->setColumnWidthList(columnwidthlist);
+  // todo TimeMainWindow is longlived, delete commiter somewhere, otherwise memory leak
+  auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList);
+  
   if (checkConfigDir()) {
     checkLock();
-    settings->writeSettings(abtList, m_punchClockList); // settings wont survive the reload
-    int diff = abtList->getZeitDifferenz();
-    abtList->reload(data);
-    settings->readSettings(abtList, NULL);
-    if (abtList!=abtListToday) {
-        settings->writeSettings(abtListToday, m_punchClockList); // settings wont survive the reload
-        abtListToday->reload(data);
-        settings->readSettings(abtListToday, NULL);
-    }
-    kontoTree->load(abtList);
-    abtList->setZeitDifferenz(diff);
+    connect(commiter, &AccountListCommiter::finished, this, &TimeMainWindow::commitKontenlisteFinished );
+    commiter->start();
+  } else {
+    QApplication::restoreOverrideCursor();
   }
-  kontoTree->closeFlaggedPersoenlicheItems();
+}
+
+void TimeMainWindow::commitKontenlisteFinished() {
   statusBar->showMessage(tr("Account list successfully read."), 2000);
   QApplication::restoreOverrideCursor();
   QMetaObject::invokeMethod(this, "aktivesKontoPruefen", Qt::QueuedConnection);
   emit accountListRead();
 }
+
 
 /**
  * Fuegt das aktuell selektierte Unterkonto den Persoenlichen Konten hinzu.

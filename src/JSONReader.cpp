@@ -26,22 +26,44 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QProcess>
-
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QThread>
+#include <QEventLoop>
+#include <QApplication>
 
 
 JSONSource::JSONSource(JSONReaderBase *jsonreader)
-  :Datasource(), currentversion(JSONReaderBase::INVALIDDATA), jsonreader(jsonreader) {}
+  :Datasource(), currentversion(JSONReaderBase::INVALIDDATA), jsonreader(jsonreader) {
+          connect(this->jsonreader, SIGNAL(aborted()), this, SLOT(jsonfailed()));
+          connect(this->jsonreader, SIGNAL(finished()), this, SLOT(jsonreceived()));
+  }
 
 void JSONSource::appendStringToRow(QStringList& row, const QJsonObject& object, const QString& field) {
   row.append(object[field].toString());
 }
 
-bool JSONSource::read(DSResult* const result) {
-  currentversion=jsonreader->loadDataNewerThan(currentversion);
-  if (currentversion==JSONReaderBase::INVALIDDATA)
-    return false;
-  return convertData(result);
+void JSONSource::start() {
+  if (broken) {
+     emit failed();
+     return;
+  }
+  jsonreader->loadDataNewerThan(currentversion);
 }
+
+void JSONSource::jsonreceived() {
+   DSResult result;
+   if (convertData(&result)) {
+      emit finished(result);
+   } else {
+      emit failed();
+   }
+}
+  void JSONSource::jsonfailed() {
+     emit failed();
+  }
+
 
 /*
  * creates a new JSONSource-Object. JSONSource reads from aJSONReader Object and creates a flat table,
@@ -126,7 +148,8 @@ bool JSONAccountSource::convertData(DSResult* const result) {
 }
 
 JSONReaderBase::JSONReaderBase()
-  : currentversion(INVALIDDATA) {}
+  : currentversion(INVALIDDATA) {
+  }
   
 QJsonDocument &JSONReaderBase::getData()
 {
@@ -135,19 +158,21 @@ QJsonDocument &JSONReaderBase::getData()
 
 
 
-int JSONReaderBase::loadDataNewerThan(int version)
+void JSONReaderBase::loadDataNewerThan(int version)
 {
-  if ((version<currentversion)&&(currentversion!=INVALIDDATA))
-     return currentversion;
   currentversion=version+1;
-  QByteArray byteData;
+  /*QByteArray byteData;
   try {
      byteData = getByteArray();
   } catch (JSONReaderException *e) {
     return INVALIDDATA;
   }
-  data=QJsonDocument::fromJson(byteData);
-  return currentversion;
+  */
+  requestData();
+}
+
+void JSONReaderBase::processByteArray(QByteArray byteData) {
+   data=QJsonDocument::fromJson(byteData);
 }
 
 JSONOnCallSource::JSONOnCallSource(JSONReaderBase *jsonreader)
@@ -191,25 +216,31 @@ bool JSONSpecialRemunSource::convertData(DSResult* const result) {
   return true;
 }
 
-
-QByteArray JSONReaderFile::getByteArray()
+void JSONReaderUrl::requestData()
 {
-  QFile loadFile(path);
-
-  if (!loadFile.open(QIODevice::ReadOnly)) {
-      trace(QObject::tr("Couldn't open json file %1.").arg(path));
-      loadFile.close();
-      throw(new JSONReaderException());
-  }
-
-  QByteArray byteData = loadFile.readAll();
-  loadFile.close();
-  return byteData;
+  auto request = QNetworkRequest(QUrl(uri));
+  networkAccessManager.get(request);
 }
 
-JSONReaderFile::JSONReaderFile(const QString& _path): JSONReaderBase(), path(_path) {};
+void JSONReaderUrl::receiveData(QNetworkReply *reply)
+{
+  auto err=reply->error();
+  if (err!=QNetworkReply::NoError) {
+        trace(tr("Couldn't open json from uri %1.").arg(uri));
+        emit aborted();
+        return;
+  }
+  QByteArray byteData = reply->readAll();
+  processByteArray(byteData);
+  emit finished();
+}
 
-QByteArray JSONReaderCommand::getByteArray()
+JSONReaderUrl::JSONReaderUrl(const QString& _uri): JSONReaderBase(), uri(_uri) {
+        connect(&networkAccessManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(receiveData(QNetworkReply *)));
+};
+
+#ifndef RESTONLY
+void JSONReaderCommand::requestData()
 {
   QProcess* process = new QProcess(parent);
   process->start(command,QIODevice::ReadOnly);
@@ -217,17 +248,21 @@ QByteArray JSONReaderCommand::getByteArray()
   if (!process->waitForFinished(-1)) {
     logError(QObject::tr("Cannot run command '%1': %2").arg(command).arg(process->error()));
     delete process;
-    throw(new JSONReaderException());
+    emit aborted();
+    return;
   }
   if (process->exitCode()) {
     logError(QObject::tr("Command '%1' has non-zero exitcode: %s2").arg(command, process->exitCode()));
     delete process;
-    throw(new JSONReaderException());
+    emit aborted();
+    return;
   }
   QByteArray byteData = process->readAllStandardOutput();
   delete process;
 
-  return byteData;
+  processByteArray(byteData);
+  emit finished();
 }
 
 JSONReaderCommand::JSONReaderCommand(const QString& _command, QObject* _parent): JSONReaderBase(), command(_command), parent(_parent) {};
+#endif

@@ -19,62 +19,70 @@
 #define JSONREADER_H
 
 #include <QString>
-#include <QException>
 
 #include <QJsonDocument>
+#include <QNetworkReply>
 #include "datasource.h"
 
-class JSONReaderException : public QException
+class JSONReaderBase: public QObject
 {
-public:
-    void raise() const override { throw *this; }
-    JSONReaderException *clone() const override { return new JSONReaderException(*this); }
-};
-
-class JSONReaderBase
-{
+  Q_OBJECT
 public:
   const static int INVALIDDATA=-1;
   virtual ~JSONReaderBase() {};
-  virtual int loadDataNewerThan(int version);
-  virtual QByteArray getByteArray()=0;
+  virtual void loadDataNewerThan(int version);
+  virtual void requestData()=0;
   virtual QJsonDocument& getData();
+  virtual void processByteArray(QByteArray byteData);
+signals:
+  void aborted();
+  void finished();
 private:
   QJsonDocument data;
   int currentversion;
 protected:
   JSONReaderBase();
+  QNetworkAccessManager networkAccessManager;
 };
 
-class JSONReaderFile: public JSONReaderBase
+class JSONReaderUrl: public JSONReaderBase
 {
+Q_OBJECT
 public:
-  JSONReaderFile(const QString& path);
-  virtual QByteArray getByteArray();
-  virtual ~JSONReaderFile() {};
+  JSONReaderUrl(const QString& uri);
+  virtual void requestData();
+  virtual ~JSONReaderUrl() {};
+public slots:
+  virtual void receiveData(QNetworkReply *reply);
 private:
-  const QString path;
+  const QString uri;
 };
 
+#ifndef RESTONLY
 class JSONReaderCommand: public JSONReaderBase
 {
 public:
   const static int INVALIDDATA=-1;
   JSONReaderCommand(const QString& command, QObject* parent);
-  virtual QByteArray getByteArray();
+  virtual void requestData();
   virtual ~JSONReaderCommand() {};
 private:
   const QString command;
   QObject* parent;
 };
+#endif //RESTONLY
 
 class JSONSource: public Datasource
 {
+  Q_OBJECT;
 public:
   JSONSource(JSONReaderBase *jsonreader);
   virtual ~JSONSource() {};
-  virtual bool read(DSResult* const result);
   virtual QString toString() {return "JSONSource";};
+public slots:
+  virtual void start();
+  virtual void jsonreceived();
+  virtual void jsonfailed();
 private: 
   int currentversion;
 protected:

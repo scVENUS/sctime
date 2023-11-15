@@ -22,38 +22,58 @@
 #include <QTextStream>
 #include <QStringList>
 #include <QFile>
+#ifndef RESTONLY
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#endif
 #include <QVariant>
 #include "globals.h"
 
 static bool readFile(DSResult* const result, QTextStream &ts, const QString &sep, int columns, const QString &path);
 
-Datasource::Datasource():broken(false) {}
-
-DatasourceManager::DatasourceManager(const QString& name):name(name) {}
+DatasourceManager::DatasourceManager(const QString& name, QList<Datasource*>* sources):name(name) {
+   lastidx=0;
+   this->sources=sources;
+   if (sources->length()==0) {
+           return;
+   }
+   QObject::connect((*sources)[0], &Datasource::finished, this, &DatasourceManager::dsfinished);
+   for (int i=1; i<sources->length(); i++) {
+      QObject::connect((*sources)[i], &Datasource::finished, this, &DatasourceManager::dsfinished);
+      QObject::connect((*sources)[i-1], &Datasource::failed, (*sources)[i], &Datasource::start);
+   }
+}
 
 DatasourceManager::~DatasourceManager() {
   Datasource *ds;
-  foreach (ds, sources) delete ds;
+  foreach (ds, *sources) delete ds;
+  delete sources;
 }
 
 void DatasourceManager::start() {
   Datasource *ds;
-  DSResult result;
-  foreach (ds, sources) {
-    if (ds->broken) continue;
-    if (ds->read(&result)) {
-      emit finished(result);
-      return;
-    }
-    result.clear();
+  if (sources->length()==0) {
+    logError(QObject::tr("%1: no data source available").arg(name));
+    emit aborted();
+    return;
   }
+  ds=(*sources)[0];
+  ds->start();
+}
+
+void DatasourceManager::dsfinished(const DSResult& data) {
+  emit finished(data);
+}
+
+void DatasourceManager::lastdsnoresult() {
   logError(QObject::tr("%1: no data source available").arg(name));
   emit aborted();
 }
+
+
+#ifndef RESTONLY
 
 FileReader::FileReader(const QString &path, const QString&  columnSeparator, int columns)
   :Datasource(), path(path), sep(columnSeparator), columns(columns) {}
@@ -68,6 +88,15 @@ bool FileReader::read(DSResult* const result) {
   trace(QObject::tr("Reading ") + path);
   QTextStream ts(&file);
   return readFile(result, ts, sep, columns, path);
+}
+
+void FileReader::start() {
+   DSResult result;
+   if (read(&result)) {
+      emit finished(result);
+   } else {
+      emit failed();
+   }
 }
 
 static bool readFile(DSResult* const result, QTextStream &ts, const QString& sep, int columns, const QString &path) {
@@ -122,6 +151,15 @@ bool  SqlReader::read(DSResult* const result) {
   return true;
 }
 
+void SqlReader::start() {
+   DSResult result;
+   if (read(&result)) {
+      emit finished(result);
+   } else {
+      emit failed();
+   }
+}
+
 #ifndef WIN32
 #include <stdlib.h>
 #include <errno.h>
@@ -148,4 +186,16 @@ bool CommandReader::read(DSResult* const result) {
   }
   return ok;
 }
+
+void CommandReader::start() {
+   DSResult result;
+   if (read(&result)) {
+      emit finished(result);
+   } else {
+      emit failed();
+   }
+}
+
+#endif // RESTONLY
+
 #endif

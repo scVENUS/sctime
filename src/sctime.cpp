@@ -23,7 +23,6 @@
 #include <QMessageBox>
 #include <QString>
 #include <QTranslator>
-#include <QSqlDatabase>
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QLocalSocket>

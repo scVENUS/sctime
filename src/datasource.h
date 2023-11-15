@@ -22,23 +22,29 @@
 #include <QString>
 #include <QList>
 #include <QObject>
+#ifndef RESTONLY
 #include <QSqlDatabase>
+#endif
 class QStringList;
 
 typedef QList<QStringList> DSResult;
 
 /* represents a way of reading data (a list of a list of strings); the base class of all data sources. */
-class Datasource
+class Datasource: public QObject
 {
+  Q_OBJECT
 public:
-  /* false: error; */
-  virtual bool read(DSResult* const result) = 0;
-  /* the datasource detected a permanent error */
-  bool broken;
   virtual ~Datasource() {};
   virtual QString toString()=0;
+public slots:
+  virtual void start()=0;
+signals:
+  void finished(const DSResult& data);
+  void failed();
 protected:
-  Datasource();
+  /* the datasource detected a permanent error */
+  bool broken;
+  Datasource(QObject* parent=NULL): QObject(parent) {broken=false;};
 };
 
 class DatasourceManager:public QObject
@@ -46,53 +52,72 @@ class DatasourceManager:public QObject
   Q_OBJECT
 public:
   /* name: identifier for message */
-  DatasourceManager(const QString& name);
+  DatasourceManager(const QString& name, QList<Datasource*>* sources);
   const QString name;
-  QList<Datasource*> sources;
-  ~DatasourceManager();
+  virtual ~DatasourceManager();
 public slots:
   virtual void start();
+  virtual void dsfinished(const DSResult& data);
+  virtual void lastdsnoresult();
 signals:
   /* successfully finished reading */
   void finished(const DSResult& data);
   /* no datasource provided data */
   void aborted();
+private:
+  int lastidx;
+  QList<Datasource*> *sources;
 };
+
+#ifndef RESTONLY
 
 class FileReader : public Datasource
 {
+  Q_OBJECT
 public:
   FileReader(const QString &path, const QString& columnSeparator, int columns);
   virtual ~FileReader() {};
-  virtual bool read(DSResult* const result);
   const QString path, sep;
   const int columns;
   virtual QString toString() {return "FileReader_"+path;};
+public slots:
+  virtual void start();
+private:
+  bool read(DSResult* const result);
   };
 
 class SqlReader : public Datasource
 {
+  Q_OBJECT
 public:
   SqlReader(QSqlDatabase db, const QString &cmd);
   virtual ~SqlReader() {};
-  virtual bool read(DSResult* const result);
   const QString cmd;
   QSqlDatabase db;
   virtual QString toString() {return "SqlReader_"+cmd;};
+public slots:
+  virtual void start();
+private:
+  bool read(DSResult* const result);
 };
 
 
 #ifndef WIN32
 class CommandReader : public Datasource
 {
+  Q_OBJECT
 public:
   CommandReader(const QString &command, const QString& columnSeparator, int columns);
   virtual ~CommandReader() {};
-  virtual bool read(DSResult* const result);
   const QString command, sep;
   const int columns;
   virtual QString toString() {return "CommandReader_"+command;};
+public slots:
+  virtual void start();
+private:
+  bool read(DSResult* const result);
 };
+#endif
 #endif
 
 #endif // DATASOURCE_H

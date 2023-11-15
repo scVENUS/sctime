@@ -1,0 +1,16 @@
+-x
+c++
+-D
+RESTONLY
+-I
+/qt-everywhere-src-5.15.2/qtbase/include/QtWidgets
+-I
+/qt-everywhere-src-5.15.2/qtbase/include
+-I
+/qt-everywhere-src-5.15.2/qtbase/include/QtGui
+-I
+/qt-everywhere-src-5.15.2/qtbase/include/QtXml
+-I
+/qt-everywhere-src-5.15.2/qtbase/include/QtNetwork
+-I
+/qt-everywhere-src-5.15.2/qtbase/include/QtCore

@@ -18,20 +18,29 @@
 #ifndef SCTIMESETTINGS_H
 #define  SCTIMESETTINGS_H
 
+#include <QObject>
+#include <QIODevice>
 #include <QDateTime>
 #include <QPoint>
 #include <QSize>
 #include <QColor>
 #include <vector>
 #include <QString>
+#include <QNetworkAccessManager>
+#include "abteilungsliste.h"
+#include <QNetworkReply>
+#include "punchclock.h"
 
 class AbteilungsListe;
 class QTextStream;
+class XMLReader;
 class PunchClockEntry;
-class PunchClockList;
 
-class SCTimeXMLSettings
+class SCTimeXMLSettings: public QObject
 {
+   Q_OBJECT;
+   friend class XMLReader;
+   friend class XMLWriter;
 public:
     enum DefCommentDisplayModeEnum{DM_BOLD,DM_NOTUSEDBOLD,DM_NOTBOLD};
 
@@ -99,8 +108,6 @@ public:
 #endif
      
     }
-
-    bool writeSettings(AbteilungsListe* abtList, PunchClockList* pcl);
 
     void readSettings();
 
@@ -414,7 +421,7 @@ public:
     };
 
     /* the format in which timestamps are written into the configuration file */
-    QString timestampFormat() {
+    static QString timestampFormat() {
         return "yyyy-MM-dd HH:mm:ss";
     }
 
@@ -449,11 +456,11 @@ public:
 
     void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     
-    int compVersion(const QString& version1, const QString& version2);
+    static int compVersion(const QString& version1, const QString& version2);
 
-    QString color2str(const QColor& color);
+    static QString color2str(const QColor& color);
 
-    QColor str2color(const QString& str);
+    static QColor str2color(const QString& str);
 
     QString zeitKommando;
     QString m_zeitKontenKommando;
@@ -510,7 +517,12 @@ public:
 
     QString m_currentPCCdata;
     QString m_prevPCCdata;
-};
 
+    private slots:
+       void continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+
+    signals:
+        void settingsRead();
+};
 
 #endif
