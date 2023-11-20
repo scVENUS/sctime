@@ -23,17 +23,17 @@ void DateChanger::start()
     {
         expectedActions = 2;
         
-        write(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
-        write(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
         // TODO: shell scripts are not written asynchronously
         m_timeMainWindow->settings->writeShellSkript(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
         m_timeMainWindow->settings->writeShellSkript(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+        write(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        write(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
     }
     else
     {
         expectedActions = 1;
-        write(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
         m_timeMainWindow->settings->writeShellSkript(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+        write(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
     }
 }
 
