@@ -56,7 +56,7 @@
 
           var qtLoader = QtLoader({
               canvasElements : [canvas],
-              environment : {"SCTIME_USER" : getCookie("username"), "SCTIME_BASE_URL": window.location.href.substring(0,window.location.href.lastIndexOf('/'))},
+              environment : {"SCTIME_BASE_URL": window.location.href.substring(0,window.location.href.lastIndexOf('/'))+"/../"},
               showLoader: function(loaderStatus) {
                   spinner.style.display = 'block';
                   canvas.style.display = 'none';

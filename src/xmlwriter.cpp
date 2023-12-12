@@ -12,14 +12,23 @@
 
 void XMLWriter::checkReply(QNetworkReply* input) {
    if (input->isFinished()) {
+     input->deleteLater();
      emit settingsPartWritten(global, abtList, pcl);
    }
 }
 
+void XMLWriter::gotReply() {
+    auto obj=sender();
+    checkReply((QNetworkReply*)obj);
+}
+
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   auto request = QNetworkRequest(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-  networkAccessManager.put(request, ba);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
+  QNetworkReply *reply = networkAccessManager.put(request, ba);
+  connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
+  connect(reply, &QNetworkReply::errorOccurred,
+        this, &XMLWriter::gotReply);
 }
 
 void XMLWriter::writeAllSettings() {
@@ -449,9 +458,13 @@ void XMLWriter::writeSettings(bool global) {
   stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
   stream<<doc.toString()<<endl;
   auto env=QProcessEnvironment::systemEnvironment();
-  QString user=env.value("SCTIME_USER");
   QString baseurl=env.value("SCTIME_BASE_URL");
-  writeBytes(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename), ba);
+  QString postfix = "";
+  if (!global) {
+    postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+  }
+  writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix), ba);
+
 #endif // RESTCONFIG
 #endif //NO_XML
   if (!global) {

@@ -215,7 +215,7 @@ void DSM::setup(SCTimeXMLSettings* settings)
 #endif // RESTONLY
     auto env=QProcessEnvironment::systemEnvironment();
     QString baseurl=env.value("SCTIME_BASE_URL");
-    jsonreader=new JSONReaderUrl(baseurl+"/../accountingmetadata");
+    jsonreader=new JSONReaderUrl(baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
     kontensources->append(new JSONAccountSource(jsonreader));
     bereitsources->append(new JSONOnCallSource(jsonreader));
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));

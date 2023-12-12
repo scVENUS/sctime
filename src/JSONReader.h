@@ -54,6 +54,7 @@ public:
   virtual ~JSONReaderUrl() {};
 public slots:
   virtual void receiveData(QNetworkReply *reply);
+  virtual void gotReply();
 private:
   const QString uri;
 };

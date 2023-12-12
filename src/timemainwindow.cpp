@@ -386,8 +386,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   addToolBar(toolBar);
 
   settings=new SCTimeXMLSettings();
-  connect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
-  settings->readSettings(abtList, m_punchClockList);
+  readInitialSetting();
+}
+
+void TimeMainWindow::readInitialSetting() {
+    connect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+    settings->readSettings(abtList, m_punchClockList);
 }
 
 void TimeMainWindow::initialSettingsRead() {
@@ -483,11 +487,12 @@ void TimeMainWindow::initialSettingsRead() {
   connect(m_dsm->kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(m_dsm->bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(m_dsm->specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
+  // QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
   connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
   QMetaObject::invokeMethod(m_dsm->bereitDSM, "start", Qt::QueuedConnection);
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
   QMetaObject::invokeMethod(m_dsm->specialRemunDSM, "start", Qt::QueuedConnection);
+
   specialRemunAction->setEnabled(false);
 
   m_ipcserver = new QLocalServer(this);
@@ -1295,6 +1300,7 @@ void TimeMainWindow::refreshKontoListe() {
 }
 
 void TimeMainWindow::commitKontenliste(DSResult data) {
+  statusBar->showMessage(tr("Commiting account list..."));
   // todo TimeMainWindow is longlived, delete commiter somewhere, otherwise memory leak
   auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList);
   

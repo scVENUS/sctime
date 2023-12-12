@@ -16,7 +16,6 @@ class XMLWriter: public QObject
      Q_OBJECT;
      public:
        XMLWriter(SCTimeXMLSettings* settings, AbteilungsListe* abtList, PunchClockList* pcl): settings(settings), abtList(abtList), pcl(pcl) {
-               connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLWriter::checkReply);
                connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
                writeAll=false;
        };
@@ -27,6 +26,7 @@ class XMLWriter: public QObject
 
     public slots:
       virtual void checkReply(QNetworkReply* input);
+      virtual void gotReply();
     /*private signals:
       void deviceOpenedForReading(QIODevice*);*/
     private slots:

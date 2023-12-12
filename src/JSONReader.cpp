@@ -219,11 +219,15 @@ bool JSONSpecialRemunSource::convertData(DSResult* const result) {
 void JSONReaderUrl::requestData()
 {
   auto request = QNetworkRequest(QUrl(uri));
-  networkAccessManager.get(request);
+  QNetworkReply *reply = networkAccessManager.get(request);
+  connect(reply, &QNetworkReply::finished, this, &JSONReaderUrl::gotReply);
+  connect(reply, &QNetworkReply::errorOccurred,
+        this, &JSONReaderUrl::gotReply);
 }
 
 void JSONReaderUrl::receiveData(QNetworkReply *reply)
 {
+  reply->deleteLater();
   auto err=reply->error();
   if (err!=QNetworkReply::NoError) {
         trace(tr("Couldn't open json from uri %1.").arg(uri));
@@ -236,8 +240,13 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
 }
 
 JSONReaderUrl::JSONReaderUrl(const QString& _uri): JSONReaderBase(), uri(_uri) {
-        connect(&networkAccessManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(receiveData(QNetworkReply *)));
+        
 };
+
+void JSONReaderUrl::gotReply() {
+    auto obj=sender();
+    receiveData((QNetworkReply*)obj);
+}
 
 #ifndef RESTONLY
 void JSONReaderCommand::requestData()

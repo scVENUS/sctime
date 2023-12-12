@@ -133,6 +133,8 @@ public:
 
     void updateSpecialModes(bool afterPause);
 
+    void readInitialSetting();
+
 
   signals:        
     /** Wird ausgeloest, falls sich die Gesamtzeit geaendert hat. Uebergeben wird die neue Gesamtzahl der Sekunden. */
@@ -194,6 +196,7 @@ public:
     void showContextMenu(const QPoint &pos);
     void cleanupUnterKontoDialog(int result);
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
+    
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:

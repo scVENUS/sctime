@@ -49,11 +49,22 @@ void XMLReader::open()
 
 #else
     auto env = QProcessEnvironment::systemEnvironment();
-    QString user = env.value("SCTIME_USER");
     QString baseurl = env.value("SCTIME_BASE_URL");
-    auto request = QNetworkRequest(QUrl(baseurl + "/../accountingdata/" + user + "/" + filename));
-    networkAccessManager.get(request);
+    QString postfix = "";
+    if (!global) {
+      postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+    }
+    auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
+    QNetworkReply *reply = networkAccessManager.get(request);
+    connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
+    connect(reply, &QNetworkReply::errorOccurred,
+        this, &XMLReader::gotReply);
 #endif
+}
+
+void XMLReader::gotReply() {
+    auto obj=sender();
+    parse((QIODevice*)obj);
 }
 
 void XMLReader::parse(QIODevice *input)
@@ -68,11 +79,13 @@ void XMLReader::parse(QIODevice *input)
                 msg="Error on reading settings";
             }
             emit settingsPartRead(global, abtList, pcl, false, msg); 
+            input->deleteLater();
             return;
         }
         if (!netinput->isFinished()) {
             return;
         }
+        input->deleteLater();
     }
     if (fileinput!=NULL && !fileinput->exists()) {
       emit settingsPartRead(global, abtList, pcl, false, ""); 
