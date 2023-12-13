@@ -557,3 +557,15 @@ void XMLReader::parse(QIODevice *input)
     }
     emit settingsPartRead(global, abtList, pcl, true, "");
 }
+
+void XMLReader::continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
+{
+  /* we come here twice. first after reading the gobal settings, and then after reading the settings of the day. after that we send the finished signal*/
+  if (global) {
+    this->global = false;
+    open();
+  } else {
+    emit settingsRead();
+  }
+}
+

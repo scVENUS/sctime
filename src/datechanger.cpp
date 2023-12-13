@@ -4,6 +4,7 @@
 #include "abteilungsliste.h"
 #include "sctimexmlsettings.h"
 #include "xmlwriter.h"
+#include "xmlreader.h"
 #include "globals.h"
 
 void DateChanger::start()
@@ -91,18 +92,24 @@ void DateChanger::resetLists()
         }
     }
     expectedActions = 1;
-    lastconn = connect(m_timeMainWindow->settings, &SCTimeXMLSettings::settingsRead, this, &DateChanger::updatePunchClock);
+    
     if (changeToday && (m_timeMainWindow->abtListToday != m_timeMainWindow->abtList))
     {
         m_timeMainWindow->abtListToday->clearKonten();
         m_timeMainWindow->m_punchClockListToday->clear();
         expectedActions++;
-        m_timeMainWindow->settings->readSettings(m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
+        connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+        reader->open();
     }
 
     m_timeMainWindow->abtList->clearKonten();
     m_timeMainWindow->m_punchClockList->clear();
-    m_timeMainWindow->settings->readSettings(m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+    connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
+    connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+    reader->open();
 }
 
 void DateChanger::updatePunchClock()

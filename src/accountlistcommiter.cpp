@@ -4,6 +4,7 @@
 #include "sctimexmlsettings.h"
 #include "punchclock.h"
 #include "xmlwriter.h"
+#include "xmlreader.h"
 
 void AccountListCommiter::start() {
   abtList->kontoDatenInfoSuccess = true;
@@ -11,6 +12,7 @@ void AccountListCommiter::start() {
   std::vector<int> columnwidthlist;
   kontoTree->getColumnWidthList(columnwidthlist);
   settings->setColumnWidthList(columnwidthlist);
+  reader=NULL;
   writer=new XMLWriter(settings,abtList,pcl);
   connect(writer,&XMLWriter::settingsWritten, this, &AccountListCommiter::reloadAbtList);
   connect(writer, &XMLWriter::settingsWriteFailed, this, &AccountListCommiter::cleanupOnErr);
@@ -19,32 +21,41 @@ void AccountListCommiter::start() {
 
 void AccountListCommiter::reloadAbtList() {
   disconnect(writer,&XMLWriter::settingsWritten, this, &AccountListCommiter::reloadAbtList);
+  writer->deleteLater();
+  writer=NULL;
   diff = abtList->getZeitDifferenz();
   abtList->reload(data);
+  reader = new XMLReader(settings, true, abtList, NULL);
   if (abtList!=abtListToday) {
-     connect(settings,&SCTimeXMLSettings::settingsRead, this, &AccountListCommiter::writeAbtListToday);
+     connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::writeAbtListToday);
   } else {
-     connect(settings,&SCTimeXMLSettings::settingsRead, this, &AccountListCommiter::finish);
+     connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::finish);
   }
-  settings->readSettings(abtList, NULL);
+  reader->open();
 }
 
 void AccountListCommiter::reloadAbtListToday() {
-  connect(settings,&SCTimeXMLSettings::settingsRead, this, &AccountListCommiter::finish);
+  reader = new XMLReader(settings, true, abtListToday, NULL);
+  connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::finish);
   writer->deleteLater();
+  writer=NULL;
   abtListToday->reload(data);
-  settings->readSettings(abtListToday, NULL);
+  reader->open();
 }
 
 void AccountListCommiter::writeAbtListToday() {
-   disconnect(settings,&SCTimeXMLSettings::settingsRead, this, &AccountListCommiter::writeAbtListToday);
-   writer->deleteLater();
+   disconnect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::writeAbtListToday);
+   reader->deleteLater();
+   reader=NULL;
+   //writer->deleteLater();
    writer=new XMLWriter(settings,abtListToday,pcl);
    connect(writer,&XMLWriter::settingsWritten, this, &AccountListCommiter::reloadAbtListToday);
    writer->writeAllSettings(); // settings wont survive the reload
 }
 
 void AccountListCommiter::finish() {
+  reader->deleteLater();
+  reader=NULL;
   kontoTree->load(abtList);
   abtList->setZeitDifferenz(diff);
   kontoTree->closeFlaggedPersoenlicheItems();
@@ -52,5 +63,10 @@ void AccountListCommiter::finish() {
 }
 
 void AccountListCommiter::cleanupOnErr() {
-  writer->deleteLater();
+  if (writer!=NULL) {
+     writer->deleteLater();
+  }
+  if (reader!=NULL) {
+     reader->deleteLater();
+  }
 }

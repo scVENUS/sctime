@@ -75,6 +75,7 @@
 #include "pausedialog.h"
 #include "datechanger.h"
 #include "xmlwriter.h"
+#include "xmlreader.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -392,12 +393,13 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 }
 
 void TimeMainWindow::readInitialSetting() {
-    connect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
-    settings->readSettings(abtList, m_punchClockList);
+    XMLReader *reader=new XMLReader(settings, true, abtList, m_punchClockList);
+    connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+    connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+    reader->open();
 }
 
 void TimeMainWindow::initialSettingsRead() {
-  disconnect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
   std::vector<QString> xmlfilelist;
   std::vector<int> columnwidthlist;
   settings->getDefaultCommentFiles(xmlfilelist);

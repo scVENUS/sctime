@@ -109,9 +109,9 @@ public:
      
     }
 
-    void readSettings();
+    /*void readSettings();
 
-    void readSettings(AbteilungsListe* abtList, PunchClockList* pcl);
+    void readSettings(AbteilungsListe* abtList, PunchClockList* pcl);*/
 
     void writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl);
 
@@ -454,7 +454,7 @@ public:
 
     bool writeSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
 
-    void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
+    // void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     
     static int compVersion(const QString& version1, const QString& version2);
 
@@ -519,10 +519,9 @@ public:
     QString m_prevPCCdata;
 
     private slots:
-       void continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
 
     signals:
-        void settingsRead();
+        
 };
 
 #endif
