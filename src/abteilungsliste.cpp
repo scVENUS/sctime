@@ -883,7 +883,7 @@ void AbteilungsListe::reload(const DSResult &data) {
     QString pspstr = ql[12].simplified();
     QString srliststr = ql[13].simplified();
     QList<QString> srlist=srliststr.split(",");
-    insertEintrag(abt,konto,unterkonto);
+    insertEintrag(abt,konto,unterkonto,0);
     setDescription(abt,konto,unterkonto,DescData(beschreibung ,verantwortlicher, typ, pspstr));
     setUnterKontoFlags(abt,konto,unterkonto,IS_IN_DATABASE,FLAG_MODE_OR);
     // Do not simplify comment to preserve intentional whitespace.

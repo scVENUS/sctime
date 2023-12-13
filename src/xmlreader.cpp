@@ -209,7 +209,7 @@ void XMLReader::parse(QIODevice *input)
                                                 if (elem4.tagName() == "eintrag")
                                                 {
                                                     QString eintragstr = elem4.attribute("nummer");
-                                                    if (eintragstr.isNull())
+                                                    if (eintragstr.isNull()||eintragstr.isEmpty())
                                                         continue;
                                                     int idx = eintragstr.toInt();
 
