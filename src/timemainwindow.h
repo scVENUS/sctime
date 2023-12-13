@@ -46,6 +46,14 @@ class DSM;
 class TextViewerDialog;
 class Lock;
 
+class QueuedMethod {
+    public:
+       QueuedMethod(QObject* obj, char* method): obj(obj), method(method) {}
+    public:
+       QObject* obj;
+       char * method;
+};
+
 /** Diese Klasse implementiert das Hauptfenster des Programms,
     und sorgt zudem fuer das Fortschreiten der Zeit.
 */
@@ -273,6 +281,7 @@ public:
     QMetaObject::Connection m_unterKontoDialogTimerConnection;
     DateChanger * m_dateChanger;
     DSM* m_dsm;
+    QQueue<QueuedMethod*>* m_afterCommitMethodQueue;
 };
 
 

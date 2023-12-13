@@ -43,6 +43,7 @@
 #include <QLocalSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QQueue>
 
 #include "globals.h"
 #include "time.h"
@@ -110,6 +111,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   paused = false;
   entryBeingEdited = false;
   sekunden = 0;
+  m_afterCommitMethodQueue = new QQueue<QueuedMethod*>();
   setObjectName(tr("sctime"));
   QDate heute;
   abtListToday=new AbteilungsListe(heute.currentDate(), zk);
@@ -489,9 +491,15 @@ void TimeMainWindow::initialSettingsRead() {
   connect(m_dsm->specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   // QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
   connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
-  QMetaObject::invokeMethod(m_dsm->bereitDSM, "start", Qt::QueuedConnection);
+  m_afterCommitMethodQueue->clear();
+  if (m_dsm->bereitDSM!=m_dsm->kontenDSM) {
+     m_afterCommitMethodQueue->enqueue(new QueuedMethod(m_dsm->bereitDSM, "start"));
+  }
+  if ((m_dsm->specialRemunDSM!=m_dsm->kontenDSM)&&(m_dsm->specialRemunDSM!=m_dsm->bereitDSM)) {
+     m_afterCommitMethodQueue->enqueue(new QueuedMethod(m_dsm->specialRemunDSM, "start"));
+  }
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
-  QMetaObject::invokeMethod(m_dsm->specialRemunDSM, "start", Qt::QueuedConnection);
+  
 
   specialRemunAction->setEnabled(false);
 
@@ -1318,6 +1326,12 @@ void TimeMainWindow::commitKontenlisteFinished() {
   QApplication::restoreOverrideCursor();
   QMetaObject::invokeMethod(this, "aktivesKontoPruefen", Qt::QueuedConnection);
   emit accountListRead();
+  if (!m_afterCommitMethodQueue->isEmpty()) {
+     auto method = m_afterCommitMethodQueue->dequeue();
+     QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
+     delete method;
+  }
+
 }
 
 
@@ -1967,6 +1981,11 @@ void TimeMainWindow::commitBereit(DSResult data) {
     if (beschreibung.isEmpty()) beschreibung = ""; // Leerer String, falls keine Beschr. vorhanden. //FIXME: notwendig?
     berListe->insertEintrag(name, beschreibung);
   }
+  if (!m_afterCommitMethodQueue->isEmpty()) {
+     auto method = m_afterCommitMethodQueue->dequeue();
+     QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
+     delete method;
+  }
 }
 
 void TimeMainWindow::commitSpecialRemun(DSResult data) {
@@ -1984,6 +2003,11 @@ void TimeMainWindow::commitSpecialRemun(DSResult data) {
   }
   abtList->setSpecialRemunTypeMap(srmap);
   abtList->setGlobalSpecialRemunNames(global_srnames);
+  if (!m_afterCommitMethodQueue->isEmpty()) {
+     auto method = m_afterCommitMethodQueue->dequeue();
+     QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
+     delete method;
+  }
 }
 
 void TimeMainWindow::callAdditionalLicenseDialog() {
