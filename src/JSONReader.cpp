@@ -221,6 +221,8 @@ void JSONReaderUrl::requestData()
   auto request = QNetworkRequest(QUrl(uri));
   QNetworkReply *reply = networkAccessManager.get(request);
   connect(reply, &QNetworkReply::finished, this, &JSONReaderUrl::gotReply);
+  connect(reply, &QNetworkReply::errorOccurred,
+        this, &JSONReaderUrl::gotReply);
 }
 
 void JSONReaderUrl::receiveData(QNetworkReply *reply)
