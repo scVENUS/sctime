@@ -27,6 +27,8 @@ void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
   QNetworkReply *reply = networkAccessManager.put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
+  connect(reply, &QNetworkReply::errorOccurred,
+        this, &XMLWriter::gotReply);
 }
 
 void XMLWriter::writeAllSettings() {

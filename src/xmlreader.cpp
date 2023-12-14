@@ -57,6 +57,8 @@ void XMLReader::open()
     auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
     QNetworkReply *reply = networkAccessManager.get(request);
     connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
+    connect(reply, &QNetworkReply::errorOccurred,
+        this, &XMLReader::gotReply);
 #endif
 }
 
