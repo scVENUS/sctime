@@ -57,12 +57,21 @@ void XMLReader::open()
     auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
     QNetworkReply *reply = networkAccessManager.get(request);
     connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
-    connect(reply, &QNetworkReply::errorOccurred,
-        this, &XMLReader::gotReply);
+    // for compatibility - use errorOccurred slot instead in future
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+        this, &XMLReader::onErrCompat);
+    //connect(reply, &QNetworkReply::errorOccurred,
+    //    this, &XMLReader::gotReply);
 #endif
 }
 
 void XMLReader::gotReply() {
+    auto obj=sender();
+    parse((QIODevice*)obj);
+}
+
+// we need this for compatibility with old QT.
+void XMLReader::onErrCompat(QNetworkReply::NetworkError code) {
     auto obj=sender();
     parse((QIODevice*)obj);
 }

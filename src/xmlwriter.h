@@ -22,9 +22,10 @@ class XMLWriter: public QObject
     public:
       virtual void writeAllSettings();
       virtual void writeSettings(bool global);
+      virtual void onErrCompat(QNetworkReply::NetworkError code);
       virtual void writeBytes(QUrl url, QByteArray bytes);
 
-    public slots:
+  public slots:
       virtual void checkReply(QNetworkReply* input);
       virtual void gotReply();
     /*private signals:

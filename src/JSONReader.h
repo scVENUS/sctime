@@ -55,6 +55,7 @@ public:
 public slots:
   virtual void receiveData(QNetworkReply *reply);
   virtual void gotReply();
+  virtual void onErrCompat(QNetworkReply::NetworkError code);
 private:
   const QString uri;
 };

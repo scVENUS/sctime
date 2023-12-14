@@ -22,13 +22,22 @@ void XMLWriter::gotReply() {
     checkReply((QNetworkReply*)obj);
 }
 
+// we need this for compatibility with old QT.
+void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
+    auto obj=sender();
+    checkReply((QNetworkReply*)obj);
+}
+
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   auto request = QNetworkRequest(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
   QNetworkReply *reply = networkAccessManager.put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
-  connect(reply, &QNetworkReply::errorOccurred,
-        this, &XMLWriter::gotReply);
+  // for compatibility - use errorOccurred slot instead in future
+  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+        this, &XMLWriter::onErrCompat);
+  //connect(reply, &QNetworkReply::errorOccurred,
+  //      this, &XMLWriter::gotReply);
 }
 
 void XMLWriter::writeAllSettings() {

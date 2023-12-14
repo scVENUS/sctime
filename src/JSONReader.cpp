@@ -221,8 +221,9 @@ void JSONReaderUrl::requestData()
   auto request = QNetworkRequest(QUrl(uri));
   QNetworkReply *reply = networkAccessManager.get(request);
   connect(reply, &QNetworkReply::finished, this, &JSONReaderUrl::gotReply);
-  connect(reply, &QNetworkReply::errorOccurred,
-        this, &JSONReaderUrl::gotReply);
+  // for compatibility - use errorOccurred slot instead in future
+  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+        this, &JSONReaderUrl::onErrCompat);
 }
 
 void JSONReaderUrl::receiveData(QNetworkReply *reply)
@@ -242,6 +243,12 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
 JSONReaderUrl::JSONReaderUrl(const QString& _uri): JSONReaderBase(), uri(_uri) {
         
 };
+
+// we need this for compatibility with old QT.
+void JSONReaderUrl::onErrCompat(QNetworkReply::NetworkError code) {
+    auto obj=sender();
+    receiveData((QNetworkReply*)obj);
+}
 
 void JSONReaderUrl::gotReply() {
     auto obj=sender();

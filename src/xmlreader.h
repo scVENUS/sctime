@@ -22,10 +22,11 @@ class XMLReader: public QObject
     public slots:
       virtual void parse(QIODevice* input);
       virtual void gotReply();
-      virtual void continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
-    /*private signals:
-      void deviceOpenedForReading(QIODevice*);*/
-    private:
+      virtual void onErrCompat(QNetworkReply::NetworkError code);
+      virtual void continueAfterReading(bool global, AbteilungsListe *abtList, PunchClockList *pcl);
+      /*private signals:
+        void deviceOpenedForReading(QIODevice*);*/
+  private:
       bool global;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
