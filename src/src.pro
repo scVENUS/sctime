@@ -11,7 +11,7 @@ CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
           datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
-          descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp preferencedialog.cpp\
+          descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
           specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
@@ -19,7 +19,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
           datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
-          pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
+          oncalldialog.h pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
           setupdsm.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
           unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h

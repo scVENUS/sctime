@@ -40,6 +40,7 @@ SpecialRemunerationsDialog::SpecialRemunerationsDialog(AbteilungsListe* _abtlist
     unterkonto=uko;
     eintragsIdx=idx;
     fillListWidget(srListWidget, abtlist, &(ukiter->second), eintragsIdx,abt, ko, uko);
+    connect(this, &SpecialRemunerationsDialog::finished, this, &SpecialRemunerationsDialog::postprocess);
 }
 
 void SpecialRemunerationsDialog::fillListWidget(QListWidget* widget, AbteilungsListe* abtlist, EintragsListe* etl, int eintragsIdx, const QString& abteilung, const QString& konto, const QString& unterkonto)
@@ -85,4 +86,9 @@ void SpecialRemunerationsDialog::accept()
     }
     ukiter->second[eintragsIdx].setAchievedSpecialRemunSet(selection);
     emit specialRemunerationsChanged(abteilung,konto,unterkonto,eintragsIdx);
+}
+
+void SpecialRemunerationsDialog::postprocess()
+{
+    emit finishedWithInfo(abteilung,konto,unterkonto);
 }

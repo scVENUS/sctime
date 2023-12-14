@@ -22,13 +22,18 @@
 #include "sctimexmlsettings.h"
 
 
-PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, QWidget *parent)
+PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode, QWidget *parent)
 : QDialog(parent)
 {
     setupUi(this);
     connect(buttonOk, SIGNAL(clicked()), this, SLOT(accept()));
     connect(buttonCancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(customFontSelectButton, SIGNAL(clicked()), this, SLOT(selectCustomFont()));
+    connect(this, &PreferenceDialog::finished, this, &PreferenceDialog::postprocess);
+
+    this->oldshowtypecolumn=oldshowtypecolumn;
+    this->oldshowpspcolumn=oldshowpspcolumn;
+    this->olddisplaymode=olddisplaymode;
 
     settings = _settings;
     zeitIncBox->setValue(settings->timeIncrement()/60);
@@ -116,4 +121,8 @@ void PreferenceDialog::accept()
         dm = SCTimeXMLSettings::DM_NOTBOLD;
     }
     settings->setDefCommentDisplayMode(dm);
+}
+
+void PreferenceDialog::postprocess() {
+    emit finishedWithInfo(oldshowtypecolumn, oldshowpspcolumn, olddisplaymode);
 }

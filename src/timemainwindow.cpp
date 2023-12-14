@@ -76,6 +76,7 @@
 #include "datechanger.h"
 #include "xmlwriter.h"
 #include "xmlreader.h"
+#include "oncalldialog.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -937,15 +938,16 @@ void TimeMainWindow::pause() {
     if ((now.date()==abtListToday->getDatum()) && (pce!=m_punchClockListToday->end())) {
       pce->second=now.time().msecsSinceStartOfDay()/1000;
     }
-    PauseDialog pd(now, this);
-    QTimer pauseTimer;
-    pauseTimer.setInterval(10000); // Update every 10 seconds
-    connect(&pauseTimer, SIGNAL(timeout()),&pd,SLOT(updateTime()));
-    pauseTimer.start();
-    pd.exec();
-    pauseTimer.stop();
+    PauseDialog* pd = new PauseDialog(now, drift, secSinceTick, this);
+    
+    connect(pd,&PauseDialog::pauseHasEnded, this, &TimeMainWindow::continueAfterPause);
+    pd->startPause();
+}
+
+void TimeMainWindow::continueAfterPause(int drift, int secSinceTick) {
+    sender()->deleteLater();
     paused = false;
-    now = QDateTime::currentDateTime();
+    QDateTime now = QDateTime::currentDateTime();
     sekunden = drift;
     trace(tr("End of break: ") +now.toString());
 
@@ -1023,11 +1025,16 @@ void TimeMainWindow::callCantSaveDialog() {
     msg->setText(tr("An error occured when saving data. Please check permissions and connectivity of your target directory. If this error persists and you close sctime, you will loose all changes since the last successful save (an automatic save should occur every 5 minutes)."));
     msg->setIcon(QMessageBox::Warning);
     msg->setStandardButtons(QMessageBox::Close);
+    msg->setModal(true);
     qDebug() << tr("An error occured when saving data.");
-    msg->exec();
-    delete cantSaveDialog;
-    cantSaveDialog = NULL;
+    connect(msg, &QMessageBox::finished, this, &TimeMainWindow::finishCantSaveDialog);
+    msg->open();
   }
+}
+
+void TimeMainWindow::finishCantSaveDialog() {
+  cantSaveDialog->deleteLater();
+  cantSaveDialog=NULL;
 }
 
 void TimeMainWindow::checkLock() {
@@ -1035,17 +1042,19 @@ void TimeMainWindow::checkLock() {
     QMessageBox msg;
     msg.setText(tr("The program will quit in a few seconds without saving."));
     msg.setInformativeText(m_lock->errorString());
+    msg.setModal(true);
     qDebug() << tr("The program will now quit without saving.") << m_lock->errorString();
     QTimer::singleShot(10000, this, SLOT(quit()));
-    msg.exec();
+    msg.open();
     return;
   }
   if (m_lock->check()!=LS_OK) {
     QMessageBox msg;
     msg.setText(tr("Unclear state of Lockfile. Please check that there is no other instance of sctime running and that you have access to the sctime config directory. Otherwise loss of data may occur."));
     msg.setInformativeText(m_lock->errorString());
+    msg.setModal(true);
     qDebug() << tr("Unkown state of lockfile.") << m_lock->errorString();
-    msg.exec();
+    msg.open();
   }
 }
 
@@ -1226,7 +1235,7 @@ void TimeMainWindow::callSwitchDateErrorDialog()
     QString msgtext = tr("Could not switch day due to problems with saving. ATTENTION: that also means that the clock might be running on the wrong day. Please fix the problem with saving and switch manually to the current date afterwards.");
     msg.setText(msgtext);
     qDebug() << msgtext;
-    msg.exec();
+    msg.open();
 }
 
 void TimeMainWindow::loadPCCData(const QString& pccdata) {
@@ -1644,18 +1653,23 @@ void TimeMainWindow::callFindKontoDialog()
 {
   QString konto;
 
-  FindKontoDialog findKontoDialog(abtList,this);
-  int rcFindDialog = findKontoDialog.exec();
+  FindKontoDialog* findKontoDialog=new FindKontoDialog(abtList,this);
+  connect(findKontoDialog,&FindKontoDialog::finished, this, &TimeMainWindow::finishFindKontoDialog);
+  findKontoDialog->open();
+}
+
+void TimeMainWindow::finishFindKontoDialog() 
+{
+  auto findKontoDialog = (FindKontoDialog*)(sender());
+  int rcFindDialog = findKontoDialog->result();
   if( rcFindDialog == QDialog::Rejected )
   {
-    return;
-  }
-  else if( rcFindDialog == QDialog::Accepted )
+  } else if( rcFindDialog == QDialog::Accepted )
   {
-    QStringList items = findKontoDialog.getSelectedItems();
+    QStringList items = findKontoDialog->getSelectedItems();
     openItemFromPathList(items);
-    
   }
+  findKontoDialog->deleteLater();
 }
 
 void TimeMainWindow::openItem( QTreeWidgetItem *item )
@@ -1682,8 +1696,13 @@ void TimeMainWindow::callPreferenceDialog()
     QApplication::setFont(QFont(custFont,custFontSize));
   }
 
-  PreferenceDialog preferenceDialog(settings, this);
-  preferenceDialog.exec();
+  PreferenceDialog *preferenceDialog=new PreferenceDialog(settings, oldshowtypecolumn, oldshowpspcolumn, olddisplaymode, this);
+  connect(preferenceDialog,&PreferenceDialog::finishedWithInfo, this, &TimeMainWindow::finishPreferenceDialog);
+  preferenceDialog->open();
+}
+
+void TimeMainWindow::finishPreferenceDialog(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode) {
+  sender()->deleteLater();
   showAdditionalButtons(settings->powerUserView());
   configClickMode(settings->singleClickActivation());
   kontoTree->setAcceptDrops(settings->dragNDrop());
@@ -1848,65 +1867,51 @@ void TimeMainWindow::callBereitschaftsDialog(QTreeWidgetItem * item) {
   if (!abtList->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
     QMessageBox::critical(this, tr("sctime: On-call times"), tr("subaccount not found!"));
     return;
-  }
-
-  QDialog dialog(this);
-  dialog.setObjectName(tr("sctime: On-call times"));
-  dialog.setWindowTitle(tr("On-call times"));
-
-  QVBoxLayout* layout=new QVBoxLayout(&dialog);
-  layout->setMargin(15);
-
-  QPushButton * okbutton=new QPushButton(tr("OK"), &dialog);
-  okbutton->setDefault(true);
-  QPushButton * cancelbutton=new QPushButton(tr("Cancel"), &dialog);
-
-  layout->addStretch(1);
-
-
-  QLabel* infolabel=new QLabel (tr("Please choose the rendered on-call times for this subaccount."), &dialog);
-  infolabel->setWordWrap(true);
-  layout->addWidget(infolabel);
-
-  layout->addSpacing(10);
+  }  
 
   QStringList bereitschaften = ukiter->second.getBereitschaft();
-  BereitschaftsView* bereitschaftsView=new BereitschaftsView(&dialog);
-  bereitschaftsView->setSelectionList(bereitschaften);
-  layout->addWidget(bereitschaftsView);
 
-  QHBoxLayout* buttonlayout=new QHBoxLayout();
-  //buttonlayout->setParent(layout);
-  buttonlayout->setContentsMargins(3,3,3,3);
-  buttonlayout->addStretch(1);
-  buttonlayout->addWidget(okbutton);
-  buttonlayout->addWidget(cancelbutton);
-  layout->addLayout(buttonlayout);
+  auto oncalldialog=new OnCallDialog(abt,ko,uko,bereitschaften,this);
+  connect(oncalldialog, &OnCallDialog::finishedWithInfo, this, &TimeMainWindow::finishBereitschaftsDialog);
 
-  connect (okbutton, SIGNAL(clicked()), &dialog, SLOT(accept()));
-  connect (cancelbutton, SIGNAL(clicked()), &dialog, SLOT(reject()));
+  oncalldialog->open();
+}
 
-  dialog.exec();
-  if (dialog.result())
+void TimeMainWindow::finishBereitschaftsDialog(QString abt, QString ko, QString uko, QStringList bereitschaften, QStringList bereitschaftenNeu) {
+  auto dialog = (QDialog*)(sender());
+  if (dialog->result())
   {
-    QStringList bereitschaftenNeu = bereitschaftsView->getSelectionList();
     if (bereitschaften!=bereitschaftenNeu) {
+      UnterKontoListe *ukl;
+      UnterKontoListe::iterator ukiter;
+
+      if (!abtList->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
+        QMessageBox::critical(this, tr("sctime: On-call times"), tr("subaccount not found!"));
+        return;
+      }
       ukiter->second.setBereitschaft(bereitschaftenNeu);
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
     }
   }
+  dialog->deleteLater();
 }
 
 void TimeMainWindow::callSpecialRemunerationsDialog(QTreeWidgetItem * item) {
   QString top,uko,ko,abt;
   int idx;
   kontoTree->itemInfo(item,top,abt,ko,uko,idx);
-  SpecialRemunerationsDialog srDialog(abtList, abt,ko,uko,idx, this);
-  srDialog.exec();
-  if (srDialog.result())
+  SpecialRemunerationsDialog* srDialog= new SpecialRemunerationsDialog(abtList, abt,ko,uko,idx, this);
+  connect(srDialog, &SpecialRemunerationsDialog::finishedWithInfo, this, &TimeMainWindow::finishSpecialRemunerationsDialog);
+  srDialog->open();
+}
+
+void TimeMainWindow::finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko) {
+  auto srDialog=(SpecialRemunerationsDialog*)(sender());
+  if (srDialog->result())
   {
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
   }
+  srDialog->deleteLater();
 }
 
 
@@ -2287,10 +2292,17 @@ void TimeMainWindow::readIPCMessage() {
 }
 
 void TimeMainWindow::callPunchClockDialog() {
-  PunchClockDialog pcDialog(m_punchClockList, m_PCSToday, this);
-  int result = pcDialog.exec();
+  PunchClockDialog* pcDialog=new PunchClockDialog(m_punchClockList, m_PCSToday, this);
+  connect(pcDialog, &PunchClockDialog::finished, this, &TimeMainWindow::finishPunchClockDialog);
+  pcDialog->setModal(true);
+  pcDialog->open();
+}
+
+void TimeMainWindow::finishPunchClockDialog() {
+  auto pcDialog=(PunchClockDialog*)(sender());
+  auto result=pcDialog->result();
   if (result==QDialog::Accepted) {
-    pcDialog.copyToList(m_punchClockList);
+    pcDialog->copyToList(m_punchClockList);
     auto now=QDateTime::currentDateTime();
     if (m_punchClockList==m_punchClockListToday) {
       auto pce=m_punchClockListToday->currentEntry();
@@ -2299,4 +2311,5 @@ void TimeMainWindow::callPunchClockDialog() {
       } 
     }
   }
+  pcDialog->deleteLater();
 }

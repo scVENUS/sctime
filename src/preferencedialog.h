@@ -31,11 +31,11 @@ class PreferenceDialog : public QDialog, private Ui::PreferenceDialogBase
   Q_OBJECT
 
 public:
-  PreferenceDialog(SCTimeXMLSettings* _settings, QWidget* parent = 0);
+  PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode, QWidget* parent = 0);
   ~PreferenceDialog();
   /*$PUBLIC_FUNCTIONS$*/
 
-protected:
+  protected:
   SCTimeXMLSettings* settings;
 
 public slots:
@@ -48,11 +48,15 @@ protected slots:
   /*$PROTECTED_SLOTS$*/
   virtual void          accept();
   virtual void          selectCustomFont();
+  virtual void postprocess();
 
 signals:
-  // signals
+  void finishedWithInfo(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode);
 private:
   QFont selectedFont;
+  int oldshowtypecolumn;
+  int oldshowpspcolumn;
+  int olddisplaymode;
 };
 
 #endif

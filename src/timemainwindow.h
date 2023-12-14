@@ -77,6 +77,7 @@ public:
     void callNightTimeDialog(bool isnight);
     void minuteHochzaehlen();
     void pause();
+    void continueAfterPause(int drift, int secSinceTick);
     void pauseAbzur(bool on);
     void zeitChanged();
     void updateCaption();
@@ -110,13 +111,17 @@ public:
     void subFastAbzurTimeInc();
 
     void callFindKontoDialog();
+    void finishFindKontoDialog();
     void callHelpDialog();
     void callPreferenceDialog();
-    void callBereitschaftsDialog(QTreeWidgetItem * item);
-    void callSpecialRemunerationsDialog(QTreeWidgetItem * item);
+    void finishPreferenceDialog(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode);
+    void callBereitschaftsDialog(QTreeWidgetItem *item);
+    void finishBereitschaftsDialog(QString abt, QString ko, QString uko, QStringList bereitschaften, QStringList bereitschaftenNeu);
+    void callSpecialRemunerationsDialog(QTreeWidgetItem *item);
     void callColorDialog();
     void callAdditionalLicenseDialog();
     void callPunchClockDialog();
+    void finishPunchClockDialog();
     void removeBgColor();
     void jumpToAlleKonten();
 
@@ -198,6 +203,7 @@ public:
     void callNightTimeBeginDialog();
     void callNightTimeEndDialog();
     void callCantSaveDialog();
+    void finishCantSaveDialog();
     void callSwitchDateErrorDialog();
     void initialSettingsRead();
     void readIPCMessage();
@@ -213,7 +219,8 @@ public:
     bool checkConfigDir();
     void updateTaskbarTitle(int zeit);
     void closeEvent(QCloseEvent * event);
-    void refreshAfterColorChange(QString&, QString&, QString&);
+    void finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko);
+    void refreshAfterColorChange(QString &, QString &, QString &);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
     bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
     void openItemFromPathList(QStringList pathlist);

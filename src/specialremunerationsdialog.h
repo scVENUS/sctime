@@ -54,10 +54,12 @@ protected:
 protected slots:
   /*$PROTECTED_SLOTS$*/
   virtual void          accept();
+  virtual void postprocess();
 
 signals:
   // signals
   void specialRemunerationsChanged(const QString&, const QString&, const QString&, int idx);
+  void finishedWithInfo(QString abt, QString ko, QString uko);
 };
 
 #endif
