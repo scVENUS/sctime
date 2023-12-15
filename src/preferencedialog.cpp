@@ -94,35 +94,32 @@ PreferenceDialog::~PreferenceDialog()
 {
 }
 
-void PreferenceDialog::accept()
-{
-    QDialog::accept();
-    settings->setTimeIncrement(zeitIncBox->value()*60);
-    settings->setFastTimeIncrement(fastZeitIncBox->value()*60);
-    settings->setAlwaysSaveEntry(entrySaveCheckbox->isChecked());
-    settings->setPowerUserView(powerUserCheckbox->isChecked());
-    settings->setSingleClickActivation(singleClickCheckbox->isChecked());
-    settings->setShowTypeColumn(showTypeCheckBox->isChecked());
-    settings->setShowPSPColumn(showPSPCheckBox->isChecked());
-    settings->setUseDefaultCommentIfUnique(useDefaultCommentIfUniqueCheckBox->isChecked());
-    settings->setUseCustomFont(customFontCheckBox->isChecked());
-    settings->setCustomFont(selectedFont.family());
-    settings->setDragNDrop(dragNDropCheckbox->isChecked());
-    settings->setPersoenlicheKontensumme(persoenlicheKontensummeCheckbox->isChecked());
-    settings->setCustomFontSize(selectedFont.pointSize());
-    settings->setShowSpecialRemunSelector(showSpecialRemunSelector->isChecked());
-    settings->setWarnISO8859(warnISO8859->isChecked());
-    settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
-    SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
-    if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
-        dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
-    } else
-    if (radioNoBold->isChecked()) {
-        dm = SCTimeXMLSettings::DM_NOTBOLD;
-    }
-    settings->setDefCommentDisplayMode(dm);
-}
-
 void PreferenceDialog::postprocess() {
+    if (result()==QDialog::Accepted) {
+        settings->setTimeIncrement(zeitIncBox->value()*60);
+        settings->setFastTimeIncrement(fastZeitIncBox->value()*60);
+        settings->setAlwaysSaveEntry(entrySaveCheckbox->isChecked());
+        settings->setPowerUserView(powerUserCheckbox->isChecked());
+        settings->setSingleClickActivation(singleClickCheckbox->isChecked());
+        settings->setShowTypeColumn(showTypeCheckBox->isChecked());
+        settings->setShowPSPColumn(showPSPCheckBox->isChecked());
+        settings->setUseDefaultCommentIfUnique(useDefaultCommentIfUniqueCheckBox->isChecked());
+        settings->setUseCustomFont(customFontCheckBox->isChecked());
+        settings->setCustomFont(selectedFont.family());
+        settings->setDragNDrop(dragNDropCheckbox->isChecked());
+        settings->setPersoenlicheKontensumme(persoenlicheKontensummeCheckbox->isChecked());
+        settings->setCustomFontSize(selectedFont.pointSize());
+        settings->setShowSpecialRemunSelector(showSpecialRemunSelector->isChecked());
+        settings->setWarnISO8859(warnISO8859->isChecked());
+        settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
+        SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
+        if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
+            dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
+        } else
+        if (radioNoBold->isChecked()) {
+            dm = SCTimeXMLSettings::DM_NOTBOLD;
+        }
+        settings->setDefCommentDisplayMode(dm);
+    }
     emit finishedWithInfo(oldshowtypecolumn, oldshowpspcolumn, olddisplaymode);
 }

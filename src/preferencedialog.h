@@ -46,7 +46,6 @@ protected:
 
 protected slots:
   /*$PROTECTED_SLOTS$*/
-  virtual void          accept();
   virtual void          selectCustomFont();
   virtual void postprocess();
 
