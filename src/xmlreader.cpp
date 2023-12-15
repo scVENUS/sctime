@@ -44,6 +44,7 @@ void XMLReader::open()
                 settings->backupSettingsXml = false;
         }
         emit settingsPartRead(global, abtList, pcl, false, ""); 
+        return;
     }
     parse(&f);
 
@@ -106,11 +107,12 @@ void XMLReader::parse(QIODevice *input)
     // QByteArray bytes=input->readAll();
     if (!doc.setContent(input, &errMsg, &errLine, &errCol))
     {
-        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
         if (global)
             settings->backupSettingsXml = false;
         emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file");
+        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
+        return;
     }
 #ifndef RESTCONFIG
     // when closing a networkrequest, we get another finished signal. Not sure if this bug or feature - for now just dont close it
