@@ -389,9 +389,6 @@ void XMLWriter::writeSettings(bool global) {
       }
   }
 
-  QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
-#ifndef RESTCONFIG
-  filename=configDir.filePath(filename);
   if (!global && pcl!=NULL) {
     QDomElement punchclocktag = doc.createElement( "punchclock" );
     for (auto pce: *pcl) {
@@ -406,6 +403,9 @@ void XMLWriter::writeSettings(bool global) {
     root.appendChild(punchclocktag);
   }
 
+  QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
+#ifndef RESTCONFIG
+  filename=configDir.filePath(filename);
   QFile fnew(filename + ".tmp");
   QDateTime filemod = QFileInfo(filename).lastModified();
   if (!global && settings->m_lastSave.isValid() && filemod.isValid() && filemod>settings->m_lastSave.addSecs(30)) {
