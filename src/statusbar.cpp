@@ -19,13 +19,15 @@
 
 StatusBar::StatusBar(QWidget *parent) : QStatusBar(parent)
 {
+    datumsWarnung = new QLabel("", this);
+    modeList = new QLabel("", this);
+#ifndef WASMQUIRKS // leads to issues in WASM, disable for now
+    addWidget(datumsWarnung);
+    addWidget(modeList);
+#endif
     zeitLabel = new QLabel(tr("Overall time: ") + "0", this);
     addPermanentWidget(zeitLabel);
     connect(parent, SIGNAL(gesamtZeitChanged(int)), this, SLOT(setSekunden(int)));
-    datumsWarnung = new QLabel("", this);
-    addWidget(datumsWarnung);
-    modeList = new QLabel("", this);
-    addWidget(modeList);
     secDiff = 0;
     sekunden = 0;
 }

@@ -44,6 +44,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QQueue>
+#include <QStatusBar>
 
 #include "globals.h"
 #include "time.h"
@@ -63,6 +64,7 @@
 #include "defaultcommentreader.h"
 #include "abteilungsliste.h"
 #include "sctimexmlsettings.h"
+#include "specialremunentryhelper.h"
 #include "lock.h"
 #include "datasource.h"
 #include "punchclockdialog.h"
@@ -134,6 +136,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   m_dateChanger = NULL;
 
   statusBar = new StatusBar(this);
+  //setStatusBar(new QStatusBar(this));
   setStatusBar(statusBar);
   std::vector<int> columnwidthlist;
 
@@ -642,6 +645,7 @@ void TimeMainWindow::resume() {
   [=](){
     if (msgbox->result() == QMessageBox::Yes)
        zeitKorrektur(pauseSecs);
+    msgbox->deleteLater();
    });
    msgbox->open();
 }
@@ -674,21 +678,26 @@ void TimeMainWindow::driftKorrektur() {
       stream<< msg << endl;
     }
   }
-  int answer =
-          drift > 0
-          ? QMessageBox::question(
-                  this, tr("sctime: Programm was frozen"),
-                  tr("The program (or whole system) seems to have hung for %1min or system time was changed.\n"
+  QMessageBox* msgbox;
+  if (drift>0) {
+     msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: Programm was frozen"),
+         tr("The program (or whole system) seems to have hung for %1min or system time was changed.\n"
                      "Should the time difference be added to the active account?\n"
                      "(current system time: %2)").arg(drift/60).arg(lastMinuteTick.toString()),
-                  QMessageBox::Yes, QMessageBox::No)
-          : QMessageBox::question(
-                this, tr("sctime: system time set back"),
-                tr("The system's time has been set back by %1min to %2."
+	       QMessageBox::Yes| QMessageBox::No);
+  } else {
+    msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: system time set back"),
+        tr("The system's time has been set back by %1min to %2."
                    "Should this time be subtracted from the active account?\n").arg(drift/60).arg(lastMinuteTick.toString()),
-                QMessageBox::No, QMessageBox::Yes);
-  if (answer == QMessageBox::Yes)
-      zeitKorrektur(drift);
+	       QMessageBox::Yes| QMessageBox::No);
+  }
+  connect(msgbox, &QMessageBox::finished,
+  [=](){
+    if (msgbox->result() == QMessageBox::Yes)
+       zeitKorrektur(drift);
+    msgbox->deleteLater();
+   });
+  msgbox->open();      
 }
 
 /* Wird durch einen Timer einmal pro Minute aufgerufen,
@@ -1378,29 +1387,45 @@ void TimeMainWindow::inPersoenlicheKonten(bool hinzufuegen)
   int idx;
 
   kontoTree->itemInfo(item,top,abt,ko,uko,idx);
+  int itemDepth=kontoTree->getItemDepth(item);
 
-  if (!hinzufuegen) {
-    if (QMessageBox::question(this,tr("Remove from personal accounts"), tr("Do you really want to remove this item from your personal accounts?"))!=QMessageBox::Yes) {
-      flagsChanged(abt,ko,uko,idx);
+  auto doChange = [=](){
+    if (itemDepth == 2)
+    {
+      abtList->moveKontoPersoenlich(abt, ko, hinzufuegen);
+      kontoTree->refreshAllItemsInKonto(abt, ko);
       return;
     }
-  }
+    else
+    {
+      if (itemDepth == 3)
+      {
+        abtList->moveUnterKontoPersoenlich(abt, ko, uko, hinzufuegen);
+        kontoTree->refreshAllItemsInUnterkonto(abt, ko, uko);
+        return;
+      }
+    }
 
-  if (kontoTree->getItemDepth(item)==2) {
-    abtList->moveKontoPersoenlich(abt,ko,hinzufuegen);
-    kontoTree->refreshAllItemsInKonto(abt,ko);
-    return;
-  }
-  else {
-    if (kontoTree->getItemDepth(item)==3) {
-      abtList->moveUnterKontoPersoenlich(abt,ko,uko,hinzufuegen);
-      kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
-      return;
-        }
-  }
+    abtList->moveEintragPersoenlich(abt, ko, uko, idx, hinzufuegen);
+    kontoTree->refreshItem(abt, ko, uko, idx);
+  };
 
-  abtList->moveEintragPersoenlich(abt,ko,uko,idx,hinzufuegen);
-  kontoTree->refreshItem(abt,ko,uko,idx);
+  if (!hinzufuegen) {
+    auto msgbox=new QMessageBox(QMessageBox::Question, tr("Remove from personal accounts"),
+        tr("Do you really want to remove this item from your personal accounts?"),
+	      QMessageBox::Yes| QMessageBox::No);
+    connect(msgbox, &QMessageBox::finished,
+       [=](){
+         if (msgbox->result() != QMessageBox::Yes)
+            flagsChanged(abt,ko,uko,idx);
+         else
+            doChange();
+         msgbox->deleteLater();
+       });
+    msgbox->open();
+  } else {
+    doChange();
+  }
 }
 
 
@@ -1785,6 +1810,18 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
   int oldidx;
   abtList->getAktiv(oldabt, oldko, olduk,oldidx);
 
+  auto doSetActiveProject=[=](int idx){
+    abtList->setAsAktiv(abt,ko,uko,idx);
+    kontoTree->refreshItem(oldabt,oldko,olduk,oldidx);
+    kontoTree->refreshItem(abt,ko,uko,idx);
+    kontoTree->setCurrentItem(item);
+    if (item->text(KontoTreeItem::COL_TYPE) == "tageweise abrechnen (kd)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) {
+      statusBar->showMessage(tr("Please specify only one entry for accounts of type \"%1\"!").arg(item->text(KontoTreeItem::COL_TYPE)), 10000);
+      QApplication::beep();
+    }
+    updateCaption();
+  };
+
   if (abtList->overTimeModeActive()) {
     UnterKontoEintrag entry;
     abtList->getEintrag(entry,abt,ko,uko,idx);
@@ -1792,28 +1829,29 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     QSet<QString> otmRS = abtList->getActiveOverTimeModes();
     if (!existingRS.contains(otmRS)) {
        existingRS.unite(otmRS);
-       if (!checkAndChangeSREntry(idx,abt,ko,uko,existingRS)) {
-          if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
-            idx=abtList->insertEintrag(abt,ko,uko);
-            entry.sekunden=0;
-            entry.sekundenAbzur=0;
-          }
-          entry.setAchievedSpecialRemunSet(existingRS);
-          abtList->setEintrag(abt, ko, uko, idx, entry);
-       }
-       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+       auto helper=new SpecialRemunEntryHelper();
+       connect(helper, &SpecialRemunEntryHelper::checked, [=](bool reuse, int correctidx) {
+         int newidx=correctidx;
+         if (!reuse) {
+           auto newentry=entry;
+           newidx=idx;
+           if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
+             newidx=abtList->insertEintrag(abt,ko,uko);
+             newentry.sekunden=0;
+             newentry.sekundenAbzur=0;
+           }
+           newentry.setAchievedSpecialRemunSet(existingRS);
+           abtList->setEintrag(abt, ko, uko, newidx, newentry);
+         }
+         kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+         helper->deleteLater();
+         doSetActiveProject(newidx);   
+      });
+      helper->checkSREntry(abtListToday,idx,abt,ko,uko,existingRS);
+      return;
     }
-  }
-  abtList->setAsAktiv(abt,ko,uko,idx);
-  kontoTree->refreshItem(oldabt,oldko,olduk,oldidx);
-  kontoTree->refreshItem(abt,ko,uko,idx);
-  kontoTree->setCurrentItem(item);
-  if (item->text(KontoTreeItem::COL_TYPE) == "tageweise abrechnen (kd)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) {
-  //if (item->text(1) == "interne Projekte (ip)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) { // für Versuche
-      statusBar->showMessage(tr("Please specify only one entry for accounts of type \"%1\"!").arg(item->text(KontoTreeItem::COL_TYPE)), 10000);
-      QApplication::beep();
-  }
-  updateCaption();
+  } 
+  doSetActiveProject(idx);
 }
 
 /**
@@ -2058,35 +2096,6 @@ void TimeMainWindow::callAdditionalLicenseDialog() {
   dialog->browser()->setSource(QUrl::fromLocalFile(additionalLicensesFile));
 }
 
-/** checks if a new time entry should be generated for the given set of special remunerations.
- * this functions potentially asks the user what to do, and returns true iff an existing entry can be
- * recycled (in this case the index of this entry is also returned in the parameter idx)
-  */
-bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns) {
-  UnterKontoEintrag entry;
-  abtListToday->getEintrag(entry,abt,ko,uko,idx);
-
-  if (entry.getAchievedSpecialRemunSet()!=specialRemuns) {
-     int correctidx=idx;
-     EintragsListe::iterator itEt;
-     EintragsListe* entrylist;
-  
-     if (abtListToday->findEntryWithSpecialRemunsAndComment(itEt, entrylist, correctidx, abt, ko, uko, entry.kommentar, specialRemuns)) {
-        int result=QMessageBox::question(
-                  this, tr("sctime: wrong special remunerations"),
-                  tr("There is another entry with the same comment and the correct special remunerations. Do you want to switch to this entry? "
-                     "Otherwise a new entry will be created."),
-                  QMessageBox::Yes, QMessageBox::No);
-        if (result==QMessageBox::Yes) {
-          idx=correctidx;
-          return true;
-        }
-     }
-     return false;
-  }
-  return true;
-}
-
 /**
  * switches the overtimemode identified by the given special remun to the given state*/
 void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
@@ -2104,21 +2113,26 @@ void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
     } else {
        desiredRemuns.remove(specialremun);
     }
-    int newidx=oldidx;
-    if (!checkAndChangeSREntry(newidx,abt,ko,uko,desiredRemuns)) {
-      if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
-        newidx=abtListToday->insertEintrag(abt,ko,uko);
-        entry.sekunden=0;
-        entry.sekundenAbzur=0;
-      }
+    auto helper=new SpecialRemunEntryHelper();
+    connect(helper, &SpecialRemunEntryHelper::checked, [=](bool reuse, int correctidx) {
+      int newidx=correctidx;
+      auto newentry=entry;
+      if (!reuse) {
+        newidx=oldidx;
+        if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
+          newidx=abtListToday->insertEintrag(abt,ko,uko);
+          newentry.sekunden=0;
+          newentry.sekundenAbzur=0;
+        }
       
-      entry.setAchievedSpecialRemunSet(desiredRemuns);
-      abtListToday->setEintrag(abt, ko, uko, newidx, entry);
-    }
-    abtListToday->setAsAktiv(abt,ko,uko,newidx);
-    /*kontoTree->refreshItem(abt,ko,uko,oldidx);
-    kontoTree->refreshItem(abt,ko,uko,newidx);*/
-    kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+        newentry.setAchievedSpecialRemunSet(desiredRemuns);
+        abtListToday->setEintrag(abt, ko, uko, newidx, newentry);
+      }
+      abtListToday->setAsAktiv(abt,ko,uko,newidx);
+      kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+      helper->deleteLater();
+    });
+    helper->checkSREntry(abtListToday,oldidx,abt,ko,uko,desiredRemuns);
   }
 }
 
@@ -2181,24 +2195,25 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
     }
     QDateTime beforeOpen=QDateTime::currentDateTime();
     bool shouldswitch=false;
+    QMessageBox* msgbox;
     if (isnight) {
-       int result=QMessageBox::question(
-            this, tr("sctime: switch nightmode on?"),
-                  tr("It is %1. Should I switch to night mode, so you get special "
-                  "remuneration for working late? Please also check your companies "
-                  "regulations before enabling nightmode.").arg(beforeOpen.time().toString("hh:mm")),
-                  QMessageBox::Yes, QMessageBox::No);
-       shouldswitch = (result==QMessageBox::Yes);
+       msgbox=new QMessageBox(QMessageBox::Question,
+            tr("sctime: switch nightmode on?"),
+            tr("It is %1. Should I switch to night mode, so you get special "
+            "remuneration for working late? Please also check your companies "
+            "regulations before enabling nightmode.").arg(beforeOpen.time().toString("hh:mm")),
+            QMessageBox::Yes|QMessageBox::No);
     } else {
-       int result=QMessageBox::question(
-            this, tr("sctime: switch nightmode off?"),
-                  tr("It is %1. Should I switch night mode off? "
-                  "Otherwise you apply for further special remuneration. Please also check your companies "
-                  "regulations when keeping nightmode enabled.").arg(beforeOpen.time().toString("hh:mm")),
-                  QMessageBox::Yes, QMessageBox::No);
-       shouldswitch = (result==QMessageBox::Yes);
+       msgbox=new QMessageBox(QMessageBox::Question,
+            tr("sctime: switch nightmode off?"),
+            tr("It is %1. Should I switch night mode off? "
+            "Otherwise you apply for further special remuneration. Please also check your companies "
+            "regulations when keeping nightmode enabled.").arg(beforeOpen.time().toString("hh:mm")),
+            QMessageBox::Yes|QMessageBox::No);
     }
-    if (shouldswitch) {
+    connect(msgbox, &QMessageBox::finished,
+    [=](){
+      if (msgbox->result() == QMessageBox::Yes) {
         QString abt, ko, uko;
         int oldidx;
         abtListToday->getAktiv(abt, ko, uko,oldidx);
@@ -2232,8 +2247,11 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
             kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
           }
         }
-    }
-    mutex.unlock();
+      }
+      mutex.unlock();
+      msgbox->deleteLater();
+   });
+   msgbox->open();
 }
 
 /** shows an error message if worked times could not be moved to another entry */

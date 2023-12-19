@@ -222,7 +222,6 @@ public:
     void finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko);
     void refreshAfterColorChange(QString &, QString &, QString &);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
-    bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
