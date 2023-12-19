@@ -220,7 +220,7 @@ public:
     void updateTaskbarTitle(int zeit);
     void closeEvent(QCloseEvent * event);
     void finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko);
-    void refreshAfterColorChange(QString &, QString &, QString &);
+    void refreshAfterColorChange(const QString &, const QString &, const QString &);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);

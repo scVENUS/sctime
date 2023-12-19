@@ -1976,7 +1976,7 @@ void TimeMainWindow::finishSpecialRemunerationsDialog(QString abt, QString ko, Q
 }
 
 
-void TimeMainWindow::refreshAfterColorChange(QString& abt, QString& ko, QString& uko) {
+void TimeMainWindow::refreshAfterColorChange(const QString& abt, const QString& ko, const QString& uko) {
 	if (ko != "") {
 		if(uko != "") {
 			kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
@@ -2003,12 +2003,18 @@ void TimeMainWindow::callColorDialog()
    QColor color, initial = Qt::white;
    if (abtList->hasBgColor(abt,ko,uko))
      initial = abtList->getBgColor(abt,ko,uko);
-   color = QColorDialog::getColor(initial, this); // nur Qt >= 4.5: , tr("Hintergrundfarbe"));
-
-   if (color.isValid()) {
-     abtList->setBgColor(color, abt,ko,uko);
-     refreshAfterColorChange(abt, ko, uko);
-   }
+   auto colordialog = new QColorDialog(initial, this);
+   connect(colordialog, &QColorDialog::finished, [=](){
+     if (colordialog->result()==QDialog::Accepted) {
+       auto color=colordialog->selectedColor();
+       if (color.isValid()) {
+         abtList->setBgColor(color, abt,ko,uko);
+         refreshAfterColorChange(abt, ko, uko);
+       }
+     }
+     colordialog->deleteLater();
+   });
+   colordialog->open();
 }
 
 void TimeMainWindow::removeBgColor() {
