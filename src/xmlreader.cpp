@@ -213,8 +213,10 @@ void XMLReader::parse(QIODevice *input)
                                                     {
                                                         QStringList bereitschaften;
                                                         bereitschaften = itUk->second.getBereitschaft();
-                                                        bereitschaften.append(bereitschaft);
-                                                        itUk->second.setBereitschaft(bereitschaften);
+                                                        if (!bereitschaften.contains(bereitschaft)) {
+                                                            bereitschaften.append(bereitschaft);
+                                                            itUk->second.setBereitschaft(bereitschaften);
+                                                        }
                                                     }
                                                 }
                                                 if (elem4.tagName() == "eintrag")

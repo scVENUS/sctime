@@ -27,6 +27,12 @@ struct BereitschaftsEintrag
 {
   QString bezeichnung;
   QString beschreibung;
+  
+  bool operator==(const BereitschaftsEintrag &be) const
+  {
+    return bezeichnung == be.bezeichnung
+           && beschreibung == be.beschreibung;
+  };
 };
 
 class BereitschaftsListe: public QList<BereitschaftsEintrag>
@@ -37,5 +43,7 @@ public:
 private:
   BereitschaftsListe() {};
 };
+
+
 
 #endif // BEREITSCHAFTSLISTE_H
