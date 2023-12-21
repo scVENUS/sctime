@@ -163,7 +163,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   QAction* pauseAbzurAction = new QAction( QIcon(":/hi22_action_player_pause_half"),
                                            tr("Pause &accountable time"), this);
   pauseAbzurAction->setShortcut(Qt::CTRL+Qt::Key_A);
-  pauseAbzurAction->setStatusTip(tr("Pause only tracking of accountable time"));
   pauseAbzurAction->setCheckable(true);
   connect(pauseAbzurAction, SIGNAL(toggled(bool)), this, SLOT(pauseAbzur(bool)));
 
@@ -173,17 +172,14 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   copyAction = new QAction(tr("&Copy as text"), this);
   copyAction->setShortcut(Qt::CTRL+Qt::Key_C);
-  copyAction->setStatusTip(tr("Copy infos about account and entry as text to clipboard"));
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
 
   copyLinkAction = new QAction(tr("Copy as &link"), this);
   copyLinkAction->setShortcut(Qt::CTRL+Qt::Key_L);
-  copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
 
   QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
   pasteLinkAction->setShortcut(Qt::CTRL+Qt::Key_V);
-  pasteLinkAction->setStatusTip(tr("Open account from link from clipboard"));
   connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
@@ -192,18 +188,15 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   QAction* punchClockAction = new QAction(tr("Punch Clock"), this);
   punchClockAction->setShortcut(Qt::CTRL+Qt::Key_O);
-  punchClockAction->setStatusTip("punch clock");
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
   resetAction->setShortcut(Qt::CTRL+Qt::Key_N);
-  resetAction->setStatusTip(tr("Set active account's accountable time equal worked time"));
   connect(resetAction, SIGNAL(triggered()), this, SLOT(resetDiff()));
 
   inPersKontAction = new QAction( QIcon(":/hi22_action_attach"), tr("Select as personal &account"), this);
   inPersKontAction->setShortcut(Qt::CTRL+Qt::Key_K);
   inPersKontAction->setCheckable(true);
-  inPersKontAction->setStatusTip("link in personal accounts");
   connect(inPersKontAction, SIGNAL(toggled(bool)), this, SLOT(inPersoenlicheKonten(bool)));
 
   QAction* quitAction = new QAction(tr("&Quit"), this);
@@ -215,37 +208,30 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   // being merged into the application menu.
   quitAction->setMenuRole(QAction::QuitRole);
   quitAction->setShortcut(Qt::CTRL+Qt::Key_Q);
-  quitAction->setStatusTip(tr("Quit program"));
   connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
 
   QAction* findKontoAction = new QAction(tr("&Search account..."), this);
-  findKontoAction->setStatusTip(tr("Search for an account"));
   findKontoAction->setShortcut(Qt::CTRL+Qt::Key_F);
   //findKontoAction->setStatusTip(tr("Konto suchen"));
   connect(findKontoAction, SIGNAL(triggered()), this, SLOT(callFindKontoDialog()));
 
   QAction* refreshAction = new QAction(tr("&Reread account list"), this);
-  refreshAction->setStatusTip(tr("Reread account list"));
   refreshAction->setShortcut(Qt::CTRL+Qt::Key_R);
   connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshKontoListe()));
 
   QAction* preferenceAction = new QAction(tr("&Settings..."),this);
-  preferenceAction->setStatusTip(tr("Change settings"));
   preferenceAction->setMenuRole(QAction::PreferencesRole);
   connect(preferenceAction, SIGNAL(triggered()), this, SLOT(callPreferenceDialog()));
 
   QAction* helpAction = new QAction(tr("&Manual..."), this);
-  helpAction->setStatusTip(tr("Manual"));
   helpAction->setShortcut(Qt::Key_F1);
   connect(helpAction, SIGNAL(triggered()), this, SLOT(callHelpDialog()));  
   
   QAction* aboutAction = new QAction(tr("&About sctime..."), this);
-  aboutAction->setStatusTip(tr("About sctime..."));
   aboutAction->setMenuRole(QAction::AboutRole);
   connect(aboutAction, SIGNAL(triggered()), this, SLOT(callAboutBox()));
 
   QAction* qtAction = new QAction(tr("About &Qt..."), this);
-  qtAction->setStatusTip(tr("About QT"));
   qtAction->setMenuRole(QAction::AboutQtRole);
   connect(qtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
   
@@ -253,12 +239,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   connect(addlicAction, SIGNAL(triggered()), this, SLOT(callAdditionalLicenseDialog()));
 
   QAction* logAction = new QAction(tr("&Messages..."), this);
-  logAction->setStatusTip("Messages");
   connect(logAction, SIGNAL(triggered()), this, SLOT(logDialog()));
 
   editUnterKontoAction = new QAction(QIcon(":/hi22_action_edit" ), tr("&Edit..."), this);
   editUnterKontoAction->setShortcuts({Qt::Key_Return, Qt::Key_Menu});
-  editUnterKontoAction->setStatusTip(tr("Edit subaccount"));
   connect(editUnterKontoAction, SIGNAL(triggered()), this, SLOT(editUnterKontoPressed()));
 
   QAction* eintragActivateAction = new QAction(tr("&Activate entry"), this);
@@ -286,13 +270,21 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   bgColorChooseAction = new QAction(tr("Choose &background colour..."), this);
   bgColorChooseAction->setShortcut(Qt::CTRL+Qt::Key_G);
-  bgColorChooseAction->setStatusTip(tr("Choose background colour"));
   bgColorRemoveAction = new QAction(tr("&Remove background colour"), this);
-  bgColorRemoveAction->setStatusTip(tr("Remove background colour"));
 
 
   jumpAction = new QAction(tr("S&how selected account in 'all accounts'"), this);
-  jumpAction->setStatusTip(tr("Show selected account in 'all accounts'"));
+
+#ifndef WASMQUIRKS // leads to issues in WASM, disable for now
+  pauseAbzurAction->setStatusTip(tr("Pause only tracking of accountable time"));
+  copyAction->setStatusTip(tr("Copy infos about account and entry as text to clipboard"));
+  copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
+  pasteLinkAction->setStatusTip(tr("Open account from link from clipboard"));
+  resetAction->setStatusTip(tr("Set active account's accountable time equal worked time"));
+  quitAction->setStatusTip(tr("Quit program"));
+  aboutAction->setStatusTip(tr("About sctime..."));
+  editUnterKontoAction->setStatusTip(tr("Edit subaccount"));
+#endif
 
   QAction* min5PlusAction = new QAction(QIcon(":/hi22_action_1uparrow" ),
                                           tr("Increase time"), this);
