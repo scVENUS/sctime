@@ -274,7 +274,6 @@ public:
     bool paused;
     QDialog* cantSaveDialog;
     int stopTimers(const QString& grund); // rv: Sekunden seit letztem Tick
-    void resumeTimers(int secSinceTick, const QString& reason);
     bool entryBeingEdited; // indicates that currently an entry is being edited
     QLocalServer *m_ipcserver;
     PunchClockList *m_punchClockList;

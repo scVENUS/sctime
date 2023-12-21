@@ -136,7 +136,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   m_dateChanger = NULL;
 
   statusBar = new StatusBar(this);
-  //setStatusBar(new QStatusBar(this));
   setStatusBar(statusBar);
   std::vector<int> columnwidthlist;
 
@@ -499,7 +498,6 @@ void TimeMainWindow::initialSettingsRead() {
   connect(m_dsm->kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(m_dsm->bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(m_dsm->specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  // QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
   connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
   m_afterCommitMethodQueue->clear();
   if (m_dsm->bereitDSM!=m_dsm->kontenDSM) {
