@@ -22,13 +22,18 @@
 #include "sctimexmlsettings.h"
 
 
-PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, QWidget *parent)
+PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode, QWidget *parent)
 : QDialog(parent)
 {
     setupUi(this);
     connect(buttonOk, SIGNAL(clicked()), this, SLOT(accept()));
     connect(buttonCancel, SIGNAL(clicked()), this, SLOT(reject()));
     connect(customFontSelectButton, SIGNAL(clicked()), this, SLOT(selectCustomFont()));
+    connect(this, &PreferenceDialog::finished, this, &PreferenceDialog::postprocess);
+
+    this->oldshowtypecolumn=oldshowtypecolumn;
+    this->oldshowpspcolumn=oldshowpspcolumn;
+    this->olddisplaymode=olddisplaymode;
 
     settings = _settings;
     zeitIncBox->setValue(settings->timeIncrement()/60);
@@ -89,31 +94,32 @@ PreferenceDialog::~PreferenceDialog()
 {
 }
 
-void PreferenceDialog::accept()
-{
-    QDialog::accept();
-    settings->setTimeIncrement(zeitIncBox->value()*60);
-    settings->setFastTimeIncrement(fastZeitIncBox->value()*60);
-    settings->setAlwaysSaveEntry(entrySaveCheckbox->isChecked());
-    settings->setPowerUserView(powerUserCheckbox->isChecked());
-    settings->setSingleClickActivation(singleClickCheckbox->isChecked());
-    settings->setShowTypeColumn(showTypeCheckBox->isChecked());
-    settings->setShowPSPColumn(showPSPCheckBox->isChecked());
-    settings->setUseDefaultCommentIfUnique(useDefaultCommentIfUniqueCheckBox->isChecked());
-    settings->setUseCustomFont(customFontCheckBox->isChecked());
-    settings->setCustomFont(selectedFont.family());
-    settings->setDragNDrop(dragNDropCheckbox->isChecked());
-    settings->setPersoenlicheKontensumme(persoenlicheKontensummeCheckbox->isChecked());
-    settings->setCustomFontSize(selectedFont.pointSize());
-    settings->setShowSpecialRemunSelector(showSpecialRemunSelector->isChecked());
-    settings->setWarnISO8859(warnISO8859->isChecked());
-    settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
-    SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
-    if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
-        dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
-    } else
-    if (radioNoBold->isChecked()) {
-        dm = SCTimeXMLSettings::DM_NOTBOLD;
+void PreferenceDialog::postprocess() {
+    if (result()==QDialog::Accepted) {
+        settings->setTimeIncrement(zeitIncBox->value()*60);
+        settings->setFastTimeIncrement(fastZeitIncBox->value()*60);
+        settings->setAlwaysSaveEntry(entrySaveCheckbox->isChecked());
+        settings->setPowerUserView(powerUserCheckbox->isChecked());
+        settings->setSingleClickActivation(singleClickCheckbox->isChecked());
+        settings->setShowTypeColumn(showTypeCheckBox->isChecked());
+        settings->setShowPSPColumn(showPSPCheckBox->isChecked());
+        settings->setUseDefaultCommentIfUnique(useDefaultCommentIfUniqueCheckBox->isChecked());
+        settings->setUseCustomFont(customFontCheckBox->isChecked());
+        settings->setCustomFont(selectedFont.family());
+        settings->setDragNDrop(dragNDropCheckbox->isChecked());
+        settings->setPersoenlicheKontensumme(persoenlicheKontensummeCheckbox->isChecked());
+        settings->setCustomFontSize(selectedFont.pointSize());
+        settings->setShowSpecialRemunSelector(showSpecialRemunSelector->isChecked());
+        settings->setWarnISO8859(warnISO8859->isChecked());
+        settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
+        SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
+        if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
+            dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
+        } else
+        if (radioNoBold->isChecked()) {
+            dm = SCTimeXMLSettings::DM_NOTBOLD;
+        }
+        settings->setDefCommentDisplayMode(dm);
     }
-    settings->setDefCommentDisplayMode(dm);
+    emit finishedWithInfo(oldshowtypecolumn, oldshowpspcolumn, olddisplaymode);
 }

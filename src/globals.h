@@ -28,4 +28,10 @@ extern QString SCTIME_IPC;
 void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);
+QString getRestBaseUrl();
+
+#define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"
+#define REST_COMMITED_ENDPOINT "sctimegui/v1/commiteddata"
+#define REST_ACCOUNTINGMETA_ENDPOINT "sctimegui/v1/accountingmetadata"
+
 #endif

@@ -11,16 +11,16 @@ CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
           datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
-          descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp preferencedialog.cpp\
+          descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
-          specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
+          specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
           datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
-          pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
-          setupdsm.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
+          oncalldialog.h pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
+          setupdsm.h specialremunentryhelper.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
           unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
@@ -104,8 +104,8 @@ QMAKE_EXTRA_COMPILERS += lrelease
 
 wasm {
   QTPLUGIN.imageformats = qico qgif
-  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=http://127.0.0.1:8000/app/sctime.wasm.debug.wasm
-  DEFINES += RESTONLY
+  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=http://127.0.0.1:8888/static/sctime.wasm.debug.wasm
+  DEFINES += RESTONLY RESTCONFIG WASMQUIRKS
 }
 !wasm {
   QT += sql

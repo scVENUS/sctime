@@ -12,14 +12,32 @@
 
 void XMLWriter::checkReply(QNetworkReply* input) {
    if (input->isFinished()) {
+     input->deleteLater();
      emit settingsPartWritten(global, abtList, pcl);
    }
 }
 
+void XMLWriter::gotReply() {
+    auto obj=sender();
+    checkReply((QNetworkReply*)obj);
+}
+
+// we need this for compatibility with old QT.
+void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
+    auto obj=sender();
+    checkReply((QNetworkReply*)obj);
+}
+
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   auto request = QNetworkRequest(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-  networkAccessManager.put(request, ba);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
+  QNetworkReply *reply = networkAccessManager.put(request, ba);
+  connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
+  // for compatibility - use errorOccurred slot instead in future
+  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+        this, &XMLWriter::onErrCompat);
+  //connect(reply, &QNetworkReply::errorOccurred,
+  //      this, &XMLWriter::gotReply);
 }
 
 void XMLWriter::writeAllSettings() {
@@ -371,9 +389,6 @@ void XMLWriter::writeSettings(bool global) {
       }
   }
 
-  QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
-#ifndef RESTCONFIG
-  filename=configDir.filePath(filename);
   if (!global && pcl!=NULL) {
     QDomElement punchclocktag = doc.createElement( "punchclock" );
     for (auto pce: *pcl) {
@@ -388,6 +403,9 @@ void XMLWriter::writeSettings(bool global) {
     root.appendChild(punchclocktag);
   }
 
+  QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
+#ifndef RESTCONFIG
+  filename=configDir.filePath(filename);
   QFile fnew(filename + ".tmp");
   QDateTime filemod = QFileInfo(filename).lastModified();
   if (!global && settings->m_lastSave.isValid() && filemod.isValid() && filemod>settings->m_lastSave.addSecs(30)) {
@@ -448,10 +466,13 @@ void XMLWriter::writeSettings(bool global) {
   stream.setCodec(xmlcharmap);
   stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
   stream<<doc.toString()<<endl;
-  auto env=QProcessEnvironment::systemEnvironment();
-  QString user=env.value("SCTIME_USER");
-  QString baseurl=env.value("SCTIME_BASE_URL");
-  writeBytes(QUrl(baseurl+"/../accountingdata/"+user+"/"+filename), ba);
+  QString baseurl=getRestBaseUrl();
+  QString postfix = "";
+  if (!global) {
+    postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+  }
+  writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix), ba);
+
 #endif // RESTCONFIG
 #endif //NO_XML
   if (!global) {

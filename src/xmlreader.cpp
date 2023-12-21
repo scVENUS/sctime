@@ -6,7 +6,6 @@
 #include <QDomElement>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QProcessEnvironment>
 #include "globals.h"
 
 void XMLReader::open()
@@ -44,16 +43,36 @@ void XMLReader::open()
                 settings->backupSettingsXml = false;
         }
         emit settingsPartRead(global, abtList, pcl, false, ""); 
+        return;
     }
     parse(&f);
 
 #else
-    auto env = QProcessEnvironment::systemEnvironment();
-    QString user = env.value("SCTIME_USER");
-    QString baseurl = env.value("SCTIME_BASE_URL");
-    auto request = QNetworkRequest(QUrl(baseurl + "/../accountingdata/" + user + "/" + filename));
-    networkAccessManager.get(request);
+    QString baseurl = getRestBaseUrl();
+    QString postfix = "";
+    if (!global) {
+      postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+    }
+    auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
+    QNetworkReply *reply = networkAccessManager.get(request);
+    connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
+    // for compatibility - use errorOccurred slot instead in future
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+        this, &XMLReader::onErrCompat);
+    //connect(reply, &QNetworkReply::errorOccurred,
+    //    this, &XMLReader::gotReply);
 #endif
+}
+
+void XMLReader::gotReply() {
+    auto obj=sender();
+    parse((QIODevice*)obj);
+}
+
+// we need this for compatibility with old QT.
+void XMLReader::onErrCompat(QNetworkReply::NetworkError code) {
+    auto obj=sender();
+    parse((QIODevice*)obj);
 }
 
 void XMLReader::parse(QIODevice *input)
@@ -68,11 +87,13 @@ void XMLReader::parse(QIODevice *input)
                 msg="Error on reading settings";
             }
             emit settingsPartRead(global, abtList, pcl, false, msg); 
+            input->deleteLater();
             return;
         }
         if (!netinput->isFinished()) {
             return;
         }
+        input->deleteLater();
     }
     if (fileinput!=NULL && !fileinput->exists()) {
       emit settingsPartRead(global, abtList, pcl, false, ""); 
@@ -84,11 +105,12 @@ void XMLReader::parse(QIODevice *input)
     // QByteArray bytes=input->readAll();
     if (!doc.setContent(input, &errMsg, &errLine, &errCol))
     {
-        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
         if (global)
             settings->backupSettingsXml = false;
         emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file");
+        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
+        return;
     }
 #ifndef RESTCONFIG
     // when closing a networkrequest, we get another finished signal. Not sure if this bug or feature - for now just dont close it
@@ -189,14 +211,16 @@ void XMLReader::parse(QIODevice *input)
                                                     {
                                                         QStringList bereitschaften;
                                                         bereitschaften = itUk->second.getBereitschaft();
-                                                        bereitschaften.append(bereitschaft);
-                                                        itUk->second.setBereitschaft(bereitschaften);
+                                                        if (!bereitschaften.contains(bereitschaft)) {
+                                                            bereitschaften.append(bereitschaft);
+                                                            itUk->second.setBereitschaft(bereitschaften);
+                                                        }
                                                     }
                                                 }
                                                 if (elem4.tagName() == "eintrag")
                                                 {
                                                     QString eintragstr = elem4.attribute("nummer");
-                                                    if (eintragstr.isNull())
+                                                    if (eintragstr.isNull()||eintragstr.isEmpty())
                                                         continue;
                                                     int idx = eintragstr.toInt();
 
@@ -544,3 +568,15 @@ void XMLReader::parse(QIODevice *input)
     }
     emit settingsPartRead(global, abtList, pcl, true, "");
 }
+
+void XMLReader::continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
+{
+  /* we come here twice. first after reading the gobal settings, and then after reading the settings of the day. after that we send the finished signal*/
+  if (global) {
+    this->global = false;
+    open();
+  } else {
+    emit settingsRead();
+  }
+}
+

@@ -148,7 +148,9 @@ void DSM::setup(SCTimeXMLSettings* settings)
     trace(QObject::tr("adding jsonreader: %1.").arg(jsonPath));
     jsonreader=new JSONReaderUrl("file://"+jsonPath);
     kontensources->append(new JSONAccountSource(jsonreader));
+    jsonreader=new JSONReaderUrl("file://"+jsonPath);
     bereitsources->append(new JSONOnCallSource(jsonreader));
+    jsonreader=new JSONReaderUrl("file://"+jsonPath);
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
   }
   QString dsname;
@@ -156,7 +158,9 @@ void DSM::setup(SCTimeXMLSettings* settings)
     if (dsname.compare("json") == 0) {
       jsonreader=new JSONReaderUrl("file://"+configDir.filePath("sctime-offline.json"));
       kontensources->append(new JSONAccountSource(jsonreader));
+     jsonreader=new JSONReaderUrl("file://"+configDir.filePath("sctime-offline.json"));
       bereitsources->append(new JSONOnCallSource(jsonreader));
+      jsonreader=new JSONReaderUrl("file://"+configDir.filePath("sctime-offline.json"));
       specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
     } else
     if (dsname.compare("file") == 0) {
@@ -175,7 +179,9 @@ void DSM::setup(SCTimeXMLSettings* settings)
 #else
       jsonreader=new JSONReaderCommand("zeit-sctime-offline", NULL);
       kontensources->append(new JSONAccountSource(jsonreader));
+      jsonreader=new JSONReaderCommand("zeit-sctime-offline", NULL);
       bereitsources->append(new JSONOnCallSource(jsonreader));
+      jsonreader=new JSONReaderCommand("zeit-sctime-offline", NULL);
       specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
 #endif
 #endif
@@ -213,11 +219,12 @@ void DSM::setup(SCTimeXMLSettings* settings)
   }
   if (dsname.compare("rest") == 0) {
 #endif // RESTONLY
-    auto env=QProcessEnvironment::systemEnvironment();
-    QString baseurl=env.value("SCTIME_BASE_URL");
-    jsonreader=new JSONReaderUrl(baseurl+"/../accountingmetadata");
+    QString baseurl=getRestBaseUrl();
+    jsonreader=new JSONReaderUrl(baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
     kontensources->append(new JSONAccountSource(jsonreader));
+    jsonreader=new JSONReaderUrl(baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
     bereitsources->append(new JSONOnCallSource(jsonreader));
+    jsonreader=new JSONReaderUrl(baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
 #ifndef RESTONLY
   }

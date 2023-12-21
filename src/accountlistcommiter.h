@@ -8,6 +8,7 @@ class KontoTreeView;
 class SCTimeXMLSettings;
 class PunchClockList;
 class XMLWriter;
+class XMLReader;
 
 // commits a new account list. create a new instance of this object everytime you need to do this - states are not cleaned up.
 class AccountListCommiter: public QObject {
@@ -35,6 +36,7 @@ private:
        AbteilungsListe* abtListToday;
        PunchClockList *pcl;
        XMLWriter* writer;
+       XMLReader* reader;
 
        int diff;        
 };

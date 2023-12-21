@@ -178,29 +178,6 @@ const char* SCTimeXMLSettings::charmap() {
 #endif
 }
 
-void SCTimeXMLSettings::readSettings(AbteilungsListe* abtList, PunchClockList* pcl)
-{
-  abtList->clearKonten();
-  readSettings(true, abtList, pcl);
-}
-
-void SCTimeXMLSettings::continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
-{
-  /* we come here twice. first after reading the gobal settings, and then after reading the settings of the day. after that we send the finished signal*/
-  if (global) {
-    readSettings(false, abtList, pcl);
-  } else {
-    emit settingsRead();
-  }
-}
-
-
-void SCTimeXMLSettings::readSettings()
-{
-  // Nur globale Einstellungen lesen
-  readSettings(true, NULL, NULL);
-}
-
 int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
 {
   QString version1(v1);
@@ -226,18 +203,6 @@ int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
      } 
   }
   return 0; 
-}
-
-/**
- * Liest alle Einstellungen.
- */
-
-void SCTimeXMLSettings::readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
-{
-  XMLReader *reader = new XMLReader(this, global, abtList, pcl);
-  connect(reader, &XMLReader::settingsPartRead, this, &SCTimeXMLSettings::continueAfterReading);
-  connect(this, &SCTimeXMLSettings::settingsRead, reader, &XMLReader::deleteLater);
-  reader->open();
 }
 
 QString SCTimeXMLSettings::color2str(const QColor& color)

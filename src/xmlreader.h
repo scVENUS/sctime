@@ -14,22 +14,26 @@ class XMLReader: public QObject
      Q_OBJECT;
      public:
        XMLReader(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
-               connect(&networkAccessManager, &QNetworkAccessManager::finished, this, &XMLReader::parse);
+          connect(this, &XMLReader::settingsPartRead, this, &XMLReader::continueAfterReading);
        };
     public: 
       virtual void open();      
 
     public slots:
       virtual void parse(QIODevice* input);
-    /*private signals:
-      void deviceOpenedForReading(QIODevice*);*/
-    private:
+      virtual void gotReply();
+      virtual void onErrCompat(QNetworkReply::NetworkError code);
+      virtual void continueAfterReading(bool global, AbteilungsListe *abtList, PunchClockList *pcl);
+      /*private signals:
+        void deviceOpenedForReading(QIODevice*);*/
+  private:
       bool global;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager networkAccessManager;
     signals:
       void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl, bool success, QString message);
+      void settingsRead();
 };
 
 #endif

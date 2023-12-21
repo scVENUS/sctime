@@ -46,6 +46,14 @@ class DSM;
 class TextViewerDialog;
 class Lock;
 
+class QueuedMethod {
+    public:
+       QueuedMethod(QObject* obj, char* method): obj(obj), method(method) {}
+    public:
+       QObject* obj;
+       char * method;
+};
+
 /** Diese Klasse implementiert das Hauptfenster des Programms,
     und sorgt zudem fuer das Fortschreiten der Zeit.
 */
@@ -69,6 +77,7 @@ public:
     void callNightTimeDialog(bool isnight);
     void minuteHochzaehlen();
     void pause();
+    void continueAfterPause(int drift, int secSinceTick);
     void pauseAbzur(bool on);
     void zeitChanged();
     void updateCaption();
@@ -102,13 +111,17 @@ public:
     void subFastAbzurTimeInc();
 
     void callFindKontoDialog();
+    void finishFindKontoDialog();
     void callHelpDialog();
     void callPreferenceDialog();
-    void callBereitschaftsDialog(QTreeWidgetItem * item);
-    void callSpecialRemunerationsDialog(QTreeWidgetItem * item);
+    void finishPreferenceDialog(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode);
+    void callBereitschaftsDialog(QTreeWidgetItem *item);
+    void finishBereitschaftsDialog(QString abt, QString ko, QString uko, QStringList bereitschaften, QStringList bereitschaftenNeu);
+    void callSpecialRemunerationsDialog(QTreeWidgetItem *item);
     void callColorDialog();
     void callAdditionalLicenseDialog();
     void callPunchClockDialog();
+    void finishPunchClockDialog();
     void removeBgColor();
     void jumpToAlleKonten();
 
@@ -132,6 +145,8 @@ public:
     void switchNightMode(bool enabled);
 
     void updateSpecialModes(bool afterPause);
+
+    void readInitialSetting();
 
 
   signals:        
@@ -188,12 +203,14 @@ public:
     void callNightTimeBeginDialog();
     void callNightTimeEndDialog();
     void callCantSaveDialog();
+    void finishCantSaveDialog();
     void callSwitchDateErrorDialog();
     void initialSettingsRead();
     void readIPCMessage();
     void showContextMenu(const QPoint &pos);
     void cleanupUnterKontoDialog(int result);
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
+    
   protected:
     virtual void moveEvent( QMoveEvent *event);
   private:
@@ -202,9 +219,9 @@ public:
     bool checkConfigDir();
     void updateTaskbarTitle(int zeit);
     void closeEvent(QCloseEvent * event);
-    void refreshAfterColorChange(QString&, QString&, QString&);
+    void finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko);
+    void refreshAfterColorChange(const QString &, const QString &, const QString &);
     void resizeToIfSensible(QDialog* dialog, const QPoint& pos, const QSize& size);
-    bool checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
     void openItemFromPathList(QStringList pathlist);
     void switchOvertimeMode(bool enabled, QString otmSR);
     void cantMoveTimeDialog(int delta);
@@ -257,7 +274,6 @@ public:
     bool paused;
     QDialog* cantSaveDialog;
     int stopTimers(const QString& grund); // rv: Sekunden seit letztem Tick
-    void resumeTimers(int secSinceTick, const QString& reason);
     bool entryBeingEdited; // indicates that currently an entry is being edited
     QLocalServer *m_ipcserver;
     PunchClockList *m_punchClockList;
@@ -270,6 +286,7 @@ public:
     QMetaObject::Connection m_unterKontoDialogTimerConnection;
     DateChanger * m_dateChanger;
     DSM* m_dsm;
+    QQueue<QueuedMethod*>* m_afterCommitMethodQueue;
 };
 
 

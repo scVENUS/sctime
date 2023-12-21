@@ -1,8 +1,7 @@
 /*
-
-    Copyright (C) 2018 science+computing ag
+    Copyright (C) 2023 science+computing ag
        Authors: Florian Schmitt et al.
-
+  
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License Version 3 as published by
     the Free Software Foundation.
@@ -14,36 +13,29 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 */
 
-#ifndef BEREITSCHAFTSLISTE_H
-#define BEREITSCHAFTSLISTE_H
+#ifndef SPECIALREMUNENTRYHELPER_H
+#define SPECIALREMUNENTRYHELPER_H
 
-#include <QList>
-#include <QString>
+#include <QObject>
+class AbteilungsListe;
 
-struct BereitschaftsEintrag
+/* this class helps to check if the current account is suitable for the given entries*/
+
+class SpecialRemunEntryHelper : public QObject
 {
-  QString bezeichnung;
-  QString beschreibung;
-  
-  bool operator==(const BereitschaftsEintrag &be) const
-  {
-    return bezeichnung == be.bezeichnung
-           && beschreibung == be.beschreibung;
-  };
-};
+  Q_OBJECT
 
-class BereitschaftsListe: public QList<BereitschaftsEintrag>
-{
 public:
-  void insertEintrag(const QString& bezeichnung, const QString& beschreibung);
-  static BereitschaftsListe* getInstance();
-private:
-  BereitschaftsListe() {};
+  SpecialRemunEntryHelper() {};
+
+public slots:
+  void checkSREntry(AbteilungsListe *abtListToday, int idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns);
+
+signals:
+  void checked(bool reuse, int correctidx);
+
 };
 
-
-
-#endif // BEREITSCHAFTSLISTE_H
+#endif

@@ -15,39 +15,38 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef PAUSEDIALOG_H
-#define PAUSEDIALOG_H
+#ifndef ONCALLDIALOG_H
+#define ONCALLDIALOG_H
 
-#include "ui_pausedialogbase.h"
+#include <QDialog>
+#include <QStringList>
 
-#include <QDateTime>
-#include <QTimer>
+class  BereitschaftsView;
 
 /**
   * Dialog to show when paused
   */
-class PauseDialog : public QDialog, private Ui::PauseDialogBase
+class OnCallDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  PauseDialog(QDateTime starttime, int drift, int secSinceTick, QWidget* parent = 0);
-  virtual ~PauseDialog();
+  OnCallDialog(QString abt, QString ko, QString uko, QStringList onCallCategories, QWidget* parent = 0);
+  virtual ~OnCallDialog() {};
 public slots:
   /*$PUBLIC_SLOTS$*/
-  virtual void updateTime();
-  virtual void startPause();
-  virtual void resumeAfterPause();
+private slots:
+  virtual void postprocess();
 
 signals:
-  void pauseHasEnded(int drift, int secSinceTick);
+  void finishedWithInfo(QString abt, QString ko, QString uko, QStringList onCallCategoriesOrig, QStringList onCallCategoriesNew);
 
 private:
-  QDateTime starttime;
-  QString text;
-  QTimer pauseTimer;
-  int drift;
-  int secSinceTick;
+  BereitschaftsView* onCallView;
+  QStringList onCallCategoriesOrig;
+  QString abt;
+  QString ko;
+  QString uko;
 };
 
 #endif

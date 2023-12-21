@@ -43,6 +43,8 @@
 #include <QLocalSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QQueue>
+#include <QStatusBar>
 
 #include "globals.h"
 #include "time.h"
@@ -62,6 +64,7 @@
 #include "defaultcommentreader.h"
 #include "abteilungsliste.h"
 #include "sctimexmlsettings.h"
+#include "specialremunentryhelper.h"
 #include "lock.h"
 #include "datasource.h"
 #include "punchclockdialog.h"
@@ -74,6 +77,8 @@
 #include "pausedialog.h"
 #include "datechanger.h"
 #include "xmlwriter.h"
+#include "xmlreader.h"
+#include "oncalldialog.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -110,6 +115,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   paused = false;
   entryBeingEdited = false;
   sekunden = 0;
+  m_afterCommitMethodQueue = new QQueue<QueuedMethod*>();
   setObjectName(tr("sctime"));
   QDate heute;
   abtListToday=new AbteilungsListe(heute.currentDate(), zk);
@@ -156,7 +162,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   QAction* pauseAbzurAction = new QAction( QIcon(":/hi22_action_player_pause_half"),
                                            tr("Pause &accountable time"), this);
   pauseAbzurAction->setShortcut(Qt::CTRL+Qt::Key_A);
-  pauseAbzurAction->setStatusTip(tr("Pause only tracking of accountable time"));
   pauseAbzurAction->setCheckable(true);
   connect(pauseAbzurAction, SIGNAL(toggled(bool)), this, SLOT(pauseAbzur(bool)));
 
@@ -166,17 +171,14 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   copyAction = new QAction(tr("&Copy as text"), this);
   copyAction->setShortcut(Qt::CTRL+Qt::Key_C);
-  copyAction->setStatusTip(tr("Copy infos about account and entry as text to clipboard"));
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
 
   copyLinkAction = new QAction(tr("Copy as &link"), this);
   copyLinkAction->setShortcut(Qt::CTRL+Qt::Key_L);
-  copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
 
   QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
   pasteLinkAction->setShortcut(Qt::CTRL+Qt::Key_V);
-  pasteLinkAction->setStatusTip(tr("Open account from link from clipboard"));
   connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
@@ -189,7 +191,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
   resetAction->setShortcut(Qt::CTRL+Qt::Key_N);
-  resetAction->setStatusTip(tr("Set active account's accountable time equal worked time"));
   connect(resetAction, SIGNAL(triggered()), this, SLOT(resetDiff()));
 
   inPersKontAction = new QAction( QIcon(":/hi22_action_attach"), tr("Select as personal &account"), this);
@@ -206,7 +207,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   // being merged into the application menu.
   quitAction->setMenuRole(QAction::QuitRole);
   quitAction->setShortcut(Qt::CTRL+Qt::Key_Q);
-  quitAction->setStatusTip(tr("Quit program"));
   connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
 
   QAction* findKontoAction = new QAction(tr("&Search account..."), this);
@@ -224,10 +224,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   QAction* helpAction = new QAction(tr("&Manual..."), this);
   helpAction->setShortcut(Qt::Key_F1);
-
   connect(helpAction, SIGNAL(triggered()), this, SLOT(callHelpDialog()));  
+  
   QAction* aboutAction = new QAction(tr("&About sctime..."), this);
-  aboutAction->setStatusTip(tr("About sctime..."));
   aboutAction->setMenuRole(QAction::AboutRole);
   connect(aboutAction, SIGNAL(triggered()), this, SLOT(callAboutBox()));
 
@@ -243,7 +242,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   editUnterKontoAction = new QAction(QIcon(":/hi22_action_edit" ), tr("&Edit..."), this);
   editUnterKontoAction->setShortcuts({Qt::Key_Return, Qt::Key_Menu});
-  editUnterKontoAction->setStatusTip(tr("Edit subaccount"));
   connect(editUnterKontoAction, SIGNAL(triggered()), this, SLOT(editUnterKontoPressed()));
 
   QAction* eintragActivateAction = new QAction(tr("&Activate entry"), this);
@@ -273,7 +271,19 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   bgColorChooseAction->setShortcut(Qt::CTRL+Qt::Key_G);
   bgColorRemoveAction = new QAction(tr("&Remove background colour"), this);
 
-  jumpAction = new QAction(tr("&Show selected account in 'all accounts'"), this);
+
+  jumpAction = new QAction(tr("S&how selected account in 'all accounts'"), this);
+
+#ifndef WASMQUIRKS // leads to issues in WASM, disable for now
+  pauseAbzurAction->setStatusTip(tr("Pause only tracking of accountable time"));
+  copyAction->setStatusTip(tr("Copy infos about account and entry as text to clipboard"));
+  copyLinkAction->setStatusTip(tr("Copy infos about account and entry as a link to clipboard"));
+  pasteLinkAction->setStatusTip(tr("Open account from link from clipboard"));
+  resetAction->setStatusTip(tr("Set active account's accountable time equal worked time"));
+  quitAction->setStatusTip(tr("Quit program"));
+  aboutAction->setStatusTip(tr("About sctime..."));
+  editUnterKontoAction->setStatusTip(tr("Edit subaccount"));
+#endif
 
   QAction* min5PlusAction = new QAction(QIcon(":/hi22_action_1uparrow" ),
                                           tr("Increase time"), this);
@@ -386,12 +396,17 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   addToolBar(toolBar);
 
   settings=new SCTimeXMLSettings();
-  connect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
-  settings->readSettings(abtList, m_punchClockList);
+  readInitialSetting();
+}
+
+void TimeMainWindow::readInitialSetting() {
+    XMLReader *reader=new XMLReader(settings, true, abtList, m_punchClockList);
+    connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+    connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+    reader->open();
 }
 
 void TimeMainWindow::initialSettingsRead() {
-  disconnect(settings,&SCTimeXMLSettings::settingsRead, this, &TimeMainWindow::initialSettingsRead);
   std::vector<QString> xmlfilelist;
   std::vector<int> columnwidthlist;
   settings->getDefaultCommentFiles(xmlfilelist);
@@ -483,11 +498,17 @@ void TimeMainWindow::initialSettingsRead() {
   connect(m_dsm->kontenDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(m_dsm->bereitDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
   connect(m_dsm->specialRemunDSM, SIGNAL(aborted()), this, SLOT(displayLastLogEntry()));
-  QTimer::singleShot(1000, Qt::CoarseTimer,this, SLOT(refreshKontoListe()));
   connect(kontoTree, SIGNAL(customContextMenuRequested(const QPoint &)), SLOT(showContextMenu(const QPoint &)));
-  QMetaObject::invokeMethod(m_dsm->bereitDSM, "start", Qt::QueuedConnection);
+  m_afterCommitMethodQueue->clear();
+  if (m_dsm->bereitDSM!=m_dsm->kontenDSM) {
+     m_afterCommitMethodQueue->enqueue(new QueuedMethod(m_dsm->bereitDSM, "start"));
+  }
+  if ((m_dsm->specialRemunDSM!=m_dsm->kontenDSM)&&(m_dsm->specialRemunDSM!=m_dsm->bereitDSM)) {
+     m_afterCommitMethodQueue->enqueue(new QueuedMethod(m_dsm->specialRemunDSM, "start"));
+  }
   QMetaObject::invokeMethod(this, "refreshKontoListe", Qt::QueuedConnection);
-  QMetaObject::invokeMethod(m_dsm->specialRemunDSM, "start", Qt::QueuedConnection);
+  
+
   specialRemunAction->setEnabled(false);
 
   m_ipcserver = new QLocalServer(this);
@@ -606,13 +627,17 @@ void TimeMainWindow::resume() {
           .arg(before.toString(), now.toString()));
     return;
   }
-  if (QMessageBox::question(
-        this, tr("sctime: resume"),
+  auto msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: resume"),
         tr("The machine was suspended from %1 until %2. Should this time be added to the active account?")
         .arg(before.toString(), now.toString()),
-	QMessageBox::Yes, QMessageBox::No)
-      == QMessageBox::Yes)
-    zeitKorrektur(pauseSecs);
+	QMessageBox::Yes| QMessageBox::No);
+  connect(msgbox, &QMessageBox::finished,
+  [=](){
+    if (msgbox->result() == QMessageBox::Yes)
+       zeitKorrektur(pauseSecs);
+    msgbox->deleteLater();
+   });
+   msgbox->open();
 }
 
 void TimeMainWindow::zeitKorrektur(int delta) {
@@ -643,21 +668,26 @@ void TimeMainWindow::driftKorrektur() {
       stream<< msg << endl;
     }
   }
-  int answer =
-          drift > 0
-          ? QMessageBox::question(
-                  this, tr("sctime: Programm was frozen"),
-                  tr("The program (or whole system) seems to have hung for %1min or system time was changed.\n"
+  QMessageBox* msgbox;
+  if (drift>0) {
+     msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: Programm was frozen"),
+         tr("The program (or whole system) seems to have hung for %1min or system time was changed.\n"
                      "Should the time difference be added to the active account?\n"
                      "(current system time: %2)").arg(drift/60).arg(lastMinuteTick.toString()),
-                  QMessageBox::Yes, QMessageBox::No)
-          : QMessageBox::question(
-                this, tr("sctime: system time set back"),
-                tr("The system's time has been set back by %1min to %2."
+	       QMessageBox::Yes| QMessageBox::No);
+  } else {
+    msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: system time set back"),
+        tr("The system's time has been set back by %1min to %2."
                    "Should this time be subtracted from the active account?\n").arg(drift/60).arg(lastMinuteTick.toString()),
-                QMessageBox::No, QMessageBox::Yes);
-  if (answer == QMessageBox::Yes)
-      zeitKorrektur(drift);
+	       QMessageBox::Yes| QMessageBox::No);
+  }
+  connect(msgbox, &QMessageBox::finished,
+  [=](){
+    if (msgbox->result() == QMessageBox::Yes)
+       zeitKorrektur(drift);
+    msgbox->deleteLater();
+   });
+  msgbox->open();      
 }
 
 /* Wird durch einen Timer einmal pro Minute aufgerufen,
@@ -910,15 +940,16 @@ void TimeMainWindow::pause() {
     if ((now.date()==abtListToday->getDatum()) && (pce!=m_punchClockListToday->end())) {
       pce->second=now.time().msecsSinceStartOfDay()/1000;
     }
-    PauseDialog pd(now, this);
-    QTimer pauseTimer;
-    pauseTimer.setInterval(10000); // Update every 10 seconds
-    connect(&pauseTimer, SIGNAL(timeout()),&pd,SLOT(updateTime()));
-    pauseTimer.start();
-    pd.exec();
-    pauseTimer.stop();
+    PauseDialog* pd = new PauseDialog(now, drift, secSinceTick, this);
+    
+    connect(pd,&PauseDialog::pauseHasEnded, this, &TimeMainWindow::continueAfterPause);
+    pd->startPause();
+}
+
+void TimeMainWindow::continueAfterPause(int drift, int secSinceTick) {
+    sender()->deleteLater();
     paused = false;
-    now = QDateTime::currentDateTime();
+    QDateTime now = QDateTime::currentDateTime();
     sekunden = drift;
     trace(tr("End of break: ") +now.toString());
 
@@ -996,11 +1027,16 @@ void TimeMainWindow::callCantSaveDialog() {
     msg->setText(tr("An error occured when saving data. Please check permissions and connectivity of your target directory. If this error persists and you close sctime, you will loose all changes since the last successful save (an automatic save should occur every 5 minutes)."));
     msg->setIcon(QMessageBox::Warning);
     msg->setStandardButtons(QMessageBox::Close);
+    msg->setModal(true);
     qDebug() << tr("An error occured when saving data.");
-    msg->exec();
-    delete cantSaveDialog;
-    cantSaveDialog = NULL;
+    connect(msg, &QMessageBox::finished, this, &TimeMainWindow::finishCantSaveDialog);
+    msg->open();
   }
+}
+
+void TimeMainWindow::finishCantSaveDialog() {
+  cantSaveDialog->deleteLater();
+  cantSaveDialog=NULL;
 }
 
 void TimeMainWindow::checkLock() {
@@ -1008,17 +1044,19 @@ void TimeMainWindow::checkLock() {
     QMessageBox msg;
     msg.setText(tr("The program will quit in a few seconds without saving."));
     msg.setInformativeText(m_lock->errorString());
+    msg.setModal(true);
     qDebug() << tr("The program will now quit without saving.") << m_lock->errorString();
     QTimer::singleShot(10000, this, SLOT(quit()));
-    msg.exec();
+    msg.open();
     return;
   }
   if (m_lock->check()!=LS_OK) {
     QMessageBox msg;
     msg.setText(tr("Unclear state of Lockfile. Please check that there is no other instance of sctime running and that you have access to the sctime config directory. Otherwise loss of data may occur."));
     msg.setInformativeText(m_lock->errorString());
+    msg.setModal(true);
     qDebug() << tr("Unkown state of lockfile.") << m_lock->errorString();
-    msg.exec();
+    msg.open();
   }
 }
 
@@ -1199,7 +1237,7 @@ void TimeMainWindow::callSwitchDateErrorDialog()
     QString msgtext = tr("Could not switch day due to problems with saving. ATTENTION: that also means that the clock might be running on the wrong day. Please fix the problem with saving and switch manually to the current date afterwards.");
     msg.setText(msgtext);
     qDebug() << msgtext;
-    msg.exec();
+    msg.open();
 }
 
 void TimeMainWindow::loadPCCData(const QString& pccdata) {
@@ -1295,6 +1333,7 @@ void TimeMainWindow::refreshKontoListe() {
 }
 
 void TimeMainWindow::commitKontenliste(DSResult data) {
+  statusBar->showMessage(tr("Commiting account list..."));
   // todo TimeMainWindow is longlived, delete commiter somewhere, otherwise memory leak
   auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList);
   
@@ -1312,6 +1351,12 @@ void TimeMainWindow::commitKontenlisteFinished() {
   QApplication::restoreOverrideCursor();
   QMetaObject::invokeMethod(this, "aktivesKontoPruefen", Qt::QueuedConnection);
   emit accountListRead();
+  if (!m_afterCommitMethodQueue->isEmpty()) {
+     auto method = m_afterCommitMethodQueue->dequeue();
+     QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
+     delete method;
+  }
+
 }
 
 
@@ -1332,29 +1377,45 @@ void TimeMainWindow::inPersoenlicheKonten(bool hinzufuegen)
   int idx;
 
   kontoTree->itemInfo(item,top,abt,ko,uko,idx);
+  int itemDepth=kontoTree->getItemDepth(item);
 
-  if (!hinzufuegen) {
-    if (QMessageBox::question(this,tr("Remove from personal accounts"), tr("Do you really want to remove this item from your personal accounts?"))!=QMessageBox::Yes) {
-      flagsChanged(abt,ko,uko,idx);
+  auto doChange = [=](){
+    if (itemDepth == 2)
+    {
+      abtList->moveKontoPersoenlich(abt, ko, hinzufuegen);
+      kontoTree->refreshAllItemsInKonto(abt, ko);
       return;
     }
-  }
+    else
+    {
+      if (itemDepth == 3)
+      {
+        abtList->moveUnterKontoPersoenlich(abt, ko, uko, hinzufuegen);
+        kontoTree->refreshAllItemsInUnterkonto(abt, ko, uko);
+        return;
+      }
+    }
 
-  if (kontoTree->getItemDepth(item)==2) {
-    abtList->moveKontoPersoenlich(abt,ko,hinzufuegen);
-    kontoTree->refreshAllItemsInKonto(abt,ko);
-    return;
-  }
-  else {
-    if (kontoTree->getItemDepth(item)==3) {
-      abtList->moveUnterKontoPersoenlich(abt,ko,uko,hinzufuegen);
-      kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
-      return;
-        }
-  }
+    abtList->moveEintragPersoenlich(abt, ko, uko, idx, hinzufuegen);
+    kontoTree->refreshItem(abt, ko, uko, idx);
+  };
 
-  abtList->moveEintragPersoenlich(abt,ko,uko,idx,hinzufuegen);
-  kontoTree->refreshItem(abt,ko,uko,idx);
+  if (!hinzufuegen) {
+    auto msgbox=new QMessageBox(QMessageBox::Question, tr("Remove from personal accounts"),
+        tr("Do you really want to remove this item from your personal accounts?"),
+	      QMessageBox::Yes| QMessageBox::No);
+    connect(msgbox, &QMessageBox::finished,
+       [=](){
+         if (msgbox->result() != QMessageBox::Yes)
+            flagsChanged(abt,ko,uko,idx);
+         else
+            doChange();
+         msgbox->deleteLater();
+       });
+    msgbox->open();
+  } else {
+    doChange();
+  }
 }
 
 
@@ -1426,40 +1487,60 @@ void TimeMainWindow::updateCaption()
 
 void TimeMainWindow::resetDiff()
 {
-   int diff=abtList->getZeitDifferenz();
-   if ((diff!=0)&&(abtListToday==abtList)) {
-       QString msg;
-       if (diff>0) {
-          msg = tr("Do you also want to move the begin of the current working intervall by %1 minutes?").arg(abs(diff/60));
-       } else {
-          msg = tr("Do you also want to add a pause of %1 minutes at the end of the current working interval?").arg(abs(diff/60));
-       }
-       auto reply=QMessageBox::question(
-            0,
-            tr("Also adapt punch clock?"),
-            msg, QMessageBox::Yes|QMessageBox::No);
-       if (reply==QMessageBox::Yes) {
-         auto lastentry = std::prev(m_punchClockListToday->end());
-         if (diff>0) {
-            int newbegin=lastentry->first-diff;
-            if (newbegin<0) {
-              newbegin=0;
-            }
-            lastentry->first=newbegin;
-         } else {
-            int newend=lastentry->second+diff;
-            if (newend<lastentry->first) {
-              newend=lastentry->first;
-            }
-            auto now=QTime::currentTime();
-            m_punchClockListToday->push_back(PunchClockEntry(lastentry->second,std::max(now.msecsSinceStartOfDay()/1000, lastentry->second)));
-            m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
-            lastentry->second=newend;
-         }
-       }
-   }
-   abtList->setZeitDifferenz(0);
-   zeitChanged();
+  int diff = abtList->getZeitDifferenz();
+  if ((diff == 0) || (abtListToday != abtList))
+  {
+    abtList->setZeitDifferenz(0);
+    zeitChanged();
+  }
+  {
+    QString msg;
+    if (diff > 0)
+    {
+      msg = tr("Do you also want to move the begin of the current working intervall by %1 minutes?").arg(abs(diff / 60));
+    }
+    else
+    {
+      msg = tr("Do you also want to add a pause of %1 minutes at the end of the current working interval?").arg(abs(diff / 60));
+    }
+    auto msgbox = new QMessageBox(
+        QMessageBox::Question,
+        tr("Also adapt punch clock?"),
+        msg, QMessageBox::Yes | QMessageBox::No);
+    connect(msgbox, &QMessageBox::finished,
+            [=]()
+            {
+              auto reply = msgbox->result();
+              if (reply == QMessageBox::Yes)
+              {
+                auto lastentry = std::prev(m_punchClockListToday->end());
+                if (diff > 0)
+                {
+                  int newbegin = lastentry->first - diff;
+                  if (newbegin < 0)
+                  {
+                    newbegin = 0;
+                  }
+                  lastentry->first = newbegin;
+                }
+                else
+                {
+                  int newend = lastentry->second + diff;
+                  if (newend < lastentry->first)
+                  {
+                    newend = lastentry->first;
+                  }
+                  auto now = QTime::currentTime();
+                  m_punchClockListToday->push_back(PunchClockEntry(lastentry->second, std::max(now.msecsSinceStartOfDay() / 1000, lastentry->second)));
+                  m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+                  lastentry->second = newend;
+                }
+              }
+              abtList->setZeitDifferenz(0);
+              zeitChanged();
+            });
+    msgbox->open();
+  }
 }
 
 /**
@@ -1610,18 +1691,23 @@ void TimeMainWindow::callFindKontoDialog()
 {
   QString konto;
 
-  FindKontoDialog findKontoDialog(abtList,this);
-  int rcFindDialog = findKontoDialog.exec();
+  FindKontoDialog* findKontoDialog=new FindKontoDialog(abtList,this);
+  connect(findKontoDialog,&FindKontoDialog::finished, this, &TimeMainWindow::finishFindKontoDialog);
+  findKontoDialog->open();
+}
+
+void TimeMainWindow::finishFindKontoDialog() 
+{
+  auto findKontoDialog = (FindKontoDialog*)(sender());
+  int rcFindDialog = findKontoDialog->result();
   if( rcFindDialog == QDialog::Rejected )
   {
-    return;
-  }
-  else if( rcFindDialog == QDialog::Accepted )
+  } else if( rcFindDialog == QDialog::Accepted )
   {
-    QStringList items = findKontoDialog.getSelectedItems();
+    QStringList items = findKontoDialog->getSelectedItems();
     openItemFromPathList(items);
-    
   }
+  findKontoDialog->deleteLater();
 }
 
 void TimeMainWindow::openItem( QTreeWidgetItem *item )
@@ -1648,8 +1734,13 @@ void TimeMainWindow::callPreferenceDialog()
     QApplication::setFont(QFont(custFont,custFontSize));
   }
 
-  PreferenceDialog preferenceDialog(settings, this);
-  preferenceDialog.exec();
+  PreferenceDialog *preferenceDialog=new PreferenceDialog(settings, oldshowtypecolumn, oldshowpspcolumn, olddisplaymode, this);
+  connect(preferenceDialog,&PreferenceDialog::finishedWithInfo, this, &TimeMainWindow::finishPreferenceDialog);
+  preferenceDialog->open();
+}
+
+void TimeMainWindow::finishPreferenceDialog(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode) {
+  sender()->deleteLater();
   showAdditionalButtons(settings->powerUserView());
   configClickMode(settings->singleClickActivation());
   kontoTree->setAcceptDrops(settings->dragNDrop());
@@ -1709,6 +1800,18 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
   int oldidx;
   abtList->getAktiv(oldabt, oldko, olduk,oldidx);
 
+  auto doSetActiveProject=[=](int idx){
+    abtList->setAsAktiv(abt,ko,uko,idx);
+    kontoTree->refreshItem(oldabt,oldko,olduk,oldidx);
+    kontoTree->refreshItem(abt,ko,uko,idx);
+    kontoTree->setCurrentItem(item);
+    if (item->text(KontoTreeItem::COL_TYPE) == "tageweise abrechnen (kd)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) {
+      statusBar->showMessage(tr("Please specify only one entry for accounts of type \"%1\"!").arg(item->text(KontoTreeItem::COL_TYPE)), 10000);
+      QApplication::beep();
+    }
+    updateCaption();
+  };
+
   if (abtList->overTimeModeActive()) {
     UnterKontoEintrag entry;
     abtList->getEintrag(entry,abt,ko,uko,idx);
@@ -1716,28 +1819,29 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     QSet<QString> otmRS = abtList->getActiveOverTimeModes();
     if (!existingRS.contains(otmRS)) {
        existingRS.unite(otmRS);
-       if (!checkAndChangeSREntry(idx,abt,ko,uko,existingRS)) {
-          if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
-            idx=abtList->insertEintrag(abt,ko,uko);
-            entry.sekunden=0;
-            entry.sekundenAbzur=0;
-          }
-          entry.setAchievedSpecialRemunSet(existingRS);
-          abtList->setEintrag(abt, ko, uko, idx, entry);
-       }
-       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+       auto helper=new SpecialRemunEntryHelper();
+       connect(helper, &SpecialRemunEntryHelper::checked, [=](bool reuse, int correctidx) {
+         int newidx=correctidx;
+         if (!reuse) {
+           auto newentry=entry;
+           newidx=idx;
+           if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
+             newidx=abtList->insertEintrag(abt,ko,uko);
+             newentry.sekunden=0;
+             newentry.sekundenAbzur=0;
+           }
+           newentry.setAchievedSpecialRemunSet(existingRS);
+           abtList->setEintrag(abt, ko, uko, newidx, newentry);
+         }
+         kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+         helper->deleteLater();
+         doSetActiveProject(newidx);   
+      });
+      helper->checkSREntry(abtListToday,idx,abt,ko,uko,existingRS);
+      return;
     }
-  }
-  abtList->setAsAktiv(abt,ko,uko,idx);
-  kontoTree->refreshItem(oldabt,oldko,olduk,oldidx);
-  kontoTree->refreshItem(abt,ko,uko,idx);
-  kontoTree->setCurrentItem(item);
-  if (item->text(KontoTreeItem::COL_TYPE) == "tageweise abrechnen (kd)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) {
-  //if (item->text(1) == "interne Projekte (ip)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) { // für Versuche
-      statusBar->showMessage(tr("Please specify only one entry for accounts of type \"%1\"!").arg(item->text(KontoTreeItem::COL_TYPE)), 10000);
-      QApplication::beep();
-  }
-  updateCaption();
+  } 
+  doSetActiveProject(idx);
 }
 
 /**
@@ -1814,69 +1918,55 @@ void TimeMainWindow::callBereitschaftsDialog(QTreeWidgetItem * item) {
   if (!abtList->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
     QMessageBox::critical(this, tr("sctime: On-call times"), tr("subaccount not found!"));
     return;
-  }
-
-  QDialog dialog(this);
-  dialog.setObjectName(tr("sctime: On-call times"));
-  dialog.setWindowTitle(tr("On-call times"));
-
-  QVBoxLayout* layout=new QVBoxLayout(&dialog);
-  layout->setMargin(15);
-
-  QPushButton * okbutton=new QPushButton(tr("OK"), &dialog);
-  okbutton->setDefault(true);
-  QPushButton * cancelbutton=new QPushButton(tr("Cancel"), &dialog);
-
-  layout->addStretch(1);
-
-
-  QLabel* infolabel=new QLabel (tr("Please choose the rendered on-call times for this subaccount."), &dialog);
-  infolabel->setWordWrap(true);
-  layout->addWidget(infolabel);
-
-  layout->addSpacing(10);
+  }  
 
   QStringList bereitschaften = ukiter->second.getBereitschaft();
-  BereitschaftsView* bereitschaftsView=new BereitschaftsView(&dialog);
-  bereitschaftsView->setSelectionList(bereitschaften);
-  layout->addWidget(bereitschaftsView);
 
-  QHBoxLayout* buttonlayout=new QHBoxLayout();
-  //buttonlayout->setParent(layout);
-  buttonlayout->setContentsMargins(3,3,3,3);
-  buttonlayout->addStretch(1);
-  buttonlayout->addWidget(okbutton);
-  buttonlayout->addWidget(cancelbutton);
-  layout->addLayout(buttonlayout);
+  auto oncalldialog=new OnCallDialog(abt,ko,uko,bereitschaften,this);
+  connect(oncalldialog, &OnCallDialog::finishedWithInfo, this, &TimeMainWindow::finishBereitschaftsDialog);
 
-  connect (okbutton, SIGNAL(clicked()), &dialog, SLOT(accept()));
-  connect (cancelbutton, SIGNAL(clicked()), &dialog, SLOT(reject()));
+  oncalldialog->open();
+}
 
-  dialog.exec();
-  if (dialog.result())
+void TimeMainWindow::finishBereitschaftsDialog(QString abt, QString ko, QString uko, QStringList bereitschaften, QStringList bereitschaftenNeu) {
+  auto dialog = (QDialog*)(sender());
+  if (dialog->result())
   {
-    QStringList bereitschaftenNeu = bereitschaftsView->getSelectionList();
     if (bereitschaften!=bereitschaftenNeu) {
+      UnterKontoListe *ukl;
+      UnterKontoListe::iterator ukiter;
+
+      if (!abtList->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
+        QMessageBox::critical(this, tr("sctime: On-call times"), tr("subaccount not found!"));
+        return;
+      }
       ukiter->second.setBereitschaft(bereitschaftenNeu);
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
     }
   }
+  dialog->deleteLater();
 }
 
 void TimeMainWindow::callSpecialRemunerationsDialog(QTreeWidgetItem * item) {
   QString top,uko,ko,abt;
   int idx;
   kontoTree->itemInfo(item,top,abt,ko,uko,idx);
-  SpecialRemunerationsDialog srDialog(abtList, abt,ko,uko,idx, this);
-  srDialog.exec();
-  if (srDialog.result())
+  SpecialRemunerationsDialog* srDialog= new SpecialRemunerationsDialog(abtList, abt,ko,uko,idx, this);
+  connect(srDialog, &SpecialRemunerationsDialog::finishedWithInfo, this, &TimeMainWindow::finishSpecialRemunerationsDialog);
+  srDialog->open();
+}
+
+void TimeMainWindow::finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko) {
+  auto srDialog=(SpecialRemunerationsDialog*)(sender());
+  if (srDialog->result())
   {
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
   }
+  srDialog->deleteLater();
 }
 
 
-void TimeMainWindow::refreshAfterColorChange(QString& abt, QString& ko, QString& uko) {
+void TimeMainWindow::refreshAfterColorChange(const QString& abt, const QString& ko, const QString& uko) {
 	if (ko != "") {
 		if(uko != "") {
 			kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
@@ -1903,12 +1993,18 @@ void TimeMainWindow::callColorDialog()
    QColor color, initial = Qt::white;
    if (abtList->hasBgColor(abt,ko,uko))
      initial = abtList->getBgColor(abt,ko,uko);
-   color = QColorDialog::getColor(initial, this); // nur Qt >= 4.5: , tr("Hintergrundfarbe"));
-
-   if (color.isValid()) {
-     abtList->setBgColor(color, abt,ko,uko);
-     refreshAfterColorChange(abt, ko, uko);
-   }
+   auto colordialog = new QColorDialog(initial, this);
+   connect(colordialog, &QColorDialog::finished, [=](){
+     if (colordialog->result()==QDialog::Accepted) {
+       auto color=colordialog->selectedColor();
+       if (color.isValid()) {
+         abtList->setBgColor(color, abt,ko,uko);
+         refreshAfterColorChange(abt, ko, uko);
+       }
+     }
+     colordialog->deleteLater();
+   });
+   colordialog->open();
 }
 
 void TimeMainWindow::removeBgColor() {
@@ -1961,6 +2057,11 @@ void TimeMainWindow::commitBereit(DSResult data) {
     if (beschreibung.isEmpty()) beschreibung = ""; // Leerer String, falls keine Beschr. vorhanden. //FIXME: notwendig?
     berListe->insertEintrag(name, beschreibung);
   }
+  if (!m_afterCommitMethodQueue->isEmpty()) {
+     auto method = m_afterCommitMethodQueue->dequeue();
+     QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
+     delete method;
+  }
 }
 
 void TimeMainWindow::commitSpecialRemun(DSResult data) {
@@ -1978,41 +2079,17 @@ void TimeMainWindow::commitSpecialRemun(DSResult data) {
   }
   abtList->setSpecialRemunTypeMap(srmap);
   abtList->setGlobalSpecialRemunNames(global_srnames);
+  if (!m_afterCommitMethodQueue->isEmpty()) {
+     auto method = m_afterCommitMethodQueue->dequeue();
+     QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
+     delete method;
+  }
 }
 
 void TimeMainWindow::callAdditionalLicenseDialog() {
   TextViewerDialog* dialog;
   infoDialog(dialog, tr("sctime: Additional Information about Licensing"), tr("sctime licensing"), 600, 450, true);
   dialog->browser()->setSource(QUrl::fromLocalFile(additionalLicensesFile));
-}
-
-/** checks if a new time entry should be generated for the given set of special remunerations.
- * this functions potentially asks the user what to do, and returns true iff an existing entry can be
- * recycled (in this case the index of this entry is also returned in the parameter idx)
-  */
-bool TimeMainWindow::checkAndChangeSREntry(int& idx, const QString& abt, const QString& ko , const QString& uko, const QSet<QString>& specialRemuns) {
-  UnterKontoEintrag entry;
-  abtListToday->getEintrag(entry,abt,ko,uko,idx);
-
-  if (entry.getAchievedSpecialRemunSet()!=specialRemuns) {
-     int correctidx=idx;
-     EintragsListe::iterator itEt;
-     EintragsListe* entrylist;
-  
-     if (abtListToday->findEntryWithSpecialRemunsAndComment(itEt, entrylist, correctidx, abt, ko, uko, entry.kommentar, specialRemuns)) {
-        int result=QMessageBox::question(
-                  this, tr("sctime: wrong special remunerations"),
-                  tr("There is another entry with the same comment and the correct special remunerations. Do you want to switch to this entry? "
-                     "Otherwise a new entry will be created."),
-                  QMessageBox::Yes, QMessageBox::No);
-        if (result==QMessageBox::Yes) {
-          idx=correctidx;
-          return true;
-        }
-     }
-     return false;
-  }
-  return true;
 }
 
 /**
@@ -2032,21 +2109,26 @@ void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
     } else {
        desiredRemuns.remove(specialremun);
     }
-    int newidx=oldidx;
-    if (!checkAndChangeSREntry(newidx,abt,ko,uko,desiredRemuns)) {
-      if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
-        newidx=abtListToday->insertEintrag(abt,ko,uko);
-        entry.sekunden=0;
-        entry.sekundenAbzur=0;
-      }
+    auto helper=new SpecialRemunEntryHelper();
+    connect(helper, &SpecialRemunEntryHelper::checked, [=](bool reuse, int correctidx) {
+      int newidx=correctidx;
+      auto newentry=entry;
+      if (!reuse) {
+        newidx=oldidx;
+        if (entry.sekunden!=0 || entry.sekundenAbzur!=0) {
+          newidx=abtListToday->insertEintrag(abt,ko,uko);
+          newentry.sekunden=0;
+          newentry.sekundenAbzur=0;
+        }
       
-      entry.setAchievedSpecialRemunSet(desiredRemuns);
-      abtListToday->setEintrag(abt, ko, uko, newidx, entry);
-    }
-    abtListToday->setAsAktiv(abt,ko,uko,newidx);
-    /*kontoTree->refreshItem(abt,ko,uko,oldidx);
-    kontoTree->refreshItem(abt,ko,uko,newidx);*/
-    kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+        newentry.setAchievedSpecialRemunSet(desiredRemuns);
+        abtListToday->setEintrag(abt, ko, uko, newidx, newentry);
+      }
+      abtListToday->setAsAktiv(abt,ko,uko,newidx);
+      kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+      helper->deleteLater();
+    });
+    helper->checkSREntry(abtListToday,oldidx,abt,ko,uko,desiredRemuns);
   }
 }
 
@@ -2109,24 +2191,25 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
     }
     QDateTime beforeOpen=QDateTime::currentDateTime();
     bool shouldswitch=false;
+    QMessageBox* msgbox;
     if (isnight) {
-       int result=QMessageBox::question(
-            this, tr("sctime: switch nightmode on?"),
-                  tr("It is %1. Should I switch to night mode, so you get special "
-                  "remuneration for working late? Please also check your companies "
-                  "regulations before enabling nightmode.").arg(beforeOpen.time().toString("hh:mm")),
-                  QMessageBox::Yes, QMessageBox::No);
-       shouldswitch = (result==QMessageBox::Yes);
+       msgbox=new QMessageBox(QMessageBox::Question,
+            tr("sctime: switch nightmode on?"),
+            tr("It is %1. Should I switch to night mode, so you get special "
+            "remuneration for working late? Please also check your companies "
+            "regulations before enabling nightmode.").arg(beforeOpen.time().toString("hh:mm")),
+            QMessageBox::Yes|QMessageBox::No);
     } else {
-       int result=QMessageBox::question(
-            this, tr("sctime: switch nightmode off?"),
-                  tr("It is %1. Should I switch night mode off? "
-                  "Otherwise you apply for further special remuneration. Please also check your companies "
-                  "regulations when keeping nightmode enabled.").arg(beforeOpen.time().toString("hh:mm")),
-                  QMessageBox::Yes, QMessageBox::No);
-       shouldswitch = (result==QMessageBox::Yes);
+       msgbox=new QMessageBox(QMessageBox::Question,
+            tr("sctime: switch nightmode off?"),
+            tr("It is %1. Should I switch night mode off? "
+            "Otherwise you apply for further special remuneration. Please also check your companies "
+            "regulations when keeping nightmode enabled.").arg(beforeOpen.time().toString("hh:mm")),
+            QMessageBox::Yes|QMessageBox::No);
     }
-    if (shouldswitch) {
+    connect(msgbox, &QMessageBox::finished,
+    [=](){
+      if (msgbox->result() == QMessageBox::Yes) {
         QString abt, ko, uko;
         int oldidx;
         abtListToday->getAktiv(abt, ko, uko,oldidx);
@@ -2160,8 +2243,11 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
             kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
           }
         }
-    }
-    mutex.unlock();
+      }
+      mutex.unlock();
+      msgbox->deleteLater();
+   });
+   msgbox->open();
 }
 
 /** shows an error message if worked times could not be moved to another entry */
@@ -2243,10 +2329,17 @@ void TimeMainWindow::readIPCMessage() {
 }
 
 void TimeMainWindow::callPunchClockDialog() {
-  PunchClockDialog pcDialog(m_punchClockList, m_PCSToday, this);
-  int result = pcDialog.exec();
+  PunchClockDialog* pcDialog=new PunchClockDialog(m_punchClockList, m_PCSToday, this);
+  connect(pcDialog, &PunchClockDialog::finished, this, &TimeMainWindow::finishPunchClockDialog);
+  pcDialog->setModal(true);
+  pcDialog->open();
+}
+
+void TimeMainWindow::finishPunchClockDialog() {
+  auto pcDialog=(PunchClockDialog*)(sender());
+  auto result=pcDialog->result();
   if (result==QDialog::Accepted) {
-    pcDialog.copyToList(m_punchClockList);
+    pcDialog->copyToList(m_punchClockList);
     auto now=QDateTime::currentDateTime();
     if (m_punchClockList==m_punchClockListToday) {
       auto pce=m_punchClockListToday->currentEntry();
@@ -2255,4 +2348,5 @@ void TimeMainWindow::callPunchClockDialog() {
       } 
     }
   }
+  pcDialog->deleteLater();
 }
