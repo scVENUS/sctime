@@ -466,8 +466,7 @@ void XMLWriter::writeSettings(bool global) {
   stream.setCodec(xmlcharmap);
   stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
   stream<<doc.toString()<<endl;
-  auto env=QProcessEnvironment::systemEnvironment();
-  QString baseurl=env.value("SCTIME_BASE_URL");
+  QString baseurl=getRestBaseUrl();
   QString postfix = "";
   if (!global) {
     postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");

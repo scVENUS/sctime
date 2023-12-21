@@ -6,7 +6,6 @@
 #include <QDomElement>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QProcessEnvironment>
 #include "globals.h"
 
 void XMLReader::open()
@@ -49,8 +48,7 @@ void XMLReader::open()
     parse(&f);
 
 #else
-    auto env = QProcessEnvironment::systemEnvironment();
-    QString baseurl = env.value("SCTIME_BASE_URL");
+    QString baseurl = getRestBaseUrl();
     QString postfix = "";
     if (!global) {
       postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
