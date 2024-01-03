@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>503</width>
-    <height>760</height>
+    <height>787</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -97,6 +97,19 @@
        <widget class="QCheckBox" name="sortByCommentTextCheckbox">
         <property name="text">
          <string>Sort by comment text (instead by number)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="stayOfflineCheckbox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Stay offline after initialization</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

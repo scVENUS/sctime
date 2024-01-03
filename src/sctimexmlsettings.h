@@ -74,6 +74,8 @@ public:
       m_customFont="helvetica";
       m_customFontSize=10;
       m_showSpecialRemunSelector=false;
+      m_restCurrentlyOffline=false;
+      m_restSaveOffline=false;
       backends = defaultbackends;
       databaseserver = defaultdatabaseserver;
       database = defaultdatabase;
@@ -441,6 +443,22 @@ public:
        m_prevPCCdata=s;
     }
 
+    bool restCurrentlyOffline() {
+        return m_restCurrentlyOffline;
+    }
+
+    void setRestCurrentlyOffline(bool b)  {
+        m_restCurrentlyOffline=b;
+    }
+
+    bool restSaveOffline() {
+        return m_restSaveOffline;
+    }
+
+    void setRestSaveOffline(bool b)  {
+        m_restSaveOffline=b;
+    }
+
 
     QString backends;
 
@@ -451,10 +469,6 @@ public:
     QString databasepassword;
 
   private:
-
-    bool writeSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
-
-    // void readSettings(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
     
     static int compVersion(const QString& version1, const QString& version2);
 
@@ -491,6 +505,8 @@ public:
     int m_customFontSize;
     bool backupSettingsXml; // nur beim ersten Speichern ein  Backup von settings.xml erstellen
     bool m_sortByCommentText;
+    bool m_restCurrentlyOffline;
+    bool m_restSaveOffline;
     DefCommentDisplayModeEnum m_defCommentDisplayMode;
     QPoint unterKontoWindowPosition;
     QSize unterKontoWindowSize;

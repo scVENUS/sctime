@@ -10,6 +10,23 @@
 
 void XMLReader::open()
 {
+  bool usefilestorageonly=true;
+#ifdef RESTCONFIG
+  SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
+  usefilestorageonly=settings->restSaveOffline()||settings->backupSettingsXml;
+#endif
+  if (usefilestorageonly) {
+    auto f=openFile(true);
+    if (f!=NULL) {
+      parse(f);
+      delete f;
+    }
+  } else {
+    openREST();
+  }
+}
+
+QFile* XMLReader::openFile(bool handleerr) {
     QString filename;
     if (global)
         filename = "settings.xml";
@@ -28,26 +45,32 @@ void XMLReader::open()
                 abtList->setCheckInState(false);
         }
     }
-#ifndef RESTCONFIG // TODO: we might also use networkAccessManager for local files and get rid of the ifdef
-    QFile f(configDir.filePath(filename));
+
+    QFile* f=new QFile(configDir.filePath(filename));
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
-    if (!f.open(QIODevice::ReadOnly))
+    if (handleerr&&!f->open(QIODevice::ReadOnly))
     {
-        logError(f.fileName() + ": " + f.errorString());
-        if (global || f.exists())
+        logError(f->fileName() + ": " + f->errorString());
+        if (global || f->exists())
         {
-            // keine Fehlerausgabe, wenn "zeit-HEUTE.xml" fehlt
-            QMessageBox::warning(NULL, QObject::tr("sctime: opening configuration file"),
-                                 QObject::tr("%1 : %2").arg(f.fileName(), f.errorString()));
             if (global)
                 settings->backupSettingsXml = false;
+            // keine Fehlerausgabe, wenn "zeit-HEUTE.xml" fehlt
+            auto msgbox=new QMessageBox(QMessageBox::Warning, tr("sctime: opening configuration file"),
+                           tr("%1 : %2").arg(f->fileName(), f->errorString()));
+            connect(msgbox, &QMessageBox::finished,[=](){
+               msgbox->deleteLater();
+            });
+            msgbox->open();
         }
-        emit settingsPartRead(global, abtList, pcl, false, ""); 
-        return;
+        emit settingsPartRead(global, abtList, pcl, false, "");
+        delete f;
+        return NULL;
     }
-    parse(&f);
+    return f;
+}
 
-#else
+void XMLReader::openREST() {
     QString baseurl = getRestBaseUrl();
     QString postfix = "";
     if (!global) {
@@ -61,7 +84,6 @@ void XMLReader::open()
         this, &XMLReader::onErrCompat);
     //connect(reply, &QNetworkReply::errorOccurred,
     //    this, &XMLReader::gotReply);
-#endif
 }
 
 void XMLReader::gotReply() {
@@ -80,42 +102,119 @@ void XMLReader::parse(QIODevice *input)
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
     QNetworkReply* netinput = dynamic_cast<QNetworkReply*>(input);
     QFile* fileinput = dynamic_cast<QFile*>(input);
+    QDomDocument doclocal("settings");
+    QDomDocument docremote("settings");
+    QString errMsg;
+    QString resname;
+    int errLine, errCol;
+    bool readSuccessLocal=false;
+    bool readSuccessRemote=false;
+
     if (netinput!=NULL) {
         if (netinput->error()!=QNetworkReply::NoError) {
-            QString msg="";
-            if (netinput->error()!=QNetworkReply::ContentNotFoundError) {
-                msg="Error on reading settings";
+            logError("trying to open local file");
+            if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=404 && !settings->restCurrentlyOffline()) {
+               emit offlineSwitched(true);
             }
-            emit settingsPartRead(global, abtList, pcl, false, msg); 
+            auto f=openFile(true);
+            if (f!=NULL) {
+              parse(f);
+              delete f;
+            }
             input->deleteLater();
             return;
+        } else {
+            emit offlineSwitched(false);
         }
         if (!netinput->isFinished()) {
             return;
         }
+        readSuccessRemote = docremote.setContent(netinput, &errMsg, &errLine, &errCol);
         input->deleteLater();
+        resname=netinput->url().toString();
+        if (readSuccessRemote) {
+          fileinput=openFile(false);
+        }
     }
-    if (fileinput!=NULL && !fileinput->exists()) {
-      emit settingsPartRead(global, abtList, pcl, false, ""); 
-      return;
+    if (fileinput!=NULL) {
+      if (!readSuccessRemote&&!fileinput->exists()) {
+        emit settingsPartRead(global, abtList, pcl, false, ""); 
+        return;
+      }
+      resname=fileinput->fileName();
+      readSuccessLocal = doclocal.setContent(fileinput, &errMsg, &errLine, &errCol);
+      fileinput->close();
     }
-    QDomDocument doc("settings");
-    QString errMsg;
-    int errLine, errCol;
+
+    bool readsuccess=false;
+    QString clientID=getIdentifier();
+    QDomDocument doc;
+    if (readSuccessLocal&&readSuccessRemote) {
+        auto rootElemRemote=docremote.documentElement();
+        auto rootElemLocal=doclocal.documentElement();
+        QString remoteID=rootElemRemote.attribute("identifier");
+        QString localID=rootElemLocal.attribute("identifier");
+        QString remoteDateStr=rootElemRemote.attribute("date");
+        QString localDateStr=rootElemRemote.attribute("date");
+        QDateTime remoteDate=QDateTime::fromString(remoteDateStr, Qt::ISODate);
+        QDateTime localDate=QDateTime::fromString(localDateStr, Qt::ISODate);
+        if (remoteDate==localDate) {
+           if (remoteID==localID) {
+             // standard case, just proceed
+             readsuccess=true;
+             doc=docremote;
+           } else {
+             // very improbable case, log it and use local version
+             logError(tr("two different clients have written a settings file with the same date."));
+             readsuccess=true;
+             doc=doclocal;
+           }
+        } else if (remoteDate>localDate) {
+           if (remoteID==localID) {
+             readsuccess=true;
+             doc=docremote;
+             logError(tr("using newer remote version."));
+           } else {
+             // TODO: check this case handling, perhaps add a dialog
+             logError(tr("two different clients have written a settings file with the same date. using newer remote version."));
+             readsuccess=true;
+             doc=docremote;
+           } 
+        } else if (remoteDate<localDate) {
+           if (remoteID==localID) {
+             readsuccess=true;
+             doc=doclocal;
+             logError(tr("using newer local version."));
+           } else {
+             // TODO: check this case handling, perhaps add a dialog
+             logError(tr("two different clients have written a settings file with the same date. using newer local version."));
+             readsuccess=true;
+             doc=doclocal;
+           } 
+        }
+    } else if (readSuccessLocal) {
+        readsuccess=true;
+        doc=doclocal;
+    } else if (readSuccessRemote) {
+        readsuccess=true;
+        doc=docremote;
+    }
+    
     // QByteArray bytes=input->readAll();
-    if (!doc.setContent(input, &errMsg, &errLine, &errCol))
+    if (!readsuccess)
     {
         if (global)
             settings->backupSettingsXml = false;
         emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file");
         QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(errMsg).arg(errLine).arg(errCol).arg(errMsg));
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
         return;
     }
-#ifndef RESTCONFIG
-    // when closing a networkrequest, we get another finished signal. Not sure if this bug or feature - for now just dont close it
-    input->close();
-#endif
+
+    fillSettingsFromDocument(doc, settings);
+}
+
+void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* settings) {
     QDomElement aktiveskontotag;
     QDomElement docElem = doc.documentElement();
     QString lastVersion = docElem.attribute("version");
@@ -497,6 +596,10 @@ void XMLReader::parse(QIODevice *input)
                         if (elem2.tagName() == "sortByCommentText")
                         {
                             settings->setSortByCommentText((elem2.attribute("on") == "yes"));
+                        }
+                        if (elem2.tagName() == "stayoffline")
+                        {
+                            settings->setRestSaveOffline((elem2.attribute("on") == "yes"));
                         }
                         if (elem2.tagName() == "kontodlgwindowposition")
                         {

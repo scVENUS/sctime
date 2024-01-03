@@ -20,6 +20,7 @@ private slots:
        void updatePunchClock();
 signals:
        void finished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
+       void offlineSwitched(bool offline);
 private:
        void write(AbteilungsListe* abtlist, PunchClockList* pcl);
        TimeMainWindow *m_timeMainWindow;

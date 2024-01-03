@@ -30,6 +30,7 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
+#include <emscripten.h>
 #endif
 
 #ifndef WIN32
@@ -45,7 +46,11 @@
 #include "sctimeapp.h"
 
 #ifndef CONFIGDIR
+#ifndef __EMSCRIPTEN__
 #define CONFIGDIR "~/.sctime"
+#else
+#define CONFIGDIR "/sctime"
+#endif
 #endif
 
 #ifdef __GNUC__
@@ -119,6 +124,10 @@ QString getRestBaseUrl() {
   return baseurl;
 }
 
+QString getIdentifier() {
+  return QSysInfo::machineHostName();
+}
+
 /** tries to open a link in an existing instance
  */
 bool openLinkInExistingInstance(QString accountlink) {
@@ -141,8 +150,16 @@ bool openLinkInExistingInstance(QString accountlink) {
  * (Lockfiles,...), und falls ja, wird SCTimeApp initialisiert und
  ausgefuehrt */
 int main(int argc, char **argv ) {
+#ifdef __EMSCRIPTEN__
+  // for WASM: mount persistent filesytem
+  EM_ASM(
+     FS.mkdir('/sctime');
+     FS.mount(IDBFS, {}, '/sctime');
+     sctimefsinitdone=false;
+     FS.syncfs(true, function (err) {sctimefsinitdone=true;});
+  );
+#endif
   SctimeApp* app = new SctimeApp(argc, argv);  // Qt initialization
-
   // load translations
   QTranslator qtTranslator;
   qtTranslator.load("qt_" + QLocale::system().name(),

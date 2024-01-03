@@ -51,6 +51,11 @@ PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtype
     showSpecialRemunSelector->setChecked(settings->showSpecialRemunSelector());
     warnISO8859->setChecked(settings->warnISO8859());
     sortByCommentTextCheckbox->setChecked(settings->sortByCommentText());
+#ifdef RESTCONFIG
+    stayOfflineCheckbox->setEnabled(true);
+#endif
+    stayOfflineCheckbox->setChecked(settings->restSaveOffline());
+
     QString custFont=settings->customFont();
     int custFontSize=settings->customFontSize();
     if (custFont.isEmpty()) {
@@ -112,6 +117,7 @@ void PreferenceDialog::postprocess() {
         settings->setShowSpecialRemunSelector(showSpecialRemunSelector->isChecked());
         settings->setWarnISO8859(warnISO8859->isChecked());
         settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
+        settings->setRestSaveOffline(stayOfflineCheckbox->isChecked());
         SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
         if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
             dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;

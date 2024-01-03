@@ -46,6 +46,11 @@
 #include <QQueue>
 #include <QStatusBar>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/val.h>
+#include <emscripten.h>
+#endif
+
 #include "globals.h"
 #include "time.h"
 #include "preferencedialog.h"
@@ -396,13 +401,24 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   addToolBar(toolBar);
 
   settings=new SCTimeXMLSettings();
-  readInitialSetting();
+  QTimer::singleShot(100, this, SLOT(readInitialSetting()));
 }
 
 void TimeMainWindow::readInitialSetting() {
+#ifdef __EMSCRIPTEN__
+    int initdone = EM_ASM_INT({
+        return sctimefsinitdone;
+    });
+    if (!initdone) {
+      // try again later
+      QTimer::singleShot(200, this, SLOT(readInitialSetting()));
+      return;
+    }
+#endif
     XMLReader *reader=new XMLReader(settings, true, abtList, m_punchClockList);
     connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
-    connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+    connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+    connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
     reader->open();
 }
 
@@ -457,6 +473,7 @@ void TimeMainWindow::initialSettingsRead() {
 
   configClickMode(settings->singleClickActivation());
   updateSpecialModes(true);
+  switchRestCurrentlyOffline(false);
 
   loadPCCData(settings->previousPCCData());
   loadPCCData(settings->currentPCCData());
@@ -999,11 +1016,13 @@ void TimeMainWindow::save()
     XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday);
     connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+    connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
       writer=new XMLWriter(settings, abtList, m_punchClockList);
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
+      connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
       writer->writeAllSettings();
       settings->writeShellSkript(abtList, m_punchClockList);
@@ -1271,6 +1290,7 @@ void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToda
     settings->setColumnWidthList(columnwidthlist);
     m_dateChanger = new DateChanger(this, datum, changeVisible, changeToday);
     connect(m_dateChanger, &DateChanger::finished, this, &TimeMainWindow::changeDateFinished);
+    connect(m_dateChanger, &DateChanger::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     m_dateChanger->start();
   }
   else
@@ -1743,6 +1763,7 @@ void TimeMainWindow::finishPreferenceDialog(int oldshowtypecolumn, int oldshowps
   sender()->deleteLater();
   showAdditionalButtons(settings->powerUserView());
   configClickMode(settings->singleClickActivation());
+  switchRestCurrentlyOffline(settings->restCurrentlyOffline());
   kontoTree->setAcceptDrops(settings->dragNDrop());
   if (settings->useCustomFont()) {
     QApplication::setFont(QFont(settings->customFont(),settings->customFontSize()));
@@ -2350,3 +2371,16 @@ void TimeMainWindow::finishPunchClockDialog() {
   }
   pcDialog->deleteLater();
 }
+
+ void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
+   settings->setRestCurrentlyOffline(offline);
+   if (settings->restSaveOffline()) {
+      statusBar->setOnlineStatus(tr("permanently offline"));
+   } else {
+     if (offline) {
+       statusBar->setOnlineStatus(tr("offline"));
+     } else {
+       statusBar->setOnlineStatus(tr("online"));
+     }
+   }
+ }
