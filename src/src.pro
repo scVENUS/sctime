@@ -104,7 +104,7 @@ QMAKE_EXTRA_COMPILERS += lrelease
 
 wasm {
   QTPLUGIN.imageformats = qico qgif
-  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=http://127.0.0.1:8888/static/sctime.wasm.debug.wasm
+  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=http://127.0.0.1:8888/static/sctime.wasm.debug.wasm -lidbfs.js
   DEFINES += RESTONLY RESTCONFIG WASMQUIRKS
 }
 !wasm {

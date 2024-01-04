@@ -68,7 +68,6 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
 {
   m_lock=lock;
   m_accountLink=accountlink;
-  SCTimeXMLSettings settings;
 
   DSM* dsm=new DSM(dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
 

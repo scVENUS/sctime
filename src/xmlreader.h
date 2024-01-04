@@ -3,11 +3,13 @@
 
 #include <QObject>
 #include <QString>
+#include <QDomDocument>
 #include "sctimexmlsettings.h"
 
 class AbteilungsListe;
 class PunchClockList;
 class QIODevice;
+class QFile;
 
 class XMLReader: public QObject
 {
@@ -18,9 +20,12 @@ class XMLReader: public QObject
        };
     public: 
       virtual void open();      
+      virtual QFile* openFile(bool handleerr);
+      virtual void openREST();
 
     public slots:
       virtual void parse(QIODevice* input);
+      virtual void fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* settings);
       virtual void gotReply();
       virtual void onErrCompat(QNetworkReply::NetworkError code);
       virtual void continueAfterReading(bool global, AbteilungsListe *abtList, PunchClockList *pcl);
@@ -34,6 +39,7 @@ class XMLReader: public QObject
     signals:
       void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl, bool success, QString message);
       void settingsRead();
+      void offlineSwitched(bool offline);
 };
 
 #endif

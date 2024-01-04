@@ -10,10 +10,15 @@
 #include "sctimexmlsettings.h"
 #include "globals.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 void XMLWriter::checkReply(QNetworkReply* input) {
    if (input->isFinished()) {
      input->deleteLater();
      emit settingsPartWritten(global, abtList, pcl);
+     emit offlineSwitched(false);
    }
 }
 
@@ -22,10 +27,16 @@ void XMLWriter::gotReply() {
     checkReply((QNetworkReply*)obj);
 }
 
-// we need this for compatibility with old QT.
+// we need to implement this function for compatibility with old QT. Should be moved to an errorOccured handler in the future
 void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
     auto obj=sender();
-    checkReply((QNetworkReply*)obj);
+    logError("Communication error on writing to server, going offline");
+    if (!settings->restCurrentlyOffline()) {
+       emit offlineSwitched(true);
+    }
+    obj->deleteLater();
+    // we have already saved them locally, so should be able to continue anyway
+    emit settingsPartWritten(global, abtList, pcl);
 }
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
@@ -56,9 +67,14 @@ void XMLWriter::writeSettings(bool global) {
   #ifndef NO_XML
   QDomDocument doc("settings");
 
+  QDateTime savetime=QDateTime::currentDateTimeUtc();
+
   QDomElement root = doc.createElement( "sctime" );
   // TODO: XML/HTML-Quoting
   root.setAttribute("version", qApp->applicationVersion());
+  root.setAttribute("system", QSysInfo::productType());
+  root.setAttribute("date", savetime.toString(Qt::ISODate));
+  root.setAttribute("identifier", getIdentifier());
   doc.appendChild( root );
   QDomElement generaltag = doc.createElement( "general" );
 
@@ -217,6 +233,11 @@ void XMLWriter::writeSettings(bool global) {
     on =settings->publicHolidayModeActive() ? "yes" : "no";
     publicholidaymodetag.setAttribute("on",on);
     generaltag.appendChild(publicholidaymodetag);
+
+    QDomElement stayOfflineTag = doc.createElement("stayoffline");
+    on =settings->restSaveOffline() ? "yes" : "no";
+    stayOfflineTag.setAttribute("on",on);
+    generaltag.appendChild(stayOfflineTag);
 
     QDomElement kontodlgwindowpositiontag = doc.createElement( "kontodlgwindowposition" );
     kontodlgwindowpositiontag.setAttribute("x",settings->unterKontoWindowPosition.x());
@@ -404,7 +425,6 @@ void XMLWriter::writeSettings(bool global) {
   }
 
   QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
-#ifndef RESTCONFIG
   filename=configDir.filePath(filename);
   QFile fnew(filename + ".tmp");
   QDateTime filemod = QFileInfo(filename).lastModified();
@@ -457,26 +477,36 @@ void XMLWriter::writeSettings(bool global) {
     return;
   }
   #endif
+#ifndef RESTCONFIG
   emit settingsPartWritten(global, abtList, pcl);
-
 #else // RESTCONFIG
-  QByteArray ba;
-  const char xmlcharmap[] = "UTF-8";
-  QTextStream stream(&ba);
-  stream.setCodec(xmlcharmap);
-  stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
-  stream<<doc.toString()<<endl;
-  QString baseurl=getRestBaseUrl();
-  QString postfix = "";
-  if (!global) {
-    postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+  // sync previously written files in browser
+  EM_ASM(
+      FS.syncfs(function (err) {});
+  );
+  // write files by rest api
+  if (settings->restSaveOffline())
+  {
+    logError("skipping online writing");
+    emit settingsPartWritten(global, abtList, pcl);
+  } else {
+    QByteArray ba;
+    QTextStream bastream(&ba);
+    bastream.setCodec(xmlcharmap);
+    bastream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
+    bastream<<doc.toString()<<endl;
+    QString baseurl=getRestBaseUrl();
+    QString postfix = "";
+    if (!global) {
+      postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+    }
+    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix), ba);
   }
-  writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix), ba);
 
 #endif // RESTCONFIG
 #endif //NO_XML
   if (!global) {
-     settings->m_lastSave = QDateTime::currentDateTime();
+     settings->m_lastSave = savetime;
   }
 }
 

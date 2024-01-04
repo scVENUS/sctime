@@ -146,6 +146,8 @@ public:
 
     void updateSpecialModes(bool afterPause);
 
+    void switchRestCurrentlyOffline(bool offline);
+
     void readInitialSetting();
 
 

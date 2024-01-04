@@ -23,6 +23,11 @@ StatusBar::StatusBar(QWidget *parent) : QStatusBar(parent)
     modeList = new QLabel("", this);
     addWidget(datumsWarnung);
     addWidget(modeList);
+#ifdef RESTCONFIG
+    onlineStatusLabel = new QLabel("", this);
+    onlineStatusLabel->setStyleSheet("font-style: italic");
+    addPermanentWidget(onlineStatusLabel);
+#endif
     zeitLabel = new QLabel(tr("Overall time: ") + "0", this);
     addPermanentWidget(zeitLabel);
     connect(parent, SIGNAL(gesamtZeitChanged(int)), this, SLOT(setSekunden(int)));
@@ -105,4 +110,11 @@ void StatusBar::setMode(QString modedesc, bool on)
         modeList->setStyleSheet("color:#000070;");
     }
     modeList->setText(modestr);
+}
+
+void StatusBar::setOnlineStatus(QString desc)
+{
+#ifdef RESTCONFIG
+    onlineStatusLabel->setText(desc+"  ");
+#endif
 }

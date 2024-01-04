@@ -29,6 +29,7 @@ void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);
 QString getRestBaseUrl();
+QString getIdentifier();
 
 #define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"
 #define REST_COMMITED_ENDPOINT "sctimegui/v1/commiteddata"

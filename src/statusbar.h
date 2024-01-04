@@ -42,11 +42,13 @@ class StatusBar:public QStatusBar
     void dateWarning(bool on, QDate datum=QDate::currentDate());
     void appendWarning(bool on, QString str);
     void setMode(QString modedesc, bool on);
+    void setOnlineStatus(QString desc);
 
   private:
     QLabel* zeitLabel;
     QLabel* datumsWarnung;
     QLabel* modeList;
+    QLabel* onlineStatusLabel;
     QSet<QString> modes;
     int secDiff;
     int sekunden;
