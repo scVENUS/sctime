@@ -134,6 +134,7 @@ void XMLReader::parse(QIODevice *input)
         resname=netinput->url().toString();
         if (readSuccessRemote) {
           fileinput=openFile(false);
+          fileinput->deleteLater();
         }
     }
     if (fileinput!=NULL) {

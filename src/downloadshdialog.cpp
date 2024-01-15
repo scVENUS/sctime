@@ -26,6 +26,8 @@ DownloadSHDialog::DownloadSHDialog(SCTimeXMLSettings *settings, QWidget* parent)
     setupUi(this);
     zipBuffer=NULL;
     zipWriter=NULL;
+    abtList=NULL;
+    pcl=NULL;
     startDateEdit->setDate(QDate::currentDate().addDays(-1));
     endDateEdit->setDate(QDate::currentDate().addDays(-1));
     connect(this,&DownloadSHDialog::finished, this, &DownloadSHDialog::saveZip);
@@ -33,6 +35,12 @@ DownloadSHDialog::DownloadSHDialog(SCTimeXMLSettings *settings, QWidget* parent)
 
 DownloadSHDialog::~DownloadSHDialog()
 {
+  delete zipWriter;
+  if (zipBuffer) {
+    zipBuffer->deleteLater();
+  }
+  delete abtList;
+  delete pcl;
 }
 
 void DownloadSHDialog::saveZip()
@@ -47,15 +55,22 @@ void DownloadSHDialog::saveZip()
 
 void DownloadSHDialog::addFile() {
   // Todo: we also come here if the user has canceled
+  if (result()==QDialog::Rejected) {
+    emit workflowFinished();
+    return;
+  }
   currentDate = currentDate.addDays(1);
   if (startDate!=currentDate) {
     QByteArray filecontent;
     QTextStream stream(&filecontent);
     settings->writeShellSkriptToStream(stream, abtList, pcl);
     zipWriter->addFile("zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".sh", filecontent);
+    delete(abtList);
+    delete(pcl);
+    abtList=NULL;
+    pcl=NULL;
   }
   if (currentDate <= endDate){
-    // todo delete later
     abtList=new AbteilungsListe(currentDate, (KontoDatenInfo*)NULL);
     pcl=new PunchClockList();
     XMLReader* reader = new XMLReader(settings,false,abtList,pcl);

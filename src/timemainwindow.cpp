@@ -84,7 +84,9 @@
 #include "xmlwriter.h"
 #include "xmlreader.h"
 #include "oncalldialog.h"
+#ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
+#endif
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -378,7 +380,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   kontomenu->addAction(copyLinkAction);
   kontomenu->addAction(pasteLinkAction);
   kontomenu->addAction(refreshAction);
+#ifdef DOWNLOADDIALOG
   kontomenu->addAction(downloadSHAction);
+#endif
   kontomenu->addSeparator();
   kontomenu->addAction(bgColorChooseAction);
   kontomenu->addAction(bgColorRemoveAction);
@@ -2391,7 +2395,9 @@ void TimeMainWindow::finishPunchClockDialog() {
  }
 
  void TimeMainWindow::callDownloadSHDialog() {
+#ifdef DOWNLOADDIALOG
    auto dialog=new DownloadSHDialog(settings, this);
    connect(dialog, &DownloadSHDialog::workflowFinished, dialog, &DownloadSHDialog::deleteLater);
    dialog->open();
+#endif
  }
