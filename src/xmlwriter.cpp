@@ -29,10 +29,13 @@ void XMLWriter::gotReply() {
 
 // we need to implement this function for compatibility with old QT. Should be moved to an errorOccured handler in the future
 void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
-    auto obj=sender();
+    auto obj=(QNetworkReply*)(sender());
     logError("Communication error on writing to server, going offline");
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
+    }
+    if (obj->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+      emit unauthorized();
     }
     obj->deleteLater();
     // we have already saved them locally, so should be able to continue anyway

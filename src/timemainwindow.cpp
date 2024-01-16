@@ -428,6 +428,7 @@ void TimeMainWindow::readInitialSetting() {
     connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
     connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
+    connect(reader, &XMLReader::unauthorized, this, &TimeMainWindow::sessionInvalid);
     reader->open();
 }
 
@@ -1026,6 +1027,7 @@ void TimeMainWindow::save()
     connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+    connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
@@ -1033,6 +1035,7 @@ void TimeMainWindow::save()
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+      connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
       writer->writeAllSettings();
       settings->writeShellSkript(abtList, m_punchClockList);
     }
@@ -2381,7 +2384,7 @@ void TimeMainWindow::finishPunchClockDialog() {
   pcDialog->deleteLater();
 }
 
- void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
+void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
    settings->setRestCurrentlyOffline(offline);
    if (settings->restSaveOffline()) {
       statusBar->setOnlineStatus(tr("permanently offline"));
@@ -2394,10 +2397,31 @@ void TimeMainWindow::finishPunchClockDialog() {
    }
  }
 
- void TimeMainWindow::callDownloadSHDialog() {
+void TimeMainWindow::callDownloadSHDialog() {
 #ifdef DOWNLOADDIALOG
    auto dialog=new DownloadSHDialog(settings, this);
    connect(dialog, &DownloadSHDialog::workflowFinished, dialog, &DownloadSHDialog::deleteLater);
    dialog->open();
 #endif
- }
+}
+
+void TimeMainWindow::sessionInvalid() {
+// for now, only implemented in WASM case
+#ifdef __EMSCRIPTEN__
+   static bool dialogopen = false;
+   if (dialogopen) {
+     return;
+   }
+   dialogopen = true;
+   QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+            tr("sctime: invalid session"),
+            tr("Your session seems to be invalid. Please confirm to open a new window to refresh it. Please provide your credentials there if your browser asks for them."),
+            QMessageBox::Ok);
+    connect(msgbox, &QMessageBox::finished,
+    [=](){
+      dialogopen=false;
+      emscripten_run_script(QString("window.open('%1', '%2');").arg(getRestBaseUrl()+REFRESH_URL).arg(tr("Refresh Session")).toUtf8().data());
+    });
+    msgbox->open();
+#endif
+}

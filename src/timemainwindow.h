@@ -213,6 +213,7 @@ public:
     void showContextMenu(const QPoint &pos);
     void cleanupUnterKontoDialog(int result);
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
+    void sessionInvalid();
     
   protected:
     virtual void moveEvent( QMoveEvent *event);

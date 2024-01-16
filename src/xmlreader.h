@@ -39,6 +39,7 @@ class XMLReader: public QObject
     signals:
       void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl, bool success, QString message);
       void settingsRead();
+      void unauthorized();
       void offlineSwitched(bool offline);
 };
 

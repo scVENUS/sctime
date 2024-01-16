@@ -116,6 +116,9 @@ void XMLReader::parse(QIODevice *input)
             if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=404 && !settings->restCurrentlyOffline()) {
                emit offlineSwitched(true);
             }
+            if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+               emit unauthorized();
+            }
             auto f=openFile(true);
             if (f!=NULL) {
               parse(f);

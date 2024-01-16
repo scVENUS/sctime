@@ -41,6 +41,7 @@ class XMLWriter: public QObject
       QNetworkAccessManager networkAccessManager;
     signals:
         void settingsWritten();
+        void unauthorized();
         void settingsPartWritten(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
         void settingsWriteFailed(QString reason);
         void offlineSwitched(bool offline);
