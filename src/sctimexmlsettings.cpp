@@ -46,8 +46,7 @@
 #include "xmlwriter.h"
 
 /** Schreibt die Eintraege in ein Shellskript */
-void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl)
-{
+void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl) {
   if (abtList->checkInState()) {
       trace(QObject::tr("Shell script not written because it has already been checked in."));
       return;
@@ -67,6 +66,18 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   }
   QTextStream stream( & workfile);
   stream.setCodec(charmap());
+  writeShellSkriptToStream(stream,abtList,pcl);
+  workfile.close();
+
+  if (!workfile.rename(filename)) {
+    QMessageBox::critical(NULL, QObject::tr("sctime: saving sh file"),
+                         QObject::tr("%1 cannot be renamed to %2: %3").arg(workfile.fileName(), filename, workfile.errorString()));
+  }
+}
+
+void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, AbteilungsListe* abtList, PunchClockList* pcl)
+{
+  
   int sek, abzurSek;
   abtList->getGesamtZeit(sek,abzurSek);
   QRegExp apostrophExp=QRegExp("'");
@@ -161,12 +172,6 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   }
 
   stream<<endl;
-  workfile.close();
-
-  if (!workfile.rename(filename)) {
-    QMessageBox::critical(NULL, QObject::tr("sctime: saving sh file"),
-                         QObject::tr("%1 cannot be renamed to %2: %3").arg(workfile.fileName(), filename, workfile.errorString()));
-  }
 }
 
 // returns the encoding that the user has chosen by his locale settings

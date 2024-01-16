@@ -26,6 +26,7 @@
 #include <QColor>
 #include <vector>
 #include <QString>
+#include <QTextStream>
 #include <QNetworkAccessManager>
 #include "abteilungsliste.h"
 #include <QNetworkReply>
@@ -116,6 +117,8 @@ public:
     void readSettings(AbteilungsListe* abtList, PunchClockList* pcl);*/
 
     void writeShellSkript(AbteilungsListe* abtList, PunchClockList* pcl);
+
+    void writeShellSkriptToStream(QTextStream& stream, AbteilungsListe* abtList, PunchClockList* pcl);
 
     void setTimeIncrement(int sekunden) { timeInc=sekunden; };
 
