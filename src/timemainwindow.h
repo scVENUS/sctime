@@ -214,6 +214,7 @@ public:
     void cleanupUnterKontoDialog(int result);
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
     void sessionInvalid();
+    void saveLater();
     
   protected:
     virtual void moveEvent( QMoveEvent *event);
@@ -273,6 +274,7 @@ public:
     QTimer *minutenTimer;
     QTimer *restTimer;
     QTimer *autosavetimer;
+    QTimer *saveLaterTimer;
     void tageswechsel();
     void zeitKorrektur(int delta);
     bool paused;

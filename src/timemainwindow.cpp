@@ -409,6 +409,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   addToolBar(toolBar);
 
+  saveLaterTimer = new QTimer();
+  saveLaterTimer->setSingleShot(true);
+  connect(saveLaterTimer, &QTimer::timeout, this, &TimeMainWindow::save);
+
   settings=new SCTimeXMLSettings();
   QTimer::singleShot(100, this, SLOT(readInitialSetting()));
 }
@@ -501,7 +505,7 @@ void TimeMainWindow::initialSettingsRead() {
 
   autosavetimer=new QTimer(this);
   connect( autosavetimer,SIGNAL(timeout()), this, SLOT(save()));
-  autosavetimer->setInterval(300000); //Alle 5 Minuten ticken.
+  autosavetimer->setInterval(300000); //save every 5 minutes
   autosavetimer->start();
   
   zeitChanged();
@@ -660,8 +664,10 @@ void TimeMainWindow::resume() {
 	QMessageBox::Yes| QMessageBox::No);
   connect(msgbox, &QMessageBox::finished,
   [=](){
-    if (msgbox->result() == QMessageBox::Yes)
+    if (msgbox->result() == QMessageBox::Yes) {
        zeitKorrektur(pauseSecs);
+       saveLater();
+    }
     msgbox->deleteLater();
    });
    msgbox->open();
@@ -710,8 +716,10 @@ void TimeMainWindow::driftKorrektur() {
   }
   connect(msgbox, &QMessageBox::finished,
   [=](){
-    if (msgbox->result() == QMessageBox::Yes)
+    if (msgbox->result() == QMessageBox::Yes) {
        zeitKorrektur(drift);
+       saveLater();
+    }
     msgbox->deleteLater();
    });
   msgbox->open();      
@@ -905,7 +913,7 @@ void TimeMainWindow::zeitChanged()
     QTimer::singleShot(0, this, SLOT(callNightTimeEndDialog()));
   }
 
-  
+  saveLater();
     
 #ifdef WIN32
 	updateTaskbarTitle(workedtime);
@@ -970,6 +978,7 @@ void TimeMainWindow::pause() {
     PauseDialog* pd = new PauseDialog(now, drift, secSinceTick, this);
     
     connect(pd,&PauseDialog::pauseHasEnded, this, &TimeMainWindow::continueAfterPause);
+    saveLater();
     pd->startPause();
 }
 
@@ -1214,6 +1223,7 @@ void TimeMainWindow::eintragHinzufuegen()
 
   kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
   changeShortCutSettings(item);
+  saveLater();
 }
 
 /**
@@ -1430,6 +1440,7 @@ void TimeMainWindow::inPersoenlicheKonten(bool hinzufuegen)
 
     abtList->moveEintragPersoenlich(abt, ko, uko, idx, hinzufuegen);
     kontoTree->refreshItem(abt, ko, uko, idx);
+    saveLater();
   };
 
   if (!hinzufuegen) {
@@ -1675,6 +1686,9 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
 
 void TimeMainWindow::cleanupUnterKontoDialog(int result)
 {
+  if (result==QDialog::Accepted) {
+    saveLater();
+  }
   QObject::disconnect(m_unterKontoDialogTimerConnection);
   m_unterKontoDialog->deleteLater();
   m_unterKontoDialog=NULL;
@@ -1809,6 +1823,7 @@ void TimeMainWindow::finishPreferenceDialog(int oldshowtypecolumn, int oldshowps
   }
   kontoTree->setSortByCommentText(settings->sortByCommentText());
   kontoTree->closeFlaggedPersoenlicheItems();
+  saveLater();
   
 }
 
@@ -1875,6 +1890,7 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     }
   } 
   doSetActiveProject(idx);
+  saveLater();
 }
 
 /**
@@ -1975,6 +1991,7 @@ void TimeMainWindow::finishBereitschaftsDialog(QString abt, QString ko, QString 
       }
       ukiter->second.setBereitschaft(bereitschaftenNeu);
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+      saveLater();
     }
   }
   dialog->deleteLater();
@@ -1994,6 +2011,7 @@ void TimeMainWindow::finishSpecialRemunerationsDialog(QString abt, QString ko, Q
   if (srDialog->result())
   {
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+      saveLater();
   }
   srDialog->deleteLater();
 }
@@ -2160,6 +2178,7 @@ void TimeMainWindow::switchOvertimeMode(bool enabled, QString specialremun) {
       abtListToday->setAsAktiv(abt,ko,uko,newidx);
       kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
       helper->deleteLater();
+      saveLater();
     });
     helper->checkSREntry(abtListToday,oldidx,abt,ko,uko,desiredRemuns);
   }
@@ -2276,6 +2295,7 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
             kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
           }
         }
+        saveLater();
       }
       mutex.unlock();
       msgbox->deleteLater();
@@ -2321,6 +2341,7 @@ void TimeMainWindow::updateSpecialModes(bool afterPause) {
         }
     }
   }
+  saveLater();
 }
 
 /**
@@ -2380,6 +2401,7 @@ void TimeMainWindow::finishPunchClockDialog() {
         pce->second=now.time().msecsSinceStartOfDay()/1000;
       } 
     }
+    saveLater();
   }
   pcDialog->deleteLater();
 }
@@ -2423,5 +2445,12 @@ void TimeMainWindow::sessionInvalid() {
       emscripten_run_script(QString("window.open('%1', '%2');").arg(getRestBaseUrl()+REFRESH_URL).arg(tr("Refresh Session")).toUtf8().data());
     });
     msgbox->open();
+#endif
+}
+
+void TimeMainWindow::saveLater() {
+// only use this feature from WASM for now as it slows things down
+#ifdef __EMSCRIPTEN__
+  saveLaterTimer->start(2000);
 #endif
 }
