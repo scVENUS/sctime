@@ -501,9 +501,9 @@ void XMLWriter::writeSettings(bool global) {
     QString baseurl=getRestBaseUrl();
     QString postfix = "";
     if (!global) {
-      postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
+      postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
-    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix), ba);
+    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + postfix), qCompress(ba));
   }
 
 #endif // RESTCONFIG

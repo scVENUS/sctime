@@ -27,6 +27,7 @@
 #include <QCommandLineOption>
 #include <QLocalSocket>
 #include <QProcessEnvironment>
+#include <QUuid>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
@@ -64,6 +65,7 @@ QString lockfilePath;
 QString PERSOENLICHE_KONTEN_STRING;
 QString ALLE_KONTEN_STRING;
 QString SCTIME_IPC;
+QString clientId;
 
 static void fatal(const QString& title, const QString& body) {
   QMessageBox::critical(NULL, title, body, QMessageBox::Ok);
@@ -275,6 +277,7 @@ int main(int argc, char **argv ) {
         QMessageBox::critical(NULL, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
       }
   }
+  clientId=QUuid::createUuid().toString(QUuid::WithoutBraces);
   app->init(&local, dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile, offlinefile, logfile, accountlink);
   app->exec();
   

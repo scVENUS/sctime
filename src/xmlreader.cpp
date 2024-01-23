@@ -132,7 +132,8 @@ void XMLReader::parse(QIODevice *input)
         if (!netinput->isFinished()) {
             return;
         }
-        readSuccessRemote = docremote.setContent(netinput, &errMsg, &errLine, &errCol);
+        QByteArray ba=netinput->readAll();
+        readSuccessRemote = docremote.setContent(qUncompress(ba), &errMsg, &errLine, &errCol);
         input->deleteLater();
         resname=netinput->url().toString();
         if (readSuccessRemote) {
