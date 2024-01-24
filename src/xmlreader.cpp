@@ -13,14 +13,14 @@ void XMLReader::open()
   bool usefilestorageonly=true;
 #ifdef RESTCONFIG
   SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
-  usefilestorageonly=settings->restSaveOffline()||settings->backupSettingsXml;
+  usefilestorageonly=settings->restSaveOffline();
 #endif
-  if (usefilestorageonly) {
-    auto f=openFile(true);
+  if (usefilestorageonly||forceLocalRead) {
+    auto f=openFile(usefilestorageonly);
     if (f!=NULL) {
       parse(f);
       delete f;
-    }
+    } 
   } else {
     openREST();
   }
@@ -679,7 +679,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
 
 void XMLReader::continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
-  /* we come here twice. first after reading the gobal settings, and then after reading the settings of the day. after that we send the finished signal*/
+  /* we come here twice. first after reading the global settings, and then after reading the settings of the day. after that we send the settingsRead signal*/
   if (global) {
     this->global = false;
     open();

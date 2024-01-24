@@ -15,7 +15,7 @@ class XMLReader: public QObject
 {
      Q_OBJECT;
      public:
-       XMLReader(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
+       XMLReader(SCTimeXMLSettings* parent, bool global, bool forceLocalRead, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), forceLocalRead(forceLocalRead), abtList(abtList), pcl(pcl) {
           connect(this, &XMLReader::settingsPartRead, this, &XMLReader::continueAfterReading);
        };
     public: 
@@ -33,6 +33,7 @@ class XMLReader: public QObject
         void deviceOpenedForReading(QIODevice*);*/
   private:
       bool global;
+      bool forceLocalRead;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager networkAccessManager;

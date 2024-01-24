@@ -42,6 +42,7 @@ class XMLWriter: public QObject
     signals:
         void settingsWritten();
         void unauthorized();
+        void conflicted(QDate targetdate, bool global, QByteArray othersettings);
         void settingsPartWritten(bool global, AbteilungsListe* abtList, PunchClockList* pcl);
         void settingsWriteFailed(QString reason);
         void offlineSwitched(bool offline);

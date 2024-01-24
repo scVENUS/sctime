@@ -110,6 +110,7 @@ void logError(const QString &msg) {
 /** Erzeugt ein neues TimeMainWindow, das seine Daten aus abtlist bezieht. */
 TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
      windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused")  {
+  initCompleted=false;
   if (!logfile.isNull() && !logfile.isEmpty()) {
     logFile = new QFile(logfile);
     if (logFile->open(QIODevice::ReadWrite)) {
@@ -409,15 +410,21 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   addToolBar(toolBar);
 
-  saveLaterTimer = new QTimer();
-  saveLaterTimer->setSingleShot(true);
-  connect(saveLaterTimer, &QTimer::timeout, this, &TimeMainWindow::save);
+  saveLaterTimer = NULL;
 
   settings=new SCTimeXMLSettings();
   QTimer::singleShot(100, this, SLOT(readInitialSetting()));
 }
 
 void TimeMainWindow::readInitialSetting() {
+    auto finish = [=](){
+      XMLReader *reader=new XMLReader(settings, true, false, abtList, m_punchClockList);
+      connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+      connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+      connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
+      connect(reader, &XMLReader::unauthorized, this, &TimeMainWindow::sessionInvalid);
+      reader->open();
+    };
 #ifdef __EMSCRIPTEN__
     int initdone = EM_ASM_INT({
         return sctimefsinitdone;
@@ -427,13 +434,16 @@ void TimeMainWindow::readInitialSetting() {
       QTimer::singleShot(200, this, SLOT(readInitialSetting()));
       return;
     }
-#endif
-    XMLReader *reader=new XMLReader(settings, true, abtList, m_punchClockList);
-    connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
+    // in wasm we have the permanent offline mode. We try to load a local file first, to have information initialized if we have to stay offline
+    XMLReader *reader=new XMLReader(settings, true, true, abtList, m_punchClockList);
+    connect(reader, &XMLReader::settingsRead, finish);
     connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
     connect(reader, &XMLReader::unauthorized, this, &TimeMainWindow::sessionInvalid);
     reader->open();
+#else
+    finish();    
+#endif
 }
 
 void TimeMainWindow::initialSettingsRead() {
@@ -506,7 +516,6 @@ void TimeMainWindow::initialSettingsRead() {
   autosavetimer=new QTimer(this);
   connect( autosavetimer,SIGNAL(timeout()), this, SLOT(save()));
   autosavetimer->setInterval(300000); //save every 5 minutes
-  autosavetimer->start();
   
   zeitChanged();
   changeShortCutSettings(NULL); // Unterkontenmenues deaktivieren...
@@ -547,10 +556,19 @@ void TimeMainWindow::initialSettingsRead() {
   if (!m_ipcserver->listen(SCTIME_IPC)) {
      trace(tr("cannot start ipc server"));
   }
+  autosavetimer->start();
+// enable this feature only for WASM for performance reasons
+#ifdef __EMSCRIPTEN__
+  saveLaterTimer = new QTimer();
+  saveLaterTimer->setSingleShot(true);
+  connect(saveLaterTimer, &QTimer::timeout, this, &TimeMainWindow::save);
+#endif
 }
 
 void TimeMainWindow::displayLastLogEntry(){
+#ifndef WASMQUIRKS
   statusBar->showMessage(logTextLastLine);
+#endif
   QApplication::restoreOverrideCursor();
 }
 
@@ -560,6 +578,8 @@ void TimeMainWindow::aktivesKontoPruefen(){
   abtList->getAktiv(a, k, u, i);
   EintragsListe::iterator dummy;
   EintragsListe *dummy2;
+  // if we are initalizing for the first time, this is the last step. Otherwise initCompleted should already be true.
+  initCompleted=true;
   if (!abtList->findEintrag(dummy, dummy2, a, k, u, i))
     QMessageBox::warning(
           NULL,
@@ -646,7 +666,9 @@ void TimeMainWindow::resume() {
       autosavetimer->start();
   }
   int pauseSecs = before.secsTo(now);
+#ifndef WASMQUIRKS
   statusBar->showMessage(tr("resume"), 3000);
+#endif
   trace(tr("resume %2; suspend was %1").arg(lastMinuteTick.toString(), now.toString()));
   if (pauseSecs < 60) return;
   sekunden += pauseSecs; // damit  sich driftKorrektur() nicht beschwert
@@ -1037,6 +1059,7 @@ void TimeMainWindow::save()
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
+    connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::conflictDialog, Qt::QueuedConnection);
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
@@ -1045,6 +1068,7 @@ void TimeMainWindow::save()
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
+      connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::conflictDialog, Qt::QueuedConnection);
       writer->writeAllSettings();
       settings->writeShellSkript(abtList, m_punchClockList);
     }
@@ -1369,27 +1393,34 @@ void TimeMainWindow::changeTodaysDate(const QDate &date) {
 }
 
 void TimeMainWindow::refreshKontoListe() {
+#ifndef WASMQUIRKS
   statusBar->showMessage(tr("Reading account list..."));
+#endif
   QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
   QTimer::singleShot(100, m_dsm->kontenDSM, SLOT(start()));
 }
 
 void TimeMainWindow::commitKontenliste(DSResult data) {
+#ifndef WASMQUIRKS
   statusBar->showMessage(tr("Commiting account list..."));
-  // todo TimeMainWindow is longlived, delete commiter somewhere, otherwise memory leak
-  auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList);
+#endif
+  auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList, !initCompleted);
   
   if (checkConfigDir()) {
     checkLock();
     connect(commiter, &AccountListCommiter::finished, this, &TimeMainWindow::commitKontenlisteFinished );
+    connect(commiter, &AccountListCommiter::finished, commiter, &AccountListCommiter::deleteLater);
     commiter->start();
   } else {
+    commiter->deleteLater();
     QApplication::restoreOverrideCursor();
   }
 }
 
 void TimeMainWindow::commitKontenlisteFinished() {
+#ifndef WASMQUIRKS
   statusBar->showMessage(tr("Account list successfully read."), 2000);
+#endif
   QApplication::restoreOverrideCursor();
   QMetaObject::invokeMethod(this, "aktivesKontoPruefen", Qt::QueuedConnection);
   emit accountListRead();
@@ -1398,7 +1429,6 @@ void TimeMainWindow::commitKontenlisteFinished() {
      QMetaObject::invokeMethod(method->obj, method->method, Qt::QueuedConnection);
      delete method;
   }
-
 }
 
 
@@ -1854,7 +1884,9 @@ void TimeMainWindow::setAktivesProjekt(QTreeWidgetItem * item)
     kontoTree->refreshItem(abt,ko,uko,idx);
     kontoTree->setCurrentItem(item);
     if (item->text(KontoTreeItem::COL_TYPE) == "tageweise abrechnen (kd)" && abtList->ukHatMehrereEintrage(abt, ko, uko, idx)) {
+#ifndef WASMQUIRKS
       statusBar->showMessage(tr("Please specify only one entry for accounts of type \"%1\"!").arg(item->text(KontoTreeItem::COL_TYPE)), 10000);
+#endif
       QApplication::beep();
     }
     updateCaption();
@@ -2449,8 +2481,29 @@ void TimeMainWindow::sessionInvalid() {
 }
 
 void TimeMainWindow::saveLater() {
-// only use this feature from WASM for now as it slows things down
-#ifdef __EMSCRIPTEN__
-  saveLaterTimer->start(2000);
-#endif
+   if (saveLaterTimer) {
+      saveLaterTimer->start(2000);
+   }
+}
+
+void TimeMainWindow::conflictDialog(QDate targetdate, bool global, const QByteArray ba) {
+  static QSet<QDate> dialogopenfordates;
+  if (global) {
+    // Do nothing for now, just keep the current settings and dont bother the user
+    return;
+  }
+  if (dialogopenfordates.contains(targetdate)) {
+     return;
+  }
+  dialogopenfordates+=targetdate;
+  QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+           tr("sctime: conflict on saving"),
+           tr("There might be another instance running."),
+           QMessageBox::Ok);
+  connect(msgbox, &QMessageBox::finished,
+    [=](){
+      dialogopenfordates-=targetdate;
+      msgbox->deleteLater();
+  });
+  msgbox->open();
 }

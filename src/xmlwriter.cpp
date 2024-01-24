@@ -37,6 +37,9 @@ void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
     if (obj->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
       emit unauthorized();
     }
+    if (obj->attribute(QNetworkRequest::HttpStatusCodeAttribute)==409) {
+      emit conflicted(abtList->getDatum(), global, (obj->readAll()));
+    }
     obj->deleteLater();
     // we have already saved them locally, so should be able to continue anyway
     emit settingsPartWritten(global, abtList, pcl);
@@ -503,7 +506,7 @@ void XMLWriter::writeSettings(bool global) {
     if (!global) {
       postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
-    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + postfix), qCompress(ba));
+    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&conflicttimeout=150" + postfix), qCompress(ba));
   }
 
 #endif // RESTCONFIG

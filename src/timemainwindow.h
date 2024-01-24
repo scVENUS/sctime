@@ -215,6 +215,7 @@ public:
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
     void sessionInvalid();
     void saveLater();
+    void conflictDialog(QDate targetdate, bool global, const QByteArray ba);
     
   protected:
     virtual void moveEvent( QMoveEvent *event);
@@ -270,6 +271,7 @@ public:
     // Workaround, um beim Setzen der Voreinstellung fuer den inPersoenlicheKonten-Button nicht das zugehoerige
     // Event auzuloesen. Wenn inPersoenlicheKontenAllowed=false, tut inPersoenlicheKonten(bool) gar nichts.
     bool inPersoenlicheKontenAllowed;
+    bool initCompleted;
     int sekunden; // Minuten * 60 seit Beginn minus Pausen; zur Drift-Berechnung
     QTimer *minutenTimer;
     QTimer *restTimer;
