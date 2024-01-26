@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConflictDialogBase</class>
+ <widget class="QDialog" name="ConflictDialogBase">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1012</width>
+    <height>675</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>sctime: conflict on saving</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There seems to be another session existing, that has also produced data.&lt;/p&gt;&lt;p&gt;You have several options now:&lt;/p&gt;&lt;p&gt;Close this session: in this case you'll loose data from this session, but you can continue in the existing session.&lt;/p&gt;&lt;p&gt;Replace local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be replaced by the data from the existing session. &lt;/p&gt;&lt;p&gt;Merge local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be merged with the data from the existing session. Merging might lead to duplicated entries, please check your data if you do this.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="buttonClose">
+       <property name="text">
+        <string>Close this session</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonReplace">
+       <property name="text">
+        <string>Replace data</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="buttonMerge">
+       <property name="text">
+        <string>Merge data</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

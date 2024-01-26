@@ -84,6 +84,7 @@
 #include "xmlwriter.h"
 #include "xmlreader.h"
 #include "oncalldialog.h"
+#include "conflictdialog.h"
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
 #endif
@@ -1040,7 +1041,7 @@ void TimeMainWindow::pauseAbzur(bool on)
 /**
  * Speichert die aktuellen Zeiten und Einstellungen
  */
-void TimeMainWindow::save()
+void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 {
   kontoTree->flagClosedPersoenlicheItems();
   std::vector<int> columnwidthlist;
@@ -1054,7 +1055,7 @@ void TimeMainWindow::save()
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday);
+    XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday, conflicttimeout);
     connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
@@ -1063,7 +1064,7 @@ void TimeMainWindow::save()
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
-      writer=new XMLWriter(settings, abtList, m_punchClockList);
+      writer=new XMLWriter(settings, abtList, m_punchClockList, conflicttimeout);
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
@@ -1073,6 +1074,10 @@ void TimeMainWindow::save()
       settings->writeShellSkript(abtList, m_punchClockList);
     }
   }
+}
+
+void TimeMainWindow::save() {
+  saveWithTimeout(150);
 }
 
 bool TimeMainWindow::checkConfigDir() {
@@ -2496,14 +2501,38 @@ void TimeMainWindow::conflictDialog(QDate targetdate, bool global, const QByteAr
      return;
   }
   dialogopenfordates+=targetdate;
-  QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
-           tr("sctime: conflict on saving"),
-           tr("There might be another instance running."),
-           QMessageBox::Ok);
-  connect(msgbox, &QMessageBox::finished,
+  AbteilungsListe* conflictedAbtList=NULL;
+  PunchClockList * conflictedPunchClockList=NULL;
+  bool istoday=false;
+  if (abtList->getDatum()==targetdate) {
+    conflictedAbtList=new AbteilungsListe(targetdate, abtList);
+    conflictedPunchClockList=new PunchClockList();
+  } else if (abtListToday->getDatum()==targetdate) {
+    istoday=true;
+    conflictedAbtList=new AbteilungsListe(targetdate, abtList);
+    conflictedPunchClockList=new PunchClockList();
+  } else {
+    // this should not happen, but handle anyways, just in case...
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+            tr("sctime: unresolvable conflict"),
+            tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
+            QMessageBox::Ok);
+    connect(msgbox, &QMessageBox::finished,
     [=](){
       dialogopenfordates-=targetdate;
       msgbox->deleteLater();
+    });
+    msgbox->open();
+    return;
+  }
+  ConflictDialog *dialog=new ConflictDialog(settings, targetdate, global, ba, this);
+  connect(dialog, &QMessageBox::finished,
+    [=](){
+      dialogopenfordates-=targetdate;
+      dialog->deleteLater();
+      
+      refreshKontoListe();
+      saveWithTimeout(0);
   });
-  msgbox->open();
+  dialog->open();
 }

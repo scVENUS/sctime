@@ -42,6 +42,7 @@ class DSM;
 #include "defaultcommentreader.h"
 #include "datasource.h"
 #include "punchclockchecker.h"
+#include "conflictdialog.h"
 
 class TextViewerDialog;
 class Lock;
@@ -68,6 +69,7 @@ public:
     void infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links=false);
 
     friend class DateChanger;
+    friend class ConflictDialog;
     
   public slots:
 
@@ -82,6 +84,7 @@ public:
     void zeitChanged();
     void updateCaption();
     void save();
+    void saveWithTimeout(int conflicttimeout);
     void resetDiff();
     void aktivesKontoPruefen();
 
