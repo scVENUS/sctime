@@ -277,7 +277,10 @@ int main(int argc, char **argv ) {
         QMessageBox::critical(NULL, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
       }
   }
-  clientId=QUuid::createUuid().toString(QUuid::WithoutBraces);
+  // the more elegant version does not work for older QT (for example 5.7)
+  // clientId=QUuid::createUuid().toString(QUuid::WithoutBraces);
+  QString uuid=QUuid::createUuid().toString();
+  clientId=uuid.mid(1,uuid.length()-2); // remove curly braces
   app->init(&local, dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile, offlinefile, logfile, accountlink);
   app->exec();
   
