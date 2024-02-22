@@ -10,6 +10,7 @@ TARGET = sctime
 CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
+          conflictdialog.cpp \
           datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
@@ -17,6 +18,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
+          conflictdialog.h \
           datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
           oncalldialog.h pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
@@ -25,7 +27,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
-FORMS = datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
+FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
         punchclockdialogbase.ui pausedialogbase.ui
 
 # just tell qmake that qrc_generated_translations.cpp depends on all
@@ -105,7 +107,10 @@ QMAKE_EXTRA_COMPILERS += lrelease
 
 wasm {
   QTPLUGIN.imageformats = qico qgif
-  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=http://127.0.0.1:8888/static/sctime.wasm.debug.wasm -lidbfs.js
+  isEmpty(DWARF_URL) {
+    DWARF_URL = http://127.0.0.1:8888/static/sctime.wasm.debug.wasm
+  }
+  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=$$DWARF_URL -lidbfs.js
   DEFINES += RESTONLY RESTCONFIG WASMQUIRKS DOWNLOADDIALOG
   SOURCES += downloadshdialog.cpp
   HEADERS += downloadshdialog.h

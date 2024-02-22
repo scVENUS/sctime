@@ -15,13 +15,19 @@ class XMLReader: public QObject
 {
      Q_OBJECT;
      public:
-       XMLReader(SCTimeXMLSettings* parent, bool global, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), abtList(abtList), pcl(pcl) {
+       XMLReader(SCTimeXMLSettings* parent, bool global, bool forceLocalRead, bool autoContinueOnConflict, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), forceLocalRead(forceLocalRead), autoContinueOnConflict(autoContinueOnConflict), abtList(abtList), pcl(pcl) {
           connect(this, &XMLReader::settingsPartRead, this, &XMLReader::continueAfterReading);
+          continueThisConflict=false;
        };
     public: 
       virtual void open();      
       virtual QFile* openFile(bool handleerr);
       virtual void openREST();
+      virtual void ignoreConflict() { continueThisConflict=true; };
+    
+    signals:
+      void conflicted(QDate targetdate, bool global, QDomDocument remotesettings);
+      void conflictedWithLocal(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
 
     public slots:
       virtual void parse(QIODevice* input);
@@ -33,6 +39,9 @@ class XMLReader: public QObject
         void deviceOpenedForReading(QIODevice*);*/
   private:
       bool global;
+      bool forceLocalRead;
+      bool autoContinueOnConflict;
+      bool continueThisConflict;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager networkAccessManager;

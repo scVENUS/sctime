@@ -70,6 +70,8 @@ class AbteilungsListe: public std::map<QString,KontoListe>
 
     bool findEntryWithSpecialRemunsAndComment(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, int & idx, const QString& abteilung, const QString& konto, const QString& unterkonto, const QString& comment, const QSet<QString>& specialRemuns);
 
+    bool findDuplicateEntry(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, int &idx, const QString& abteilung, const QString& konto, const QString& unterkonto, const UnterKontoEintrag& entry);
+
     QString findAbteilungOfKonto(const QString& konto);
 
     KontoListe* insertAbteilung(const QString& abteilung);

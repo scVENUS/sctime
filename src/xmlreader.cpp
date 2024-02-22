@@ -13,14 +13,14 @@ void XMLReader::open()
   bool usefilestorageonly=true;
 #ifdef RESTCONFIG
   SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
-  usefilestorageonly=settings->restSaveOffline()||settings->backupSettingsXml;
+  usefilestorageonly=settings->restSaveOffline();
 #endif
-  if (usefilestorageonly) {
-    auto f=openFile(true);
+  if (usefilestorageonly||forceLocalRead) {
+    auto f=openFile(usefilestorageonly);
     if (f!=NULL) {
       parse(f);
       delete f;
-    }
+    } 
   } else {
     openREST();
   }
@@ -134,6 +134,7 @@ void XMLReader::parse(QIODevice *input)
         }
         QByteArray ba=netinput->readAll();
         readSuccessRemote = docremote.setContent(qUncompress(ba), &errMsg, &errLine, &errCol);
+        
         input->deleteLater();
         resname=netinput->url().toString();
         if (readSuccessRemote) {
@@ -143,7 +144,7 @@ void XMLReader::parse(QIODevice *input)
     }
     if (fileinput!=NULL) {
       if (!readSuccessRemote&&!fileinput->exists()) {
-        emit settingsPartRead(global, abtList, pcl, false, ""); 
+        emit settingsPartRead(global, abtList, pcl, false, "");
         return;
       }
       resname=fileinput->fileName();
@@ -151,17 +152,28 @@ void XMLReader::parse(QIODevice *input)
       fileinput->close();
     }
 
+    auto rootElemRemote=docremote.documentElement();
+    QString clientID=clientId;
+    QString remoteDateStr=rootElemRemote.attribute("date");
+    QString remoteID=rootElemRemote.attribute("identifier");
+    QDateTime remoteDate=QDateTime::fromString(remoteDateStr, Qt::ISODate);
+    if (readSuccessRemote && (clientID!=remoteID) && (remoteDate.secsTo(QDateTime::currentDateTime())<150)) {
+        logError(tr("conflict detected. clientid is %1 remoteid is %2").arg(clientID).arg(remoteID));
+        emit conflicted(abtList->getDatum(), global, docremote);
+        if (!autoContinueOnConflict&&!continueThisConflict) {
+           return;
+        } else {
+            continueThisConflict =false;
+        }
+    }
+
     bool readsuccess=false;
-    QString clientID=getIdentifier();
     QDomDocument doc;
     if (readSuccessLocal&&readSuccessRemote) {
-        auto rootElemRemote=docremote.documentElement();
         auto rootElemLocal=doclocal.documentElement();
-        QString remoteID=rootElemRemote.attribute("identifier");
+        
         QString localID=rootElemLocal.attribute("identifier");
-        QString remoteDateStr=rootElemRemote.attribute("date");
         QString localDateStr=rootElemRemote.attribute("date");
-        QDateTime remoteDate=QDateTime::fromString(remoteDateStr, Qt::ISODate);
         QDateTime localDate=QDateTime::fromString(localDateStr, Qt::ISODate);
         if (remoteDate==localDate) {
            if (remoteID==localID) {
@@ -180,10 +192,15 @@ void XMLReader::parse(QIODevice *input)
              doc=docremote;
              logError(tr("using newer remote version."));
            } else {
-             // TODO: check this case handling, perhaps add a dialog
              logError(tr("two different clients have written a settings file with the same date. using newer remote version."));
-             readsuccess=true;
-             doc=docremote;
+             emit conflictedWithLocal(abtList->getDatum(), global, doclocal, docremote);
+             if (!autoContinueOnConflict&&!continueThisConflict) {
+               return;
+             } else {
+               continueThisConflict =false;
+               readsuccess=true;
+               doc=docremote;
+             }
            } 
         } else if (remoteDate<localDate) {
            if (remoteID==localID) {
@@ -191,10 +208,15 @@ void XMLReader::parse(QIODevice *input)
              doc=doclocal;
              logError(tr("using newer local version."));
            } else {
-             // TODO: check this case handling, perhaps add a dialog
              logError(tr("two different clients have written a settings file with the same date. using newer local version."));
-             readsuccess=true;
-             doc=doclocal;
+             emit conflictedWithLocal(abtList->getDatum(), global, doclocal, docremote);
+             if (!autoContinueOnConflict&&!continueThisConflict) {
+               return;
+             } else {
+               continueThisConflict =false;
+               readsuccess=true;
+               doc=doclocal;
+             }
            } 
         }
     } else if (readSuccessLocal) {
@@ -210,7 +232,7 @@ void XMLReader::parse(QIODevice *input)
     {
         if (global)
             settings->backupSettingsXml = false;
-        emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file");
+        emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file xyz");
         QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
         return;
@@ -679,7 +701,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
 
 void XMLReader::continueAfterReading(bool global, AbteilungsListe* abtList, PunchClockList* pcl)
 {
-  /* we come here twice. first after reading the gobal settings, and then after reading the settings of the day. after that we send the finished signal*/
+  /* we come here twice. first after reading the global settings, and then after reading the settings of the day. after that we send the settingsRead signal*/
   if (global) {
     this->global = false;
     open();

@@ -42,6 +42,9 @@ class DSM;
 #include "defaultcommentreader.h"
 #include "datasource.h"
 #include "punchclockchecker.h"
+#include "conflictdialog.h"
+
+#include <QDomDocument>
 
 class TextViewerDialog;
 class Lock;
@@ -68,6 +71,7 @@ public:
     void infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links=false);
 
     friend class DateChanger;
+    friend class ConflictDialog;
     
   public slots:
 
@@ -82,6 +86,7 @@ public:
     void zeitChanged();
     void updateCaption();
     void save();
+    void saveWithTimeout(int conflicttimeout);
     void resetDiff();
     void aktivesKontoPruefen();
 
@@ -215,6 +220,9 @@ public:
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
     void sessionInvalid();
     void saveLater();
+    void writeConflictDialog(QDate targetdate, bool global, const QByteArray ba);
+    void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
+    void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
     
   protected:
     virtual void moveEvent( QMoveEvent *event);
@@ -270,6 +278,7 @@ public:
     // Workaround, um beim Setzen der Voreinstellung fuer den inPersoenlicheKonten-Button nicht das zugehoerige
     // Event auzuloesen. Wenn inPersoenlicheKontenAllowed=false, tut inPersoenlicheKonten(bool) gar nichts.
     bool inPersoenlicheKontenAllowed;
+    bool initCompleted;
     int sekunden; // Minuten * 60 seit Beginn minus Pausen; zur Drift-Berechnung
     QTimer *minutenTimer;
     QTimer *restTimer;

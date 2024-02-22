@@ -16,9 +16,17 @@
 
 void XMLWriter::checkReply(QNetworkReply* input) {
    if (input->isFinished()) {
-     input->deleteLater();
-     emit settingsPartWritten(global, abtList, pcl);
-     emit offlineSwitched(false);
+     if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
+         auto conflictingclient=input->rawHeader("sctime-client-info");
+         emit conflicted(abtList->getDatum(), global, (input->readAll()));
+         emit settingsPartWritten(global, abtList, pcl);
+         emit offlineSwitched(false);  
+         input->deleteLater();
+     } else {  
+       input->deleteLater();
+       emit settingsPartWritten(global, abtList, pcl);
+       emit offlineSwitched(false);
+     }
    }
 }
 
@@ -30,7 +38,7 @@ void XMLWriter::gotReply() {
 // we need to implement this function for compatibility with old QT. Should be moved to an errorOccured handler in the future
 void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
     auto obj=(QNetworkReply*)(sender());
-    logError("Communication error on writing to server, going offline");
+    logError(tr("Communication error on writing to server, going offline"));
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
@@ -47,6 +55,7 @@ void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
   QNetworkReply *reply = networkAccessManager.put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
+  connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
   // for compatibility - use errorOccurred slot instead in future
   connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
         this, &XMLWriter::onErrCompat);
@@ -77,7 +86,7 @@ void XMLWriter::writeSettings(bool global) {
   root.setAttribute("version", qApp->applicationVersion());
   root.setAttribute("system", QSysInfo::productType());
   root.setAttribute("date", savetime.toString(Qt::ISODate));
-  root.setAttribute("identifier", getIdentifier());
+  root.setAttribute("identifier", clientId);
   doc.appendChild( root );
   QDomElement generaltag = doc.createElement( "general" );
 
@@ -503,7 +512,7 @@ void XMLWriter::writeSettings(bool global) {
     if (!global) {
       postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
-    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + postfix), qCompress(ba));
+    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&conflicttimeout=" + QString::number(conflicttimeout) + postfix), qCompress(ba));
   }
 
 #endif // RESTCONFIG

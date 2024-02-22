@@ -152,6 +152,34 @@ bool AbteilungsListe::findEntryWithSpecialRemunsAndComment(EintragsListe::iterat
   return false;
 }
 
+/** looks for an entry that is identical to the given one
+*/
+bool AbteilungsListe::findDuplicateEntry(EintragsListe::iterator& itEt, EintragsListe* &eintragsliste, int &idx, 
+                                                const QString& abteilung, const QString& konto, 
+                                                const QString& unterkonto, const UnterKontoEintrag& entry)
+{
+
+  UnterKontoListe *unterkontoliste;
+  UnterKontoListe::iterator itUk;
+
+  eintragsliste=NULL;
+
+  if (!findUnterKonto(itUk,unterkontoliste,abteilung,konto,unterkonto)) return false;
+
+  if (itUk==unterkontoliste->end())
+    return false;
+
+  eintragsliste=&(itUk->second);
+
+  for (itEt=eintragsliste->begin(); itEt!=eintragsliste->end(); ++itEt) {
+    if ((itEt->second.getAchievedSpecialRemunSet()==entry.getAchievedSpecialRemunSet())&&(entry.kommentar==itEt->second.kommentar)&&(entry.sekunden==itEt->second.sekunden)&&(entry.sekundenAbzur==itEt->second.sekundenAbzur)) {
+      idx=itEt->first;
+      return true;
+    }
+  }
+  return false;
+}
+
 
 /* find a department by name and return the associated account list */
 bool AbteilungsListe::findDepartment(KontoListe* &accountList, const QString&

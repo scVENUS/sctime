@@ -14,8 +14,8 @@ class XMLReader;
 class AccountListCommiter: public QObject {
         Q_OBJECT;
 public:
-       AccountListCommiter(QObject* parent, DSResult data, SCTimeXMLSettings* settings, KontoTreeView *kontotree, AbteilungsListe* abtList, AbteilungsListe* abtListToday, PunchClockList *pcl):
-          QObject(parent), data(data), settings(settings), kontoTree(kontotree), abtList(abtList), abtListToday(abtListToday), pcl(pcl), diff(0) {
+       AccountListCommiter(QObject* parent, DSResult data, SCTimeXMLSettings* settings, KontoTreeView *kontotree, AbteilungsListe* abtList, AbteilungsListe* abtListToday, PunchClockList *pcl, bool withoutSave):
+          QObject(parent), data(data), settings(settings), kontoTree(kontotree), abtList(abtList), abtListToday(abtListToday), pcl(pcl), diff(0), withoutSave(withoutSave) {
 
        };
 public slots:
@@ -37,6 +37,8 @@ private:
        PunchClockList *pcl;
        XMLWriter* writer;
        XMLReader* reader;
+       // normally you should save before commiting. If you have already done that you can skip this step.
+       bool withoutSave;
 
        int diff;        
 };

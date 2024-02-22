@@ -99,7 +99,7 @@ void DateChanger::resetLists()
         m_timeMainWindow->abtListToday->clearKonten();
         m_timeMainWindow->m_punchClockListToday->clear();
         expectedActions++;
-        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, false, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
         connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
         connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
         connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
@@ -108,7 +108,7 @@ void DateChanger::resetLists()
 
     m_timeMainWindow->abtList->clearKonten();
     m_timeMainWindow->m_punchClockList->clear();
-    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, false, true, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
     connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
     connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
     connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
