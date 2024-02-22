@@ -86,7 +86,7 @@ void XMLWriter::writeSettings(bool global) {
   root.setAttribute("version", qApp->applicationVersion());
   root.setAttribute("system", QSysInfo::productType());
   root.setAttribute("date", savetime.toString(Qt::ISODate));
-  root.setAttribute("identifier", getIdentifier());
+  root.setAttribute("identifier", clientId);
   doc.appendChild( root );
   QDomElement generaltag = doc.createElement( "general" );
 

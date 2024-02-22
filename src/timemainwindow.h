@@ -44,6 +44,8 @@ class DSM;
 #include "punchclockchecker.h"
 #include "conflictdialog.h"
 
+#include <QDomDocument>
+
 class TextViewerDialog;
 class Lock;
 
@@ -218,7 +220,9 @@ public:
     void changeDateFinished(const QDate &date, bool changeVisible, bool changeToday, bool currentDateSel);
     void sessionInvalid();
     void saveLater();
-    void conflictDialog(QDate targetdate, bool global, const QByteArray ba);
+    void writeConflictDialog(QDate targetdate, bool global, const QByteArray ba);
+    void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
+    void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
     
   protected:
     virtual void moveEvent( QMoveEvent *event);

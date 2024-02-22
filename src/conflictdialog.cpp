@@ -22,6 +22,7 @@
 #include "xmlreader.h"
 #include "qmessagebox.h"
 #include "timemainwindow.h"
+#include "globals.h"
 
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
    settings(settings), targetdate(targetdate), global(global), remoteBA(remoteBA), tmw(tmw) {
@@ -66,7 +67,7 @@ void ConflictDialog::performMerge() {
       return;
     }
 
-    XMLReader *reader=new XMLReader(settings, global, false, conflictedAbtList, conflictedPunchClockList);
+    XMLReader *reader=new XMLReader(settings, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
     QDomDocument doc("settings");
     bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);
@@ -108,7 +109,7 @@ void ConflictDialog::performReplace() {
       return;
     }
 
-    XMLReader *reader=new XMLReader(settings, global, false, conflictedAbtList, conflictedPunchClockList);
+    XMLReader *reader=new XMLReader(settings, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
     QDomDocument doc("settings");
     bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);
@@ -179,11 +180,16 @@ void ConflictDialog::mergeAbtList(AbteilungsListe* target, AbteilungsListe* othe
 
         for (EintragsListe::iterator etPos=eintragsliste->begin(); etPos!=eintragsliste->end(); ++etPos) {
           if (!(etPos->second==UnterKontoEintrag())) {
-              int idx=target->insertEintrag(abteilungstr, kontostr, unterkontostr);
               EintragsListe::iterator itEtTarget;
               EintragsListe* eintragslisteTarget;
-              target->findEintrag(itEtTarget, eintragslisteTarget, abteilungstr, kontostr, unterkontostr, idx);
-              itEtTarget->second=etPos->second;
+              int idx;
+              QString comment=etPos->second.kommentar;
+              bool found=target->findDuplicateEntry(itEtTarget, eintragslisteTarget, idx, abteilungstr, kontostr, unterkontostr, etPos->second);
+              if (!found||(itEtTarget->second.sekunden!=etPos->second.sekunden)||(itEtTarget->second.sekundenAbzur!=etPos->second.sekundenAbzur)) {
+                   idx=target->insertEintrag(abteilungstr, kontostr, unterkontostr);
+                   target->findEintrag(itEtTarget, eintragslisteTarget, abteilungstr, kontostr, unterkontostr, idx);
+                   itEtTarget->second=etPos->second;
+                 }
           }
         }
       }

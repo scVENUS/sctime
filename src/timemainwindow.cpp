@@ -419,11 +419,13 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
 void TimeMainWindow::readInitialSetting() {
     auto finish = [=](){
-      XMLReader *reader=new XMLReader(settings, true, false, abtList, m_punchClockList);
+      XMLReader *reader=new XMLReader(settings, true, false, false, abtList, m_punchClockList);
       connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
       connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
       connect(reader, &XMLReader::unauthorized, this, &TimeMainWindow::sessionInvalid);
+      connect(reader, &XMLReader::conflicted, this, &TimeMainWindow::readConflictDialog);
+      connect(reader, &XMLReader::conflictedWithLocal, this, &TimeMainWindow::readConflictWithLocalDialog);
       reader->open();
     };
 #ifdef __EMSCRIPTEN__
@@ -436,11 +438,13 @@ void TimeMainWindow::readInitialSetting() {
       return;
     }
     // in wasm we have the permanent offline mode. We try to load a local file first, to have information initialized if we have to stay offline
-    XMLReader *reader=new XMLReader(settings, true, true, abtList, m_punchClockList);
+    XMLReader *reader=new XMLReader(settings, true, true, false, abtList, m_punchClockList);
     connect(reader, &XMLReader::settingsRead, finish);
     connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
     connect(reader, &XMLReader::unauthorized, this, &TimeMainWindow::sessionInvalid);
+    connect(reader, &XMLReader::conflicted, this, &TimeMainWindow::readConflictDialog);
+    connect(reader, &XMLReader::conflictedWithLocal, this, &TimeMainWindow::readConflictWithLocalDialog);
     reader->open();
 #else
     finish();    
@@ -1060,7 +1064,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
-    connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::conflictDialog, Qt::QueuedConnection);
+    connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::writeConflictDialog, Qt::QueuedConnection);
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
@@ -1069,7 +1073,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
-      connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::conflictDialog, Qt::QueuedConnection);
+      connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::writeConflictDialog, Qt::QueuedConnection);
       writer->writeAllSettings();
       settings->writeShellSkript(abtList, m_punchClockList);
     }
@@ -2491,7 +2495,7 @@ void TimeMainWindow::saveLater() {
    }
 }
 
-void TimeMainWindow::conflictDialog(QDate targetdate, bool global, const QByteArray ba) {
+void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QByteArray ba) {
   static QSet<QDate> dialogopenfordates;
   if (global) {
     // Do nothing for now, just keep the current settings and dont bother the user
@@ -2501,16 +2505,10 @@ void TimeMainWindow::conflictDialog(QDate targetdate, bool global, const QByteAr
      return;
   }
   dialogopenfordates+=targetdate;
-  AbteilungsListe* conflictedAbtList=NULL;
-  PunchClockList * conflictedPunchClockList=NULL;
   bool istoday=false;
   if (abtList->getDatum()==targetdate) {
-    conflictedAbtList=new AbteilungsListe(targetdate, abtList);
-    conflictedPunchClockList=new PunchClockList();
   } else if (abtListToday->getDatum()==targetdate) {
     istoday=true;
-    conflictedAbtList=new AbteilungsListe(targetdate, abtList);
-    conflictedPunchClockList=new PunchClockList();
   } else {
     // this should not happen, but handle anyways, just in case...
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
@@ -2535,4 +2533,90 @@ void TimeMainWindow::conflictDialog(QDate targetdate, bool global, const QByteAr
       saveWithTimeout(0);
   });
   dialog->open();
+}
+
+void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings) {
+  auto reader=dynamic_cast<XMLReader*>(sender());
+  if (global) {
+    // Do nothing for now, just keep the current settings and dont bother the user
+    reader->ignoreConflict();
+    return;
+  }
+  bool istoday=false;
+  if (abtList->getDatum()==targetdate) {
+  } else if (abtListToday->getDatum()==targetdate) {
+    istoday=true;
+  } else {
+    // this should not happen, but handle anyways, just in case...
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+            tr("sctime: unresolvable conflict"),
+            tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
+            QMessageBox::Ok);
+    connect(msgbox, &QMessageBox::finished,
+    [=](){
+      msgbox->deleteLater();
+    });
+    msgbox->open();
+    return;
+  }
+  ConflictDialog *dialog=new ConflictDialog(settings, targetdate, global, qCompress(remotesettings.toByteArray()), this);
+  connect(dialog, &QMessageBox::finished,
+    [=](){
+      if (reader!=NULL) {
+        if (istoday) {
+           emit reader->settingsPartRead(global, abtListToday, m_punchClockListToday, true, "");
+        } else {
+           emit reader->settingsPartRead(global, abtList, m_punchClockList, true, "");
+        }
+      }
+      dialog->deleteLater();
+      saveWithTimeout(0);
+      
+  });
+  dialog->open();
+}
+
+void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings) {
+  auto reader=dynamic_cast<XMLReader*>(sender());
+  if (global) {
+    // Do nothing for now, just keep the current settings and dont bother the user
+    reader->ignoreConflict();
+    return;
+  }
+  AbteilungsListe* conflictedAbtList=NULL;
+  PunchClockList * conflictedPunchClockList=NULL;
+  bool istoday=false;
+  if (abtList->getDatum()==targetdate) {
+  } else if (abtListToday->getDatum()==targetdate) {
+    istoday=true;
+  } else {
+    // this should not happen, but handle anyways, just in case...
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+            tr("sctime: unresolvable conflict"),
+            tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
+            QMessageBox::Ok);
+    connect(msgbox, &QMessageBox::finished,
+    [=](){
+      msgbox->deleteLater();
+    });
+    msgbox->open();
+    return;
+  }
+  QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+     tr("sctime: automatically resolved conflict"),
+     tr("There was a conflict between local and remote data when loading. sctime has automatically loaded the newer data. Please check your entries."),
+     QMessageBox::Ok);
+  connect(msgbox, &QMessageBox::finished,
+    [=](){
+      if (reader!=NULL) {
+        if (istoday) {
+           emit reader->settingsPartRead(global, abtListToday, m_punchClockListToday, true, "");
+        } else {
+           emit reader->settingsPartRead(global, abtList, m_punchClockList, true, "");
+        }
+      }
+      msgbox->deleteLater();
+      saveWithTimeout(0);
+  });
+  msgbox->open();
 }

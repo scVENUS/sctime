@@ -32,7 +32,7 @@ void AccountListCommiter::reloadAbtList() {
   }
   diff = abtList->getZeitDifferenz();
   abtList->reload(data);
-  reader = new XMLReader(settings, true, false, abtList, NULL);
+  reader = new XMLReader(settings, true, false, true, abtList, NULL);
   if (abtList!=abtListToday) {
      connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::writeAbtListToday);
   } else {
@@ -42,7 +42,7 @@ void AccountListCommiter::reloadAbtList() {
 }
 
 void AccountListCommiter::reloadAbtListToday() {
-  reader = new XMLReader(settings, true, false, abtListToday, NULL);
+  reader = new XMLReader(settings, true, false, true, abtListToday, NULL);
   connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::finish);
   writer->deleteLater();
   writer=NULL;
