@@ -87,12 +87,16 @@ PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtype
 }
 
 void PreferenceDialog::selectCustomFont() {
-    bool ok;
-    QFont font = QFontDialog::getFont(&ok, selectedFont, this);
-    if (ok) {
-        selectedFont=font;
-    }
-    fontPreview->setFont(selectedFont);
+    QFontDialog* dialog=new QFontDialog(selectedFont, this);
+    connect(dialog, &QFontDialog::finished,
+    [=](){
+      if (dialog->result()==QDialog::Accepted) {
+        selectedFont=dialog->selectedFont();
+      }
+      fontPreview->setFont(selectedFont);
+      dialog->deleteLater();
+    });
+    dialog->open();
 }
 
 PreferenceDialog::~PreferenceDialog()
