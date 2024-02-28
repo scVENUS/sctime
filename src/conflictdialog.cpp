@@ -25,7 +25,7 @@
 #include "globals.h"
 
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
-   settings(settings), targetdate(targetdate), global(global), remoteBA(remoteBA), tmw(tmw) {
+    tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate) {
     setupUi(this);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);

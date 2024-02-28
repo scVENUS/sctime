@@ -51,10 +51,10 @@ class Lock;
 
 class QueuedMethod {
     public:
-       QueuedMethod(QObject* obj, char* method): obj(obj), method(method) {}
+       QueuedMethod(QObject* obj, const char* method): obj(obj), method(method) {}
     public:
        QObject* obj;
-       char * method;
+       const char * method;
 };
 
 /** Diese Klasse implementiert das Hauptfenster des Programms,

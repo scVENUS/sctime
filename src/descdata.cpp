@@ -25,13 +25,13 @@ DescData::DescData()
     m_pspelem="";
 }
 
-DescData::DescData(const DescData& descdata)
+/*DescData::DescData(const DescData& descdata)
 {
     m_description=descdata.m_description;
     m_responsible=descdata.m_responsible;
     m_type=descdata.m_type;
     m_pspelem=descdata.m_pspelem;
-}
+}*/
 
 DescData::DescData(const QString& description,const QString& responsible,const QString& type, const QString& pspelem)
 {

@@ -5,7 +5,8 @@
 #include <QMessageBox>
 #include <QDomElement>
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QGuiApplication>
+#include <QScreen>
 #include "globals.h"
 
 void XMLReader::open()
@@ -80,8 +81,8 @@ void XMLReader::openREST() {
     QNetworkReply *reply = networkAccessManager.get(request);
     connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
     // for compatibility - use errorOccurred slot instead in future
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
-        this, &XMLReader::onErrCompat);
+    connect(reply, &QNetworkReply::errorOccurred,
+        this, &XMLReader::gotReply);
     //connect(reply, &QNetworkReply::errorOccurred,
     //    this, &XMLReader::gotReply);
 }
@@ -541,7 +542,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                             if (ok)
                             {
                                 QPoint pos(x, y);
-                                QRect rootwinsize = QApplication::desktop()->screenGeometry();
+                                QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
                                 if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
                                     settings->mainwindowPosition = pos;
                             }
@@ -636,7 +637,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                             if (ok)
                             {
                                 QPoint pos(x, y);
-                                QRect rootwinsize = QApplication::desktop()->screenGeometry();
+                                QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
                                 if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
                                     settings->unterKontoWindowPosition = pos;
                             }

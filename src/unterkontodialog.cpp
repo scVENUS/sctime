@@ -30,8 +30,8 @@
 #include <QGroupBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QTextCodec>
 #include <QMessageBox>
+#include <QStringEncoder>
 
 #include "unterkontoeintrag.h"
 #include "timeedit.h"
@@ -311,8 +311,9 @@ void UnterKontoDialog::addTag()
 
 void UnterKontoDialog::checkInput()
 {
-  QTextCodec* codec=QTextCodec::codecForLocale();
-  if (!codec->canEncode(getComment())) {
+  QStringEncoder encoder(SCTimeXMLSettings::charmap());
+  encoder(getComment());
+  if (encoder.hasError()) {
     QMessageBox::critical(0,tr("Error"),tr("Error: The entered "
         "description contains a character that cannot be displayed in "
 	"your locale."),

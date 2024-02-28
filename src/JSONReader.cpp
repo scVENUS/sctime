@@ -81,10 +81,10 @@ bool JSONAccountSource::convertData(DSResult* const result) {
   QJsonDocument doc=jsonreader->getData();
   QJsonObject data=doc.object()["AccountTree"].toObject();
   QJsonArray departments=data["Departments"].toArray();
-  foreach (auto departmentVal, departments) {
+  for (const auto &departmentVal: departments) {
     QJsonObject department=departmentVal.toObject();
     QJsonArray accounts=department["Accounts"].toArray();
-    foreach (auto accountVal, accounts) {
+    for (const auto &accountVal: accounts) {
       QJsonObject account=accountVal.toObject();
       QString respaccount1="";
       QString respaccount2="";
@@ -96,7 +96,7 @@ bool JSONAccountSource::convertData(DSResult* const result) {
         }
       }
       QJsonArray subaccounts=account["SubAccounts"].toArray();
-      foreach (auto subaccountVal, subaccounts) {
+      for (const auto &subaccountVal: subaccounts) {
         QJsonObject subaccount=subaccountVal.toObject();
         QStringList row;
         appendStringToRow(row,department,"Name");
@@ -126,14 +126,14 @@ bool JSONAccountSource::convertData(DSResult* const result) {
         appendStringToRow(row,subaccount,"PSP");
         QJsonArray specialremuns=subaccount["SpecialRemunerations"].toArray();
         QStringList srlist;
-        foreach (auto specialremunVal, specialremuns) {
+        for (const auto &specialremunVal: specialremuns) {
           srlist.append(specialremunVal.toString());
         }
         row.append(srlist.join(","));
         QJsonArray microaccounts=subaccount["MicroAccounts"].toArray();
         row.append("");
         if (microaccounts.size()>0) {
-          foreach (auto microaccountVal, microaccounts) {
+          for (const auto &microaccountVal: microaccounts) {
             QString microaccount=microaccountVal.toString();
             row[row.size()-1]=microaccount; // we need a row for each microaccount, so replace it on the row
             result->append(row);            // and insert the new row to the result
@@ -181,7 +181,7 @@ JSONOnCallSource::JSONOnCallSource(JSONReaderBase *jsonreader)
 bool JSONOnCallSource::convertData(DSResult* const result) {
   QJsonDocument doc=jsonreader->getData();
   QJsonArray oncalltimes=doc.object()["OnCallTimes"].toArray();
-  foreach (auto oncalltimeVal, oncalltimes) {
+  for (const auto &oncalltimeVal: oncalltimes) {
     QJsonObject oncalltime=oncalltimeVal.toObject();
     QStringList row;
     appendStringToRow(row,oncalltime,"Category");
@@ -197,7 +197,7 @@ JSONSpecialRemunSource::JSONSpecialRemunSource(JSONReaderBase *jsonreader)
 bool JSONSpecialRemunSource::convertData(DSResult* const result) {
   QJsonDocument doc=jsonreader->getData();
   QJsonArray specialremuns=doc.object()["SpecialRemunerations"].toArray();
-  foreach (auto specialremunVal, specialremuns) {
+  for (const auto &specialremunVal: specialremuns) {
     QJsonObject specialremun=specialremunVal.toObject();
     QStringList row;
     appendStringToRow(row,specialremun,"Category");
@@ -222,8 +222,8 @@ void JSONReaderUrl::requestData()
   QNetworkReply *reply = networkAccessManager.get(request);
   connect(reply, &QNetworkReply::finished, this, &JSONReaderUrl::gotReply);
   // for compatibility - use errorOccurred slot instead in future
-  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
-        this, &JSONReaderUrl::onErrCompat);
+  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::errorOccurred),
+        this, &JSONReaderUrl::gotReply);
 }
 
 void JSONReaderUrl::receiveData(QNetworkReply *reply)
@@ -259,7 +259,7 @@ void JSONReaderUrl::gotReply() {
 void JSONReaderCommand::requestData()
 {
   QProcess* process = new QProcess(parent);
-  process->start(command,QIODevice::ReadOnly);
+  process->startCommand(command,QIODevice::ReadOnly);
   trace(QObject::tr("Running command: ") + command);
   if (!process->waitForFinished(-1)) {
     logError(QObject::tr("Cannot run command '%1': %2").arg(command).arg(process->error()));

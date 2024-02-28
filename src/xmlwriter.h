@@ -15,7 +15,7 @@ class XMLWriter: public QObject
 {
      Q_OBJECT;
      public:
-       XMLWriter(SCTimeXMLSettings* settings, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout=150): settings(settings), abtList(abtList), pcl(pcl), conflicttimeout(conflicttimeout) {
+       XMLWriter(SCTimeXMLSettings* settings, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout=150): settings(settings), conflicttimeout(conflicttimeout), abtList(abtList), pcl(pcl) {
                connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
                writeAll=false;
        };

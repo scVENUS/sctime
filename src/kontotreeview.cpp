@@ -104,12 +104,12 @@ void KontoTreeView::keyPressEvent(QKeyEvent *event)
 
 void KontoTreeView::mousePressEvent(QMouseEvent * event)
 {
-  QPoint pos = event->pos();
+  QPoint pos = event->position().toPoint();
 
   if (event->button() == Qt::LeftButton)
     dragStartPosition = pos;
 
-  QModelIndex index = indexAt(event->pos());
+  QModelIndex index = indexAt(pos);
   if (index.isValid())
      dragStartItem = (KontoTreeItem *)(itemFromIndex(index));
   else
@@ -128,8 +128,10 @@ void KontoTreeView::mousePressEvent(QMouseEvent * event)
 void KontoTreeView::mouseReleaseEvent(QMouseEvent *event) {
   QTreeWidget::mouseReleaseEvent(event);
 
+  QPoint pos = event->position().toPoint();
+
   // emit itemRightClicked if we saw a right button press matching this release
-  QModelIndex index = indexAt(event->pos());
+  QModelIndex index = indexAt(pos);
   if (event->button() == Qt::RightButton &&
 		  index == rightPressedIndex &&
 		  index.isValid()) {
@@ -139,9 +141,10 @@ void KontoTreeView::mouseReleaseEvent(QMouseEvent *event) {
 
 void KontoTreeView::mouseMoveEvent(QMouseEvent *  event )
 {
+  QPoint pos = event->position().toPoint();
   if (!(event->buttons() & Qt::LeftButton))
     return;
-  if ((event->pos() - dragStartPosition).manhattanLength()
+  if ((pos - dragStartPosition).manhattanLength()
         < QApplication::startDragDistance())
     return;
   //Get the current Item
@@ -181,7 +184,7 @@ void KontoTreeView::dropEvent(QDropEvent *event)
     return;
   }
 
-  QPoint contpos(event->pos());
+  QPoint contpos(event->position().toPoint());
 
   KontoTreeItem * item=(KontoTreeItem *)(itemAt(contpos));
   if (isEintragsItem(item)) {
@@ -243,7 +246,7 @@ void KontoTreeView::dragMoveEvent(QDragMoveEvent *event)
   if (event->mimeData()->hasFormat(MIMETYPE_ACCOUNT) &&
       event->mimeData()->hasFormat(MIMETYPE_SECONDS) &&
       event->dropAction()==Qt::MoveAction) {
-    QPoint contpos(event->pos());
+    QPoint contpos(event->position().toPoint());
     KontoTreeItem * item=(KontoTreeItem *)(itemAt(contpos));
     if (isEintragsItem(item)) {
       event->accept();

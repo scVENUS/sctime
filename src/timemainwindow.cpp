@@ -17,7 +17,6 @@
 
 #include "timemainwindow.h"
 
-#include <QTextCodec>
 #include <QClipboard>
 #include <QApplication>
 #include <QMenu>
@@ -35,7 +34,6 @@
 #include <QTextBrowser>
 #include <QAction>
 #include <QMutex>
-#include <QDesktopWidget>
 #include <QLocale>
 #include <QTextStream>
 #include <QUrlQuery>
@@ -45,6 +43,9 @@
 #include <QJsonObject>
 #include <QQueue>
 #include <QStatusBar>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QStringEncoder>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
@@ -104,7 +105,7 @@ void logError(const QString &msg) {
   logText.append(msg).append("\n");
   logTextLastLine = msg;
   if (logStream!=NULL) {
-    (*logStream)<<msg<<endl;
+    (*logStream)<<msg<<Qt::endl;
   }
 }
 
@@ -166,45 +167,45 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
   QAction* pauseAction = new QAction( QIcon(":/hi22_action_player_pause"), tr("&Pause"), this);
-  pauseAction->setShortcut(Qt::CTRL+Qt::Key_P);
+  pauseAction->setShortcut(Qt::CTRL|Qt::Key_P);
   connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));
 
   QAction* pauseAbzurAction = new QAction( QIcon(":/hi22_action_player_pause_half"),
                                            tr("Pause &accountable time"), this);
-  pauseAbzurAction->setShortcut(Qt::CTRL+Qt::Key_A);
+  pauseAbzurAction->setShortcut(Qt::CTRL|Qt::Key_A);
   pauseAbzurAction->setCheckable(true);
   connect(pauseAbzurAction, SIGNAL(toggled(bool)), this, SLOT(pauseAbzur(bool)));
 
   QAction* saveAction = new QAction( QIcon(":/hi22_action_filesave" ), tr("&Save"), this);
-  saveAction->setShortcut(Qt::CTRL+Qt::Key_S);
+  saveAction->setShortcut(Qt::CTRL|Qt::Key_S);
   connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
 
   copyAction = new QAction(tr("&Copy as text"), this);
-  copyAction->setShortcut(Qt::CTRL+Qt::Key_C);
+  copyAction->setShortcut(Qt::CTRL|Qt::Key_C);
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
 
   copyLinkAction = new QAction(tr("Copy as &link"), this);
-  copyLinkAction->setShortcut(Qt::CTRL+Qt::Key_L);
+  copyLinkAction->setShortcut(Qt::CTRL|Qt::Key_L);
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
 
   QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
-  pasteLinkAction->setShortcut(Qt::CTRL+Qt::Key_V);
+  pasteLinkAction->setShortcut(Qt::CTRL|Qt::Key_V);
   connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
-  changeDateAction->setShortcut(Qt::CTRL+Qt::Key_D);
+  changeDateAction->setShortcut(Qt::CTRL|Qt::Key_D);
   connect(changeDateAction, SIGNAL(triggered()), this, SLOT(callDateDialog()));
 
   QAction* punchClockAction = new QAction(tr("Punch Clock"), this);
-  punchClockAction->setShortcut(Qt::CTRL+Qt::Key_O);
+  punchClockAction->setShortcut(Qt::CTRL|Qt::Key_O);
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
-  resetAction->setShortcut(Qt::CTRL+Qt::Key_N);
+  resetAction->setShortcut(Qt::CTRL|Qt::Key_N);
   connect(resetAction, SIGNAL(triggered()), this, SLOT(resetDiff()));
 
   inPersKontAction = new QAction( QIcon(":/hi22_action_attach"), tr("Select as personal &account"), this);
-  inPersKontAction->setShortcut(Qt::CTRL+Qt::Key_K);
+  inPersKontAction->setShortcut(Qt::CTRL|Qt::Key_K);
   inPersKontAction->setCheckable(true);
   connect(inPersKontAction, SIGNAL(toggled(bool)), this, SLOT(inPersoenlicheKonten(bool)));
 
@@ -216,16 +217,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   // not seem to work as this time. The menu tetxts always end up English after
   // being merged into the application menu.
   quitAction->setMenuRole(QAction::QuitRole);
-  quitAction->setShortcut(Qt::CTRL+Qt::Key_Q);
+  quitAction->setShortcut(Qt::CTRL|Qt::Key_Q);
   connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
 
   QAction* findKontoAction = new QAction(tr("&Search account..."), this);
-  findKontoAction->setShortcut(Qt::CTRL+Qt::Key_F);
+  findKontoAction->setShortcut(Qt::CTRL|Qt::Key_F);
   //findKontoAction->setStatusTip(tr("Konto suchen"));
   connect(findKontoAction, SIGNAL(triggered()), this, SLOT(callFindKontoDialog()));
 
   QAction* refreshAction = new QAction(tr("&Reread account list"), this);
-  refreshAction->setShortcut(Qt::CTRL+Qt::Key_R);
+  refreshAction->setShortcut(Qt::CTRL|Qt::Key_R);
   connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshKontoListe()));
 
   QAction* preferenceAction = new QAction(tr("&Settings..."),this);
@@ -255,12 +256,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   connect(editUnterKontoAction, SIGNAL(triggered()), this, SLOT(editUnterKontoPressed()));
 
   QAction* eintragActivateAction = new QAction(tr("&Activate entry"), this);
-  eintragActivateAction->setShortcut(Qt::CTRL+Qt::Key_X);
+  eintragActivateAction->setShortcut(Qt::CTRL|Qt::Key_X);
   connect(eintragActivateAction, SIGNAL(triggered()), this, SLOT(eintragAktivieren()));
 
   QAction* eintragAddAction = new QAction(QIcon(":/hi22_action_queue" ),
                                              tr("Add &entry"), this);
-  eintragAddAction->setShortcut(Qt::CTRL+Qt::Key_Plus);
+  eintragAddAction->setShortcut(Qt::CTRL|Qt::Key_Plus);
   connect(eintragAddAction, SIGNAL(triggered()), this, SLOT(eintragHinzufuegen()));
 
   eintragRemoveAction = new QAction(tr("&Delete entry"), this);
@@ -269,16 +270,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   QAction* bereitschaftsAction = new QAction(QIcon(":/hi16_action_stamp" ),
                                             tr("Set &on-call times..."), this);
-  bereitschaftsAction->setShortcut(Qt::CTRL+Qt::Key_B);
+  bereitschaftsAction->setShortcut(Qt::CTRL|Qt::Key_B);
   connect(bereitschaftsAction, SIGNAL(triggered()), this, SLOT(editBereitschaftPressed()));
   
   specialRemunAction = new QAction(QIcon(":/hi16_moon" ),
                                             tr("Set special remuneration &times..."), this);
-  specialRemunAction->setShortcut(Qt::CTRL+Qt::Key_T);
+  specialRemunAction->setShortcut(Qt::CTRL|Qt::Key_T);
   connect(specialRemunAction, SIGNAL(triggered()), this, SLOT(specialRemunPressed()));
 
   bgColorChooseAction = new QAction(tr("Choose &background colour..."), this);
-  bgColorChooseAction->setShortcut(Qt::CTRL+Qt::Key_G);
+  bgColorChooseAction->setShortcut(Qt::CTRL|Qt::Key_G);
   bgColorRemoveAction = new QAction(tr("&Remove background colour"), this);
 
   QAction* downloadSHAction = new QAction(tr("Download sh files"), this);
@@ -479,7 +480,7 @@ void TimeMainWindow::initialSettingsRead() {
   settings->getColumnWidthList(columnwidthlist);
 
   QAction* min1MinusAction = new QAction(tr("Minimal decrease time"), this);
-  min1MinusAction->setShortcut(Qt::CTRL+Qt::Key_Comma);
+  min1MinusAction->setShortcut(Qt::CTRL|Qt::Key_Comma);
   connect(min1MinusAction, SIGNAL(triggered()), this, SLOT(subMinimalTimeInc()));
 
   kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
@@ -725,7 +726,7 @@ void TimeMainWindow::driftKorrektur() {
     QFile logFile(configDir.filePath("sctime.log"));
     if (logFile.open(QIODevice::Append)) {
       QTextStream stream(&logFile);
-      stream<< msg << endl;
+      stream<< msg << Qt::endl;
     }
   }
   QMessageBox* msgbox;
@@ -1653,7 +1654,7 @@ void TimeMainWindow::resizeToIfSensible(QDialog* dialog, const QPoint& pos, cons
   {
     return;
   }
-  QRect screenGeometry(QApplication::desktop()->screenGeometry());
+  QRect screenGeometry(QGuiApplication::primaryScreen()->availableGeometry());
   QPoint pos2=QPoint(pos.x()+size.width(), pos.y()+size.height());
   if (screenGeometry.contains(pos)&&screenGeometry.contains(pos2))
   {
@@ -2124,8 +2125,9 @@ void TimeMainWindow::jumpToAlleKonten()
 void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const QString& uko,int idx) {
   UnterKontoEintrag eintrag;
   if ((settings->warnISO8859())&&(abtList->getEintrag(eintrag, abt, ko, uko, idx))) {
-    QTextCodec *codec = QTextCodec::codecForName("ISO 8859-1");
-    if (!codec->canEncode(eintrag.kommentar))
+    QStringEncoder encoder(QStringConverter::Latin1);
+    encoder(eintrag.kommentar);
+    if (encoder.hasError())
       QMessageBox::warning(
             0,
             tr("Warning"),
@@ -2283,7 +2285,6 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
       return;
     }
     QDateTime beforeOpen=QDateTime::currentDateTime();
-    bool shouldswitch=false;
     QMessageBox* msgbox;
     if (isnight) {
        msgbox=new QMessageBox(QMessageBox::Question,
@@ -2505,10 +2506,8 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
      return;
   }
   dialogopenfordates+=targetdate;
-  bool istoday=false;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {
-    istoday=true;
   } else {
     // this should not happen, but handle anyways, just in case...
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
@@ -2583,8 +2582,6 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
     reader->ignoreConflict();
     return;
   }
-  AbteilungsListe* conflictedAbtList=NULL;
-  PunchClockList * conflictedPunchClockList=NULL;
   bool istoday=false;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {

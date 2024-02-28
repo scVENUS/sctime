@@ -65,7 +65,7 @@ defined(qtPrepareTool)|defineTest(qtPrepareTool) {
 	}
 	export($$1)
 }
-qtPrepareTool(QMAKE_RCC, rcc)
+QMAKE_RCC=$$[QT_INSTALL_LIBEXECS]/rcc
 for(resource, GENERATED_RESOURCES) {
 	# file names in build dir *have* to differ from file names in source
 	# dir. Otherwise generatedrcc.input below will find the source dir

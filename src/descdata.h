@@ -24,7 +24,7 @@ class DescData
 {
     public:
         DescData();
-        DescData(const DescData& descdata);
+        //DescData(const DescData& descdata);
         DescData(const QString& description,const QString &responsible,const QString &type, const QString &pspelem);
         QString description();
         QString responsible();

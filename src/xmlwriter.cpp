@@ -57,8 +57,8 @@ void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
   connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
   // for compatibility - use errorOccurred slot instead in future
-  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
-        this, &XMLWriter::onErrCompat);
+  connect(reply, &QNetworkReply::errorOccurred,
+        this, &XMLWriter::gotReply);
   //connect(reply, &QNetworkReply::errorOccurred,
   //      this, &XMLWriter::gotReply);
 }
@@ -456,9 +456,9 @@ void XMLWriter::writeSettings(bool global) {
   fnew.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
   const char xmlcharmap[] = "UTF-8";
   QTextStream stream(&fnew);
-  stream.setCodec(xmlcharmap);
-  stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
-  stream<<doc.toString()<<endl;
+  stream.setEncoding(QStringConverter::Utf8);
+  stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<Qt::endl;
+  stream<<doc.toString()<<Qt::endl;
   fnew.close();
   QFile fcurrent(filename);
   if (global && settings->backupSettingsXml && fcurrent.exists()) {
@@ -504,9 +504,9 @@ void XMLWriter::writeSettings(bool global) {
   } else {
     QByteArray ba;
     QTextStream bastream(&ba);
-    bastream.setCodec(xmlcharmap);
-    bastream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
-    bastream<<doc.toString()<<endl;
+    bastream.setEncoding(QStringConverter::Utf8);
+    bastream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<Qt::endl;
+    bastream<<doc.toString()<<Qt::endl;
     QString baseurl=getRestBaseUrl();
     QString postfix = "";
     if (!global) {

@@ -20,13 +20,12 @@
 #include <QFile>
 #include <QDir>
 #include <QTextStream>
-#include <QTextCodec>
 #include <QRect>
-#include <QDesktopWidget>
 #include <QMessageBox>
 #include <QApplication>
 #include <QProcessEnvironment>
 #include <QDebug>
+#include <QRegularExpression>
 #ifndef WIN32
 #include <langinfo.h>
 #include <errno.h>
@@ -65,7 +64,7 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
       return;
   }
   QTextStream stream( & workfile);
-  stream.setCodec(charmap());
+  stream.setEncoding(charmap());
   writeShellSkriptToStream(stream,abtList,pcl);
   workfile.close();
 
@@ -80,7 +79,7 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
   
   int sek, abzurSek;
   abtList->getGesamtZeit(sek,abzurSek);
-  QRegExp apostrophExp=QRegExp("'");
+  QRegularExpression apostrophExp=QRegularExpression("'");
 
   TimeCounter tc(sek), tcAbzur(abzurSek);
   stream<<
@@ -157,8 +156,8 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
     QString consolidatedIntervals=pcc->getConsolidatedIntervalString(pcl);
     delete pcc;
     if (!consolidatedIntervals.isEmpty()) {
-      stream<<endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
-      stream<<endl<<"#";
+      stream<<Qt::endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
+      stream<<Qt::endl<<"#";
       
       for (auto pce: *pcl) {
         if (pce.first>pce.second) {
@@ -166,20 +165,28 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
         }
         stream<<" "<<QTime::fromMSecsSinceStartOfDay(pce.first*1000).toString("H:mm")<<"-"<<QTime::fromMSecsSinceStartOfDay(pce.second*1000).toString("H:mm");
       }
-      stream<<endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd")<<" "<<consolidatedIntervals;
-      stream<<endl;
+      stream<<Qt::endl<<"zeitarbeit "<<abtList->getDatum().toString("yyyy-MM-dd")<<" "<<consolidatedIntervals;
+      stream<<Qt::endl;
     }
   }
 
-  stream<<endl;
+  stream<<Qt::endl;
 }
 
 // returns the encoding that the user has chosen by his locale settings
-const char* SCTimeXMLSettings::charmap() {
+QStringConverter::Encoding SCTimeXMLSettings::charmap() {
 #if defined(WIN32) || defined(Q_OS_MAC)
-    return "UTF-8";
+    return QStringConverter::Utf8;
 #else
-    return nl_langinfo(CODESET); // has same result as the command "locale charmap"
+    QString codeset = QString(nl_langinfo(CODESET)).toUpper();
+  // FIXME: this heuristics might go wrong in some special cases (for example euro sign and iso-8859-15 encoding), but there does 
+  // not seem to be a better way using QT that works with all QT6 versions
+  // the best way to fix encoding issues would probably be to have the command always output utf8, which would reduce complexity here
+    if ((codeset!="UTF-8") || (codeset!="UTF8")) {
+      return QStringConverter::Latin1;
+    } else {
+      return QStringConverter::Utf8;
+    }
 #endif
 }
 

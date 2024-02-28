@@ -324,7 +324,7 @@ public:
         return m_zeitKontenKommando;
     }
 
-    const char* charmap();
+    static QStringConverter::Encoding charmap();
 
     void setZeitKontenKommando(const QString& command)
     {

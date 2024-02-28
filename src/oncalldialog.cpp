@@ -9,7 +9,7 @@ OnCallDialog::OnCallDialog(QString abt, QString ko, QString uko, QStringList onC
   setWindowTitle(tr("On-call times"));
 
   QVBoxLayout* layout=new QVBoxLayout(this);
-  layout->setMargin(15);
+  layout->setContentsMargins(15,15,15,15);
 
   QPushButton * okbutton=new QPushButton(tr("OK"), this);
   okbutton->setDefault(true);

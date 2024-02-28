@@ -15,7 +15,7 @@ class AccountListCommiter: public QObject {
         Q_OBJECT;
 public:
        AccountListCommiter(QObject* parent, DSResult data, SCTimeXMLSettings* settings, KontoTreeView *kontotree, AbteilungsListe* abtList, AbteilungsListe* abtListToday, PunchClockList *pcl, bool withoutSave):
-          QObject(parent), data(data), settings(settings), kontoTree(kontotree), abtList(abtList), abtListToday(abtListToday), pcl(pcl), diff(0), withoutSave(withoutSave) {
+          QObject(parent), data(data), settings(settings), kontoTree(kontotree), abtList(abtList), abtListToday(abtListToday), pcl(pcl), withoutSave(withoutSave),diff(0) {
 
        };
 public slots:
