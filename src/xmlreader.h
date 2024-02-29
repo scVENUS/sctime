@@ -33,7 +33,6 @@ class XMLReader: public QObject
       virtual void parse(QIODevice* input);
       virtual void fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* settings);
       virtual void gotReply();
-      virtual void onErrCompat(QNetworkReply::NetworkError code);
       virtual void continueAfterReading(bool global, AbteilungsListe *abtList, PunchClockList *pcl);
       /*private signals:
         void deviceOpenedForReading(QIODevice*);*/

@@ -15,17 +15,24 @@
 #endif
 
 void XMLWriter::checkReply(QNetworkReply* input) {
+   auto errcode=input->error();
+   if (errcode!=0) {
+      onErr(errcode);
+      return;
+   }
    if (input->isFinished()) {
      if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
          auto conflictingclient=input->rawHeader("sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
-         emit offlineSwitched(false);  
+         emit offlineSwitched(false);
+         input->abort();
          input->deleteLater();
      } else {  
-       input->deleteLater();
        emit settingsPartWritten(global, abtList, pcl);
        emit offlineSwitched(false);
+       input->abort();
+       input->deleteLater();
      }
    }
 }
@@ -35,8 +42,7 @@ void XMLWriter::gotReply() {
     checkReply((QNetworkReply*)obj);
 }
 
-// we need to implement this function for compatibility with old QT. Should be moved to an errorOccured handler in the future
-void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
+void XMLWriter::onErr(QNetworkReply::NetworkError code) {
     auto obj=(QNetworkReply*)(sender());
     logError(tr("Communication error on writing to server, going offline"));
     if (!settings->restCurrentlyOffline()) {
@@ -45,9 +51,10 @@ void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
     if (obj->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
       emit unauthorized();
     }
-    obj->deleteLater();
     // we have already saved them locally, so should be able to continue anyway
     emit settingsPartWritten(global, abtList, pcl);
+    obj->abort();
+    obj->deleteLater();
 }
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
@@ -55,12 +62,9 @@ void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
   QNetworkReply *reply = networkAccessManager.put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
-  connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
-  // for compatibility - use errorOccurred slot instead in future
-  connect(reply, &QNetworkReply::errorOccurred,
-        this, &XMLWriter::gotReply);
+  //connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
   //connect(reply, &QNetworkReply::errorOccurred,
-  //      this, &XMLWriter::gotReply);
+  //      this, &XMLWriter::onErr);
 }
 
 void XMLWriter::writeAllSettings() {
