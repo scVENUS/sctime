@@ -388,6 +388,11 @@ void KontoTreeView::flagClosedPersoenlicheItems()
 {
   KontoTreeItem *topi, *abti, *koi, *ukoi;
 
+  // tree not loaded
+  if (topLevelItemCount()==0) {
+    return;
+  }
+
   for (topi=(KontoTreeItem*)topLevelItem(0); (topi!=NULL)&&(topi->text(KontoTreeItem::COL_ACCOUNTS)!=PERSOENLICHE_KONTEN_STRING); topi=(KontoTreeItem*)topi->nextSibling()) ;
   if (topi==NULL) return;
 
