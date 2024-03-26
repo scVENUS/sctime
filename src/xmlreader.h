@@ -15,8 +15,8 @@ class XMLReader: public QObject
 {
      Q_OBJECT;
      public:
-       XMLReader(SCTimeXMLSettings* parent, bool global, bool forceLocalRead, bool autoContinueOnConflict, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), forceLocalRead(forceLocalRead), autoContinueOnConflict(autoContinueOnConflict), abtList(abtList), pcl(pcl) {
-          connect(this, &XMLReader::settingsPartRead, this, &XMLReader::continueAfterReading);
+       XMLReader(SCTimeXMLSettings* parent, QNetworkAccessManager *networkAccessManager, bool global, bool forceLocalRead, bool autoContinueOnConflict, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), forceLocalRead(forceLocalRead), autoContinueOnConflict(autoContinueOnConflict), abtList(abtList), pcl(pcl), networkAccessManager(networkAccessManager) {
+          connect(this, &XMLReader::settingsPartRead, this, &XMLReader::continueAfterReading, Qt::QueuedConnection);
           continueThisConflict=false;
        };
     public: 
@@ -43,7 +43,7 @@ class XMLReader: public QObject
       bool continueThisConflict;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
-      QNetworkAccessManager networkAccessManager;
+      QNetworkAccessManager *networkAccessManager;
     signals:
       void settingsPartRead(bool global, AbteilungsListe* abtList, PunchClockList* pcl, bool success, QString message);
       void settingsRead();
