@@ -14,7 +14,7 @@ void AccountListCommiter::start() {
   settings->setColumnWidthList(columnwidthlist);
   reader=NULL;
   if (!withoutSave) {
-    writer=new XMLWriter(settings,abtList,pcl);
+    writer=new XMLWriter(settings,networkAccessManager, abtList, pcl);
     connect(writer,&XMLWriter::settingsWritten, this, &AccountListCommiter::reloadAbtList);
     connect(writer, &XMLWriter::settingsWriteFailed, this, &AccountListCommiter::cleanupOnErr);
     writer->writeAllSettings(); // settings wont survive the reload
@@ -32,7 +32,7 @@ void AccountListCommiter::reloadAbtList() {
   }
   diff = abtList->getZeitDifferenz();
   abtList->reload(data);
-  reader = new XMLReader(settings, true, false, true, abtList, NULL);
+  reader = new XMLReader(settings, networkAccessManager, true, false, true, abtList, NULL);
   if (abtList!=abtListToday) {
      connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::writeAbtListToday);
   } else {
@@ -42,7 +42,7 @@ void AccountListCommiter::reloadAbtList() {
 }
 
 void AccountListCommiter::reloadAbtListToday() {
-  reader = new XMLReader(settings, true, false, true, abtListToday, NULL);
+  reader = new XMLReader(settings, networkAccessManager, true, false, true, abtListToday, NULL);
   connect(reader,&XMLReader::settingsRead, this, &AccountListCommiter::finish);
   writer->deleteLater();
   writer=NULL;
@@ -55,7 +55,7 @@ void AccountListCommiter::writeAbtListToday() {
    reader->deleteLater();
    reader=NULL;
    //writer->deleteLater();
-   writer=new XMLWriter(settings,abtListToday,pcl);
+   writer=new XMLWriter(settings, networkAccessManager, abtListToday,pcl);
    connect(writer,&XMLWriter::settingsWritten, this, &AccountListCommiter::reloadAbtListToday);
    writer->writeAllSettings(); // settings wont survive the reload
 }

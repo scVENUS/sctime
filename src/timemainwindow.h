@@ -37,6 +37,7 @@ class QTextBrowser;
 class QLocalServer;
 class DateChanger;
 class DSM;
+class QNetworkAccessManager;
 
 
 #include "defaultcommentreader.h"
@@ -64,7 +65,7 @@ class TimeMainWindow: public QMainWindow
 {
     Q_OBJECT
 public:
-    TimeMainWindow(Lock* lock, DSM* dsm, QString logfile);
+    TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessManager, DSM* dsm, QString logfile);
     QTreeWidget* getKontoTree();
     virtual ~TimeMainWindow();
     SCTimeXMLSettings* settings;
@@ -302,6 +303,7 @@ public:
     DateChanger * m_dateChanger;
     DSM* m_dsm;
     QQueue<QueuedMethod*>* m_afterCommitMethodQueue;
+    QNetworkAccessManager *networkAccessManager;
 };
 
 

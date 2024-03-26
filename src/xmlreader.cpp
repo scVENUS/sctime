@@ -49,7 +49,7 @@ QFile* XMLReader::openFile(bool handleerr) {
 
     QFile* f=new QFile(configDir.filePath(filename));
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
-    if (handleerr&&!f->open(QIODevice::ReadOnly))
+    if (!f->open(QIODevice::ReadOnly)&&handleerr)
     {
         logError(f->fileName() + ": " + f->errorString());
         if (global || f->exists())
@@ -78,18 +78,18 @@ void XMLReader::openREST() {
       postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
     auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
-    QNetworkReply *reply = networkAccessManager.get(request);
+    QNetworkReply *reply = networkAccessManager->get(request);
     connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
 }
 
 void XMLReader::gotReply() {
     auto obj=sender();
-    parse((QIODevice*)obj);
+    parse(dynamic_cast<QNetworkReply*>(obj));
 }
 
 void XMLReader::parse(QIODevice *input)
 {
-    SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
+    SCTimeXMLSettings *settings = dynamic_cast<SCTimeXMLSettings *>(parent());
     QNetworkReply* netinput = dynamic_cast<QNetworkReply*>(input);
     QFile* fileinput = dynamic_cast<QFile*>(input);
     QDomDocument doclocal("settings");

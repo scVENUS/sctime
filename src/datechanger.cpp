@@ -39,10 +39,10 @@ void DateChanger::start()
 }
 
 void DateChanger::write(AbteilungsListe* abtlist, PunchClockList* pcl) {
-    XMLWriter *writer=new XMLWriter(m_timeMainWindow->settings, abtlist, pcl);
-    connect(writer, &XMLWriter::settingsWritten, this, &DateChanger::resetLists);
-    connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
-    connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+    XMLWriter *writer=new XMLWriter(m_timeMainWindow->settings, networkAccessManager, abtlist, pcl);
+    connect(writer, &XMLWriter::settingsWritten, this, &DateChanger::resetLists, Qt::QueuedConnection);
+    connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater, Qt::QueuedConnection);
+    connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater, Qt::QueuedConnection);
     connect(writer, &XMLWriter::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
     writer->writeAllSettings();
 }
@@ -99,18 +99,18 @@ void DateChanger::resetLists()
         m_timeMainWindow->abtListToday->clearKonten();
         m_timeMainWindow->m_punchClockListToday->clear();
         expectedActions++;
-        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, false, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
-        connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
-        connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager,true, false, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock, Qt::QueuedConnection);
+        connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater, Qt::QueuedConnection);
         connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
         reader->open();
     }
 
     m_timeMainWindow->abtList->clearKonten();
     m_timeMainWindow->m_punchClockList->clear();
-    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, true, false, true, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
-    connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
-    connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager, true, false, true, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+    connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock, Qt::QueuedConnection);
+    connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater, Qt::QueuedConnection);
     connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
     reader->open();
 }

@@ -70,8 +70,9 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
   m_accountLink=accountlink;
 
   DSM* dsm=new DSM(dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
+  QNetworkAccessManager *networkAccessManager=new QNetworkAccessManager();
 
-  mainWindow = new TimeMainWindow(m_lock, dsm, logfile);
+  mainWindow = new TimeMainWindow(m_lock, networkAccessManager, dsm, logfile);
 #ifndef WIN32
   term = new SignalHandler(SIGTERM);
   connect(term, SIGNAL(received()), this, SLOT(closeAllWindows()));

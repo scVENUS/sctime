@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QProcessEnvironment>
+#include <QBuffer>
 #include "sctimexmlsettings.h"
 #include "globals.h"
 
@@ -17,7 +18,7 @@
 void XMLWriter::checkReply(QNetworkReply* input) {
    auto errcode=input->error();
    if (errcode!=0) {
-      onErr(errcode);
+      onErr(input);
       return;
    }
    if (input->isFinished()) {
@@ -26,12 +27,10 @@ void XMLWriter::checkReply(QNetworkReply* input) {
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
          emit offlineSwitched(false);
-         input->abort();
          input->deleteLater();
      } else {  
        emit settingsPartWritten(global, abtList, pcl);
        emit offlineSwitched(false);
-       input->abort();
        input->deleteLater();
      }
    }
@@ -39,28 +38,29 @@ void XMLWriter::checkReply(QNetworkReply* input) {
 
 void XMLWriter::gotReply() {
     auto obj=sender();
-    checkReply((QNetworkReply*)obj);
+    checkReply(dynamic_cast<QNetworkReply*>(obj));
 }
 
-void XMLWriter::onErr(QNetworkReply::NetworkError code) {
-    auto obj=(QNetworkReply*)(sender());
+void XMLWriter::onErr(QNetworkReply* input) {
     logError(tr("Communication error on writing to server, going offline"));
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
-    if (obj->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+    if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
       emit unauthorized();
     }
     // we have already saved them locally, so should be able to continue anyway
     emit settingsPartWritten(global, abtList, pcl);
-    obj->abort();
-    obj->deleteLater();
+    input->deleteLater();
 }
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
-  auto request = QNetworkRequest(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
-  QNetworkReply *reply = networkAccessManager.put(request, ba);
+  auto request = new QNetworkRequest(url);
+  auto bac=new QByteArray(ba);
+  request->setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+  auto buf =new QBuffer(bac);
+  buf->open(QIODeviceBase::ReadOnly);
+  QNetworkReply *reply = networkAccessManager->put(*request, buf);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
   //connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
   //connect(reply, &QNetworkReply::errorOccurred,

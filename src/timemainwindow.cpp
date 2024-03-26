@@ -32,6 +32,7 @@
 #include <QToolBar>
 #include <QColorDialog>
 #include <QTextBrowser>
+#include <QByteArray>
 #include <QAction>
 #include <QMutex>
 #include <QLocale>
@@ -110,8 +111,8 @@ void logError(const QString &msg) {
 }
 
 /** Erzeugt ein neues TimeMainWindow, das seine Daten aus abtlist bezieht. */
-TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
-     windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused")  {
+TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessManager, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
+     windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused"), networkAccessManager(networkAccessManager)  {
   initCompleted=false;
   if (!logfile.isNull() && !logfile.isEmpty()) {
     logFile = new QFile(logfile);
@@ -420,7 +421,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
 void TimeMainWindow::readInitialSetting() {
     auto finish = [=](){
-      XMLReader *reader=new XMLReader(settings, true, false, false, abtList, m_punchClockList);
+      XMLReader *reader=new XMLReader(settings, networkAccessManager ,true, false, false, abtList, m_punchClockList);
       connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
       connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
@@ -439,7 +440,7 @@ void TimeMainWindow::readInitialSetting() {
       return;
     }
     // in wasm we have the permanent offline mode. We try to load a local file first, to have information initialized if we have to stay offline
-    XMLReader *reader=new XMLReader(settings, true, true, false, abtList, m_punchClockList);
+    XMLReader *reader=new XMLReader(settings, networkAccessManager, true, true, false, abtList, m_punchClockList);
     connect(reader, &XMLReader::settingsRead, finish);
     connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
@@ -536,7 +537,7 @@ void TimeMainWindow::initialSettingsRead() {
   kontoTree->closeFlaggedPersoenlicheItems();
   showAdditionalButtons(settings->powerUserView());
 
-  m_dsm->setup(settings);
+  m_dsm->setup(settings, networkAccessManager);
 
   connect(m_dsm->kontenDSM, SIGNAL(finished(DSResult)), this, SLOT(commitKontenliste(DSResult)));
   connect(m_dsm->bereitDSM, SIGNAL(finished(DSResult)), this, SLOT(commitBereit(DSResult)));
@@ -586,12 +587,14 @@ void TimeMainWindow::aktivesKontoPruefen(){
   EintragsListe *dummy2;
   // if we are initalizing for the first time, this is the last step. Otherwise initCompleted should already be true.
   initCompleted=true;
-  if (!abtList->findEintrag(dummy, dummy2, a, k, u, i))
-    QMessageBox::warning(
-          NULL,
+  if (!abtList->findEintrag(dummy, dummy2, a, k, u, i)) {
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
           QObject::tr("sctime: accounting stopped"),
           tr("The last active account was %1/%2. It seems to have been closed or renamed. "
              "Please activate a new account to start time accounting!").arg(k,u));
+    connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
+  }
 }
 
 void TimeMainWindow::closeEvent(QCloseEvent * event)
@@ -1060,7 +1063,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday, conflicttimeout);
+    XMLWriter* writer=new XMLWriter(settings, networkAccessManager, abtListToday, m_punchClockListToday, conflicttimeout);
     connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
@@ -1069,7 +1072,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
-      writer=new XMLWriter(settings, abtList, m_punchClockList, conflicttimeout);
+      writer=new XMLWriter(settings, networkAccessManager, abtList, m_punchClockList, conflicttimeout);
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
@@ -1344,7 +1347,7 @@ void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToda
     std::vector<int> columnwidthlist;
     kontoTree->getColumnWidthList(columnwidthlist);
     settings->setColumnWidthList(columnwidthlist);
-    m_dateChanger = new DateChanger(this, datum, changeVisible, changeToday);
+    m_dateChanger = new DateChanger(this, networkAccessManager, datum, changeVisible, changeToday);
     connect(m_dateChanger, &DateChanger::finished, this, &TimeMainWindow::changeDateFinished);
     connect(m_dateChanger, &DateChanger::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     m_dateChanger->start();
@@ -1414,7 +1417,7 @@ void TimeMainWindow::commitKontenliste(DSResult data) {
 #ifndef WASMQUIRKS
   statusBar->showMessage(tr("Commiting account list..."));
 #endif
-  auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList, !initCompleted);
+  auto commiter=new AccountListCommiter(this, networkAccessManager,data, settings,kontoTree,abtList,abtListToday, m_punchClockList, !initCompleted);
   
   if (checkConfigDir()) {
     checkLock();
@@ -2463,7 +2466,7 @@ void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
 
 void TimeMainWindow::callDownloadSHDialog() {
 #ifdef DOWNLOADDIALOG
-   auto dialog=new DownloadSHDialog(settings, this);
+   auto dialog=new DownloadSHDialog(settings, networkAccessManager, this);
    connect(dialog, &DownloadSHDialog::workflowFinished, dialog, &DownloadSHDialog::deleteLater);
    dialog->open();
 #endif
@@ -2522,7 +2525,7 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
     msgbox->open();
     return;
   }
-  ConflictDialog *dialog=new ConflictDialog(settings, targetdate, global, ba, this);
+  ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, ba, this);
   connect(dialog, &QMessageBox::finished,
     [=](){
       dialogopenfordates-=targetdate;
@@ -2558,7 +2561,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
     msgbox->open();
     return;
   }
-  ConflictDialog *dialog=new ConflictDialog(settings, targetdate, global, qCompress(remotesettings.toByteArray()), this);
+  ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, qCompress(remotesettings.toByteArray()), this);
   connect(dialog, &QMessageBox::finished,
     [=](){
       if (reader!=NULL) {

@@ -15,14 +15,14 @@ class XMLWriter: public QObject
 {
      Q_OBJECT;
      public:
-       XMLWriter(SCTimeXMLSettings* settings, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout=150): settings(settings), conflicttimeout(conflicttimeout), abtList(abtList), pcl(pcl) {
+       XMLWriter(SCTimeXMLSettings* settings, QNetworkAccessManager *networkAccessManager, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout=150): settings(settings), conflicttimeout(conflicttimeout), abtList(abtList), pcl(pcl), networkAccessManager(networkAccessManager) {
                connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
                writeAll=false;
        };
     public:
       virtual void writeAllSettings();
       virtual void writeSettings(bool global);
-      virtual void onErr(QNetworkReply::NetworkError code);
+      virtual void onErr(QNetworkReply* input);
       virtual void writeBytes(QUrl url, QByteArray bytes);
 
   public slots:
@@ -39,7 +39,7 @@ class XMLWriter: public QObject
       int conflicttimeout;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
-      QNetworkAccessManager networkAccessManager;
+      QNetworkAccessManager *networkAccessManager;
     signals:
         void settingsWritten();
         void unauthorized();

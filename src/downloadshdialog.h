@@ -27,6 +27,7 @@ class AbteilungsListe;
 class PunchClockList;
 class QBuffer;
 class QZipWriter;
+class QNetworkAccessManager;
 
 /**
   * Dialog to show when paused
@@ -36,7 +37,7 @@ class DownloadSHDialog : public QDialog, private Ui::DownloadSHDialogBase
   Q_OBJECT
 
 public:
-  DownloadSHDialog(SCTimeXMLSettings* settings, QWidget* parent = 0);
+  DownloadSHDialog(SCTimeXMLSettings* settings, QNetworkAccessManager *networkAccessManager, QWidget* parent = 0);
   virtual ~DownloadSHDialog();
 public slots:
   /*$PUBLIC_SLOTS$*/
@@ -58,6 +59,7 @@ private:
   QByteArray zipData;
   QBuffer* zipBuffer;
   QZipWriter* zipWriter;
+  QNetworkAccessManager *networkAccessManager;
 };
 
 #endif

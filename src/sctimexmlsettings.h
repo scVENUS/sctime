@@ -27,7 +27,6 @@
 #include <vector>
 #include <QString>
 #include <QTextStream>
-#include <QNetworkAccessManager>
 #include "abteilungsliste.h"
 #include <QNetworkReply>
 #include "punchclock.h"

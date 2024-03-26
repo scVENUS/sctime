@@ -9,8 +9,8 @@ class XMLWriter;
 class DateChanger: public QObject {
         Q_OBJECT;
 public:
-       DateChanger(TimeMainWindow* parent, const QDate &datum, bool changeVisible, bool changeToday):
-          QObject(parent), m_timeMainWindow(parent), targetDate(datum), changeVisible(changeVisible), changeToday(changeToday)  {
+       DateChanger(TimeMainWindow* parent, QNetworkAccessManager *networkAccessManager, const QDate &datum, bool changeVisible, bool changeToday):
+          QObject(parent), m_timeMainWindow(parent), targetDate(datum), changeVisible(changeVisible), changeToday(changeToday), networkAccessManager(networkAccessManager)  {
 
        };
 public slots:
@@ -33,6 +33,7 @@ private:
        bool changeVisible;
        bool changeToday;
        bool currentDateSel;
+       QNetworkAccessManager *networkAccessManager;
 };
 
 #endif

@@ -24,8 +24,8 @@
 #include "timemainwindow.h"
 #include "globals.h"
 
-ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
-    tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate) {
+ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
+    tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
     setupUi(this);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
@@ -67,7 +67,7 @@ void ConflictDialog::performMerge() {
       return;
     }
 
-    XMLReader *reader=new XMLReader(settings, global, false, true, conflictedAbtList, conflictedPunchClockList);
+    XMLReader *reader=new XMLReader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
     QDomDocument doc("settings");
     bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);
@@ -109,7 +109,7 @@ void ConflictDialog::performReplace() {
       return;
     }
 
-    XMLReader *reader=new XMLReader(settings, global, false, true, conflictedAbtList, conflictedPunchClockList);
+    XMLReader *reader=new XMLReader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
     QDomDocument doc("settings");
     bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);

@@ -219,7 +219,7 @@ bool JSONSpecialRemunSource::convertData(DSResult* const result) {
 void JSONReaderUrl::requestData()
 {
   auto request = QNetworkRequest(QUrl(uri));
-  QNetworkReply *reply = networkAccessManager.get(request);
+  QNetworkReply *reply = networkAccessManager->get(request);
   connect(reply, &QNetworkReply::finished, this, &JSONReaderUrl::gotReply);
 }
 
@@ -237,7 +237,7 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
   emit finished();
 }
 
-JSONReaderUrl::JSONReaderUrl(const QString& _uri): JSONReaderBase(), uri(_uri) {
+JSONReaderUrl::JSONReaderUrl(QNetworkAccessManager* networkAccessManager, const QString& _uri): JSONReaderBase(), uri(_uri), networkAccessManager(networkAccessManager) {
         
 };
 
