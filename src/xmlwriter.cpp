@@ -62,7 +62,7 @@ void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
   QNetworkReply *reply = networkAccessManager->put(request, ba);
-  connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply, Qt::QueuedConnection);
+  connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
 }
 
 void XMLWriter::writeAllSettings() {

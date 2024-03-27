@@ -74,7 +74,7 @@ void DownloadSHDialog::addFile() {
     abtList=new AbteilungsListe(currentDate, (KontoDatenInfo*)NULL);
     pcl=new PunchClockList();
     XMLReader* reader = new XMLReader(settings,networkAccessManager, false,false,true,abtList,pcl);
-    connect(reader,&XMLReader::settingsRead,this,&DownloadSHDialog::addFile, Qt::QueuedConnection);
+    connect(reader,&XMLReader::settingsRead,this,&DownloadSHDialog::addFile);
     connect(reader,&XMLReader::settingsRead,reader,&XMLReader::deleteLater);
     reader->open();
   } else {
