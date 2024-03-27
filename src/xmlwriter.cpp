@@ -22,7 +22,7 @@ void XMLWriter::checkReply(QNetworkReply* input) {
       return;
    }
    if (input->isFinished()) {
-     if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
+      if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
          auto conflictingclient=input->rawHeader("sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
@@ -37,8 +37,12 @@ void XMLWriter::checkReply(QNetworkReply* input) {
 }
 
 void XMLWriter::gotReply() {
-    auto obj=sender();
-    checkReply(dynamic_cast<QNetworkReply*>(obj));
+    auto obj=dynamic_cast<QNetworkReply*>(sender());
+    if (obj==NULL) {
+        logError(tr("gotReply called with wrong sender type"));
+        return;
+    }
+    checkReply(obj);
 }
 
 void XMLWriter::onErr(QNetworkReply* input) {
@@ -55,16 +59,10 @@ void XMLWriter::onErr(QNetworkReply* input) {
 }
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
-  auto request = new QNetworkRequest(url);
-  auto bac=new QByteArray(ba);
-  request->setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-  auto buf =new QBuffer(bac);
-  buf->open(QIODeviceBase::ReadOnly);
-  QNetworkReply *reply = networkAccessManager->put(*request, buf);
-  connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
-  //connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
-  //connect(reply, &QNetworkReply::errorOccurred,
-  //      this, &XMLWriter::onErr);
+  QNetworkRequest request(url);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+  QNetworkReply *reply = networkAccessManager->put(request, ba);
+  connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply, Qt::QueuedConnection);
 }
 
 void XMLWriter::writeAllSettings() {
@@ -496,10 +494,12 @@ void XMLWriter::writeSettings(bool global) {
 #ifndef RESTCONFIG
   emit settingsPartWritten(global, abtList, pcl);
 #else // RESTCONFIG
+#ifdef __EMSCRIPTEN__
   // sync previously written files in browser
   EM_ASM(
       FS.syncfs(function (err) {});
   );
+#endif
   // write files by rest api
   if (settings->restSaveOffline())
   {
@@ -516,6 +516,7 @@ void XMLWriter::writeSettings(bool global) {
     if (!global) {
       postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
+    bastream.flush();
     writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&conflicttimeout=" + QString::number(conflicttimeout) + postfix), qCompress(ba));
   }
 

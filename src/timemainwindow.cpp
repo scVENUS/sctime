@@ -87,6 +87,9 @@
 #include "xmlreader.h"
 #include "oncalldialog.h"
 #include "conflictdialog.h"
+#ifndef __EMSCRIPTEN__
+#include "logindialog.h"
+#endif
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
 #endif
@@ -126,6 +129,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   m_dsm=dsm;
   paused = false;
   entryBeingEdited = false;
+  kontoTree =NULL;
   sekunden = 0;
   m_afterCommitMethodQueue = new QQueue<QueuedMethod*>();
   setObjectName(tr("sctime"));
@@ -416,7 +420,13 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   saveLaterTimer = NULL;
 
   settings=new SCTimeXMLSettings();
+#if defined(RESTONLY) && !defined(__EMSCRIPTEN__)
+  auto loginDialog = new LoginDialog(networkAccessManager, this);
+  connect(loginDialog, &LoginDialog::finished, this, &TimeMainWindow::readInitialSetting);
+  QTimer::singleShot(100, loginDialog, SLOT(open()));
+#else
   QTimer::singleShot(100, this, SLOT(readInitialSetting()));
+#endif
 }
 
 void TimeMainWindow::readInitialSetting() {
@@ -1051,10 +1061,12 @@ void TimeMainWindow::pauseAbzur(bool on)
  */
 void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 {
-  kontoTree->flagClosedPersoenlicheItems();
-  std::vector<int> columnwidthlist;
-  kontoTree->getColumnWidthList(columnwidthlist);
-  settings->setColumnWidthList(columnwidthlist);
+  if (kontoTree!=NULL) {
+    kontoTree->flagClosedPersoenlicheItems();
+    std::vector<int> columnwidthlist;
+    kontoTree->getColumnWidthList(columnwidthlist);
+    settings->setColumnWidthList(columnwidthlist);
+  }
   settings->setLastRecordedTimestamp(lastMinuteTick);
   m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
   m_PCSToday->date=abtListToday->getDatum();
