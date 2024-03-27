@@ -67,7 +67,6 @@ void PunchClockDialog::fillFromList(PunchClockList *pcl) {
 
 void PunchClockDialog::copyToList(PunchClockList *pcl) {
   pcl->clear();
-  PunchClockList::iterator it=pcl->begin();
   for (int row=0; row<punchClockTable->rowCount(); row++) {
     auto beginCell=(QDateTimeEdit*)punchClockTable->cellWidget(row,0);
     auto endCell=(QDateTimeEdit*)punchClockTable->cellWidget(row,1);

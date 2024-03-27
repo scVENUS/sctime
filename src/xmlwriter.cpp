@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QProcessEnvironment>
+#include <QBuffer>
 #include "sctimexmlsettings.h"
 #include "globals.h"
 
@@ -15,52 +16,53 @@
 #endif
 
 void XMLWriter::checkReply(QNetworkReply* input) {
+   auto errcode=input->error();
+   if (errcode!=0) {
+      onErr(input);
+      return;
+   }
    if (input->isFinished()) {
-     if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
+      if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
          auto conflictingclient=input->rawHeader("sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
-         emit offlineSwitched(false);  
+         emit offlineSwitched(false);
          input->deleteLater();
      } else {  
-       input->deleteLater();
        emit settingsPartWritten(global, abtList, pcl);
        emit offlineSwitched(false);
+       input->deleteLater();
      }
    }
 }
 
 void XMLWriter::gotReply() {
-    auto obj=sender();
-    checkReply((QNetworkReply*)obj);
+    auto obj=dynamic_cast<QNetworkReply*>(sender());
+    if (obj==NULL) {
+        logError(tr("gotReply called with wrong sender type"));
+        return;
+    }
+    checkReply(obj);
 }
 
-// we need to implement this function for compatibility with old QT. Should be moved to an errorOccured handler in the future
-void XMLWriter::onErrCompat(QNetworkReply::NetworkError code) {
-    auto obj=(QNetworkReply*)(sender());
+void XMLWriter::onErr(QNetworkReply* input) {
     logError(tr("Communication error on writing to server, going offline"));
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
-    if (obj->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+    if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
       emit unauthorized();
     }
-    obj->deleteLater();
     // we have already saved them locally, so should be able to continue anyway
     emit settingsPartWritten(global, abtList, pcl);
+    input->deleteLater();
 }
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
-  auto request = QNetworkRequest(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
-  QNetworkReply *reply = networkAccessManager.put(request, ba);
+  QNetworkRequest request(url);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+  QNetworkReply *reply = networkAccessManager->put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
-  connect(reply, &QNetworkReply::readyRead, this, &XMLWriter::gotReply);
-  // for compatibility - use errorOccurred slot instead in future
-  connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
-        this, &XMLWriter::onErrCompat);
-  //connect(reply, &QNetworkReply::errorOccurred,
-  //      this, &XMLWriter::gotReply);
 }
 
 void XMLWriter::writeAllSettings() {
@@ -456,9 +458,9 @@ void XMLWriter::writeSettings(bool global) {
   fnew.setPermissions(QFile::ReadOwner | QFile::WriteOwner);
   const char xmlcharmap[] = "UTF-8";
   QTextStream stream(&fnew);
-  stream.setCodec(xmlcharmap);
-  stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
-  stream<<doc.toString()<<endl;
+  stream.setEncoding(QStringConverter::Utf8);
+  stream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<Qt::endl;
+  stream<<doc.toString()<<Qt::endl;
   fnew.close();
   QFile fcurrent(filename);
   if (global && settings->backupSettingsXml && fcurrent.exists()) {
@@ -492,10 +494,12 @@ void XMLWriter::writeSettings(bool global) {
 #ifndef RESTCONFIG
   emit settingsPartWritten(global, abtList, pcl);
 #else // RESTCONFIG
+#ifdef __EMSCRIPTEN__
   // sync previously written files in browser
   EM_ASM(
       FS.syncfs(function (err) {});
   );
+#endif
   // write files by rest api
   if (settings->restSaveOffline())
   {
@@ -504,14 +508,15 @@ void XMLWriter::writeSettings(bool global) {
   } else {
     QByteArray ba;
     QTextStream bastream(&ba);
-    bastream.setCodec(xmlcharmap);
-    bastream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<endl;
-    bastream<<doc.toString()<<endl;
+    bastream.setEncoding(QStringConverter::Utf8);
+    bastream<<"<?xml version=\"1.0\" encoding=\""<< xmlcharmap <<"\"?>"<<Qt::endl;
+    bastream<<doc.toString()<<Qt::endl;
     QString baseurl=getRestBaseUrl();
     QString postfix = "";
     if (!global) {
       postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
+    bastream.flush();
     writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&conflicttimeout=" + QString::number(conflicttimeout) + postfix), qCompress(ba));
   }
 

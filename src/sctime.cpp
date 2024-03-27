@@ -15,7 +15,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <QTextCodec>
 #include <QApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -165,15 +164,11 @@ int main(int argc, char **argv ) {
   // load translations
   QTranslator qtTranslator;
   qtTranslator.load("qt_" + QLocale::system().name(),
-          QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+          QLibraryInfo::path(QLibraryInfo::TranslationsPath));
   app->installTranslator(&qtTranslator);
   QTranslator sctimeTranslator;
   sctimeTranslator.load(":/translations/sctime");
   app->installTranslator(&sctimeTranslator);
-#if QT_VERSION < 0x050000
-  /* no longer necessary with Qt >= 5.0 */
-  QTextCodec::setCodecForTr(QTextCodec::codecForName ("UTF-8"));
-#endif
 
   PERSOENLICHE_KONTEN_STRING = QObject::tr("Personal accounts");
   ALLE_KONTEN_STRING = QObject::tr("All accounts");

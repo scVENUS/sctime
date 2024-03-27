@@ -22,10 +22,11 @@
 #include <QString>
 #include <QList>
 #include <QObject>
+#include <QStringList>
 #ifndef RESTONLY
 #include <QSqlDatabase>
 #endif
-class QStringList;
+
 
 typedef QList<QStringList> DSResult;
 

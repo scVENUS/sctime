@@ -9,13 +9,14 @@ class SCTimeXMLSettings;
 class PunchClockList;
 class XMLWriter;
 class XMLReader;
+class QNetworkAccessManager;
 
 // commits a new account list. create a new instance of this object everytime you need to do this - states are not cleaned up.
 class AccountListCommiter: public QObject {
         Q_OBJECT;
 public:
-       AccountListCommiter(QObject* parent, DSResult data, SCTimeXMLSettings* settings, KontoTreeView *kontotree, AbteilungsListe* abtList, AbteilungsListe* abtListToday, PunchClockList *pcl, bool withoutSave):
-          QObject(parent), data(data), settings(settings), kontoTree(kontotree), abtList(abtList), abtListToday(abtListToday), pcl(pcl), diff(0), withoutSave(withoutSave) {
+       AccountListCommiter(QObject* parent, QNetworkAccessManager* networkAccessManager, DSResult data, SCTimeXMLSettings* settings, KontoTreeView *kontotree, AbteilungsListe* abtList, AbteilungsListe* abtListToday, PunchClockList *pcl, bool withoutSave):
+          QObject(parent), data(data), settings(settings), kontoTree(kontotree), abtList(abtList), abtListToday(abtListToday), pcl(pcl), withoutSave(withoutSave),diff(0), networkAccessManager(networkAccessManager) {
 
        };
 public slots:
@@ -40,6 +41,7 @@ private:
        // normally you should save before commiting. If you have already done that you can skip this step.
        bool withoutSave;
 
-       int diff;        
+       int diff;
+       QNetworkAccessManager* networkAccessManager;
 };
 #endif

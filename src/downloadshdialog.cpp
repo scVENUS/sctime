@@ -22,7 +22,7 @@
 #include <QBuffer>
 #include <QFileDialog>
 
-DownloadSHDialog::DownloadSHDialog(SCTimeXMLSettings *settings, QWidget* parent): QDialog(parent), settings(settings) {
+DownloadSHDialog::DownloadSHDialog(SCTimeXMLSettings *settings, QNetworkAccessManager* networkAccessManager, QWidget* parent): QDialog(parent), settings(settings), networkAccessManager(networkAccessManager) {
     setupUi(this);
     zipBuffer=NULL;
     zipWriter=NULL;
@@ -73,8 +73,8 @@ void DownloadSHDialog::addFile() {
   if (currentDate <= endDate){
     abtList=new AbteilungsListe(currentDate, (KontoDatenInfo*)NULL);
     pcl=new PunchClockList();
-    XMLReader* reader = new XMLReader(settings,false,false,true,abtList,pcl);
-    connect(reader,&XMLReader::settingsRead,this,&DownloadSHDialog::addFile, Qt::QueuedConnection);
+    XMLReader* reader = new XMLReader(settings,networkAccessManager, false,false,true,abtList,pcl);
+    connect(reader,&XMLReader::settingsRead,this,&DownloadSHDialog::addFile);
     connect(reader,&XMLReader::settingsRead,reader,&XMLReader::deleteLater);
     reader->open();
   } else {

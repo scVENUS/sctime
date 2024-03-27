@@ -21,6 +21,7 @@
 
 #include <QTextStream>
 #include <QStringList>
+#include <QStringConverter>
 #include <QFile>
 #ifndef RESTONLY
 #include <QSqlQuery>
@@ -176,7 +177,13 @@ bool CommandReader::read(DSResult* const result) {
   }
   trace(QObject::tr("Running command: ") + command);
   QTextStream ts(file, QIODevice::ReadOnly);
-  ts.setCodec(nl_langinfo(CODESET));
+  QString codeset = QString(nl_langinfo(CODESET)).toUpper();
+  // FIXME: this heuristics might go wrong in some special cases (for example euro sign and iso-8859-15 encoding), but there does 
+  // not seem to be a better way using QT that works with all QT6 versions
+  // the best way to fix encoding issues would probably be to have the command always output utf8, which would reduce complexity here
+  if ((codeset!="UTF-8") || (codeset!="UTF8")) {
+    ts.setEncoding(QStringConverter::Latin1);
+  }
   bool ok = readFile(result, ts, sep, columns, command);
   int rc = pclose(file);
   if (rc == -1 || !WIFEXITED(rc) || WEXITSTATUS(rc)) {

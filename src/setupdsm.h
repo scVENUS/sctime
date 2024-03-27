@@ -24,6 +24,7 @@
 
 class SCTimeXMLSettings;
 class DatasourceManager;
+class QNetworkAccessManager;
 
 class DSM {
 public:
@@ -31,7 +32,7 @@ public:
       userDataSourceNames(userDataSourceNames), kontenPath(kontenPath),bereitPath(bereitPath), specialremunPath(specialremunPath), jsonPath(jsonPath) {   
    }
 
-   void setup(SCTimeXMLSettings* settings);
+   void setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager);
    DatasourceManager* kontenDSM;
    DatasourceManager* bereitDSM;
    DatasourceManager* specialRemunDSM;

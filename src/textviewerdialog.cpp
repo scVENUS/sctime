@@ -20,7 +20,6 @@
 #include <QPushButton>
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QNetworkAccessManager>
 
 TextViewerDialog::TextViewerDialog(QWidget* parent, const QString& title, const QString& name, bool plaintext_links): QDialog(parent) {
   setObjectName(name);
@@ -53,7 +52,7 @@ void TextViewerDialog::sourceChanged(const QUrl &src) {
     QNetworkAccessManager nam;
     QNetworkRequest request(src);
     auto reply = nam.get(request);
-    m_browser->setHtml(QString::null);
+    m_browser->setHtml("");
     m_browser->document()->clear();
     m_browser->setPlainText(reply->readAll());
 }

@@ -5,7 +5,8 @@
 #include <QMessageBox>
 #include <QDomElement>
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QGuiApplication>
+#include <QScreen>
 #include "globals.h"
 
 void XMLReader::open()
@@ -48,7 +49,7 @@ QFile* XMLReader::openFile(bool handleerr) {
 
     QFile* f=new QFile(configDir.filePath(filename));
     SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
-    if (handleerr&&!f->open(QIODevice::ReadOnly))
+    if (!f->open(QIODevice::ReadOnly)&&handleerr)
     {
         logError(f->fileName() + ": " + f->errorString());
         if (global || f->exists())
@@ -77,29 +78,18 @@ void XMLReader::openREST() {
       postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
     auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
-    QNetworkReply *reply = networkAccessManager.get(request);
+    QNetworkReply *reply = networkAccessManager->get(request);
     connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
-    // for compatibility - use errorOccurred slot instead in future
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
-        this, &XMLReader::onErrCompat);
-    //connect(reply, &QNetworkReply::errorOccurred,
-    //    this, &XMLReader::gotReply);
 }
 
 void XMLReader::gotReply() {
     auto obj=sender();
-    parse((QIODevice*)obj);
-}
-
-// we need this for compatibility with old QT.
-void XMLReader::onErrCompat(QNetworkReply::NetworkError code) {
-    auto obj=sender();
-    parse((QIODevice*)obj);
+    parse(dynamic_cast<QNetworkReply*>(obj));
 }
 
 void XMLReader::parse(QIODevice *input)
 {
-    SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
+    SCTimeXMLSettings *settings = dynamic_cast<SCTimeXMLSettings *>(parent());
     QNetworkReply* netinput = dynamic_cast<QNetworkReply*>(input);
     QFile* fileinput = dynamic_cast<QFile*>(input);
     QDomDocument doclocal("settings");
@@ -232,9 +222,13 @@ void XMLReader::parse(QIODevice *input)
     {
         if (global)
             settings->backupSettingsXml = false;
-        emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file xyz");
-        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+        emit settingsPartRead(global, abtList, pcl, false, "error reading configuration file");
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+            tr("sctime: reading configuration file"),
+            QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg),
+            QMessageBox::Ok);
+        connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
+        msgbox->open();
         return;
     }
 
@@ -541,7 +535,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                             if (ok)
                             {
                                 QPoint pos(x, y);
-                                QRect rootwinsize = QApplication::desktop()->screenGeometry();
+                                QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
                                 if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
                                     settings->mainwindowPosition = pos;
                             }
@@ -636,7 +630,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                             if (ok)
                             {
                                 QPoint pos(x, y);
-                                QRect rootwinsize = QApplication::desktop()->screenGeometry();
+                                QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
                                 if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
                                     settings->unterKontoWindowPosition = pos;
                             }

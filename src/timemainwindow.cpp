@@ -17,7 +17,6 @@
 
 #include "timemainwindow.h"
 
-#include <QTextCodec>
 #include <QClipboard>
 #include <QApplication>
 #include <QMenu>
@@ -33,9 +32,9 @@
 #include <QToolBar>
 #include <QColorDialog>
 #include <QTextBrowser>
+#include <QByteArray>
 #include <QAction>
 #include <QMutex>
-#include <QDesktopWidget>
 #include <QLocale>
 #include <QTextStream>
 #include <QUrlQuery>
@@ -45,6 +44,9 @@
 #include <QJsonObject>
 #include <QQueue>
 #include <QStatusBar>
+#include <QGuiApplication>
+#include <QScreen>
+#include <QStringEncoder>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
@@ -85,6 +87,9 @@
 #include "xmlreader.h"
 #include "oncalldialog.h"
 #include "conflictdialog.h"
+#ifndef __EMSCRIPTEN__
+#include "logindialog.h"
+#endif
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
 #endif
@@ -104,13 +109,13 @@ void logError(const QString &msg) {
   logText.append(msg).append("\n");
   logTextLastLine = msg;
   if (logStream!=NULL) {
-    (*logStream)<<msg<<endl;
+    (*logStream)<<msg<<Qt::endl;
   }
 }
 
 /** Erzeugt ein neues TimeMainWindow, das seine Daten aus abtlist bezieht. */
-TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
-     windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused")  {
+TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessManager, DSM* dsm, QString logfile):QMainWindow(), startTime(QDateTime::currentDateTime()),
+     windowIcon(":/window_icon"), pausedWindowIcon(":/window_icon_paused"), networkAccessManager(networkAccessManager)  {
   initCompleted=false;
   if (!logfile.isNull() && !logfile.isEmpty()) {
     logFile = new QFile(logfile);
@@ -124,6 +129,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   m_dsm=dsm;
   paused = false;
   entryBeingEdited = false;
+  kontoTree =NULL;
   sekunden = 0;
   m_afterCommitMethodQueue = new QQueue<QueuedMethod*>();
   setObjectName(tr("sctime"));
@@ -166,45 +172,45 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
   QAction* pauseAction = new QAction( QIcon(":/hi22_action_player_pause"), tr("&Pause"), this);
-  pauseAction->setShortcut(Qt::CTRL+Qt::Key_P);
+  pauseAction->setShortcut(Qt::CTRL|Qt::Key_P);
   connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));
 
   QAction* pauseAbzurAction = new QAction( QIcon(":/hi22_action_player_pause_half"),
                                            tr("Pause &accountable time"), this);
-  pauseAbzurAction->setShortcut(Qt::CTRL+Qt::Key_A);
+  pauseAbzurAction->setShortcut(Qt::CTRL|Qt::Key_A);
   pauseAbzurAction->setCheckable(true);
   connect(pauseAbzurAction, SIGNAL(toggled(bool)), this, SLOT(pauseAbzur(bool)));
 
   QAction* saveAction = new QAction( QIcon(":/hi22_action_filesave" ), tr("&Save"), this);
-  saveAction->setShortcut(Qt::CTRL+Qt::Key_S);
+  saveAction->setShortcut(Qt::CTRL|Qt::Key_S);
   connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
 
   copyAction = new QAction(tr("&Copy as text"), this);
-  copyAction->setShortcut(Qt::CTRL+Qt::Key_C);
+  copyAction->setShortcut(Qt::CTRL|Qt::Key_C);
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
 
   copyLinkAction = new QAction(tr("Copy as &link"), this);
-  copyLinkAction->setShortcut(Qt::CTRL+Qt::Key_L);
+  copyLinkAction->setShortcut(Qt::CTRL|Qt::Key_L);
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
 
   QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
-  pasteLinkAction->setShortcut(Qt::CTRL+Qt::Key_V);
+  pasteLinkAction->setShortcut(Qt::CTRL|Qt::Key_V);
   connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
-  changeDateAction->setShortcut(Qt::CTRL+Qt::Key_D);
+  changeDateAction->setShortcut(Qt::CTRL|Qt::Key_D);
   connect(changeDateAction, SIGNAL(triggered()), this, SLOT(callDateDialog()));
 
   QAction* punchClockAction = new QAction(tr("Punch Clock"), this);
-  punchClockAction->setShortcut(Qt::CTRL+Qt::Key_O);
+  punchClockAction->setShortcut(Qt::CTRL|Qt::Key_O);
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
-  resetAction->setShortcut(Qt::CTRL+Qt::Key_N);
+  resetAction->setShortcut(Qt::CTRL|Qt::Key_N);
   connect(resetAction, SIGNAL(triggered()), this, SLOT(resetDiff()));
 
   inPersKontAction = new QAction( QIcon(":/hi22_action_attach"), tr("Select as personal &account"), this);
-  inPersKontAction->setShortcut(Qt::CTRL+Qt::Key_K);
+  inPersKontAction->setShortcut(Qt::CTRL|Qt::Key_K);
   inPersKontAction->setCheckable(true);
   connect(inPersKontAction, SIGNAL(toggled(bool)), this, SLOT(inPersoenlicheKonten(bool)));
 
@@ -216,16 +222,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   // not seem to work as this time. The menu tetxts always end up English after
   // being merged into the application menu.
   quitAction->setMenuRole(QAction::QuitRole);
-  quitAction->setShortcut(Qt::CTRL+Qt::Key_Q);
+  quitAction->setShortcut(Qt::CTRL|Qt::Key_Q);
   connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
 
   QAction* findKontoAction = new QAction(tr("&Search account..."), this);
-  findKontoAction->setShortcut(Qt::CTRL+Qt::Key_F);
+  findKontoAction->setShortcut(Qt::CTRL|Qt::Key_F);
   //findKontoAction->setStatusTip(tr("Konto suchen"));
   connect(findKontoAction, SIGNAL(triggered()), this, SLOT(callFindKontoDialog()));
 
   QAction* refreshAction = new QAction(tr("&Reread account list"), this);
-  refreshAction->setShortcut(Qt::CTRL+Qt::Key_R);
+  refreshAction->setShortcut(Qt::CTRL|Qt::Key_R);
   connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshKontoListe()));
 
   QAction* preferenceAction = new QAction(tr("&Settings..."),this);
@@ -255,12 +261,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   connect(editUnterKontoAction, SIGNAL(triggered()), this, SLOT(editUnterKontoPressed()));
 
   QAction* eintragActivateAction = new QAction(tr("&Activate entry"), this);
-  eintragActivateAction->setShortcut(Qt::CTRL+Qt::Key_X);
+  eintragActivateAction->setShortcut(Qt::CTRL|Qt::Key_X);
   connect(eintragActivateAction, SIGNAL(triggered()), this, SLOT(eintragAktivieren()));
 
   QAction* eintragAddAction = new QAction(QIcon(":/hi22_action_queue" ),
                                              tr("Add &entry"), this);
-  eintragAddAction->setShortcut(Qt::CTRL+Qt::Key_Plus);
+  eintragAddAction->setShortcut(Qt::CTRL|Qt::Key_Plus);
   connect(eintragAddAction, SIGNAL(triggered()), this, SLOT(eintragHinzufuegen()));
 
   eintragRemoveAction = new QAction(tr("&Delete entry"), this);
@@ -269,16 +275,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
 
   QAction* bereitschaftsAction = new QAction(QIcon(":/hi16_action_stamp" ),
                                             tr("Set &on-call times..."), this);
-  bereitschaftsAction->setShortcut(Qt::CTRL+Qt::Key_B);
+  bereitschaftsAction->setShortcut(Qt::CTRL|Qt::Key_B);
   connect(bereitschaftsAction, SIGNAL(triggered()), this, SLOT(editBereitschaftPressed()));
   
   specialRemunAction = new QAction(QIcon(":/hi16_moon" ),
                                             tr("Set special remuneration &times..."), this);
-  specialRemunAction->setShortcut(Qt::CTRL+Qt::Key_T);
+  specialRemunAction->setShortcut(Qt::CTRL|Qt::Key_T);
   connect(specialRemunAction, SIGNAL(triggered()), this, SLOT(specialRemunPressed()));
 
   bgColorChooseAction = new QAction(tr("Choose &background colour..."), this);
-  bgColorChooseAction->setShortcut(Qt::CTRL+Qt::Key_G);
+  bgColorChooseAction->setShortcut(Qt::CTRL|Qt::Key_G);
   bgColorRemoveAction = new QAction(tr("&Remove background colour"), this);
 
   QAction* downloadSHAction = new QAction(tr("Download sh files"), this);
@@ -414,12 +420,18 @@ TimeMainWindow::TimeMainWindow(Lock* lock, DSM* dsm, QString logfile):QMainWindo
   saveLaterTimer = NULL;
 
   settings=new SCTimeXMLSettings();
+#if defined(RESTONLY) && !defined(__EMSCRIPTEN__)
+  auto loginDialog = new LoginDialog(networkAccessManager, this);
+  connect(loginDialog, &LoginDialog::finished, this, &TimeMainWindow::readInitialSetting);
+  QTimer::singleShot(100, loginDialog, SLOT(open()));
+#else
   QTimer::singleShot(100, this, SLOT(readInitialSetting()));
+#endif
 }
 
 void TimeMainWindow::readInitialSetting() {
     auto finish = [=](){
-      XMLReader *reader=new XMLReader(settings, true, false, false, abtList, m_punchClockList);
+      XMLReader *reader=new XMLReader(settings, networkAccessManager ,true, false, false, abtList, m_punchClockList);
       connect(reader, &XMLReader::settingsRead, this, &TimeMainWindow::initialSettingsRead);
       connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
@@ -438,7 +450,7 @@ void TimeMainWindow::readInitialSetting() {
       return;
     }
     // in wasm we have the permanent offline mode. We try to load a local file first, to have information initialized if we have to stay offline
-    XMLReader *reader=new XMLReader(settings, true, true, false, abtList, m_punchClockList);
+    XMLReader *reader=new XMLReader(settings, networkAccessManager, true, true, false, abtList, m_punchClockList);
     connect(reader, &XMLReader::settingsRead, finish);
     connect(reader, &XMLReader::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(reader, &XMLReader::settingsRead, reader, &XMLReader::deleteLater);
@@ -479,7 +491,7 @@ void TimeMainWindow::initialSettingsRead() {
   settings->getColumnWidthList(columnwidthlist);
 
   QAction* min1MinusAction = new QAction(tr("Minimal decrease time"), this);
-  min1MinusAction->setShortcut(Qt::CTRL+Qt::Key_Comma);
+  min1MinusAction->setShortcut(Qt::CTRL|Qt::Key_Comma);
   connect(min1MinusAction, SIGNAL(triggered()), this, SLOT(subMinimalTimeInc()));
 
   kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
@@ -535,7 +547,7 @@ void TimeMainWindow::initialSettingsRead() {
   kontoTree->closeFlaggedPersoenlicheItems();
   showAdditionalButtons(settings->powerUserView());
 
-  m_dsm->setup(settings);
+  m_dsm->setup(settings, networkAccessManager);
 
   connect(m_dsm->kontenDSM, SIGNAL(finished(DSResult)), this, SLOT(commitKontenliste(DSResult)));
   connect(m_dsm->bereitDSM, SIGNAL(finished(DSResult)), this, SLOT(commitBereit(DSResult)));
@@ -585,12 +597,14 @@ void TimeMainWindow::aktivesKontoPruefen(){
   EintragsListe *dummy2;
   // if we are initalizing for the first time, this is the last step. Otherwise initCompleted should already be true.
   initCompleted=true;
-  if (!abtList->findEintrag(dummy, dummy2, a, k, u, i))
-    QMessageBox::warning(
-          NULL,
+  if (!abtList->findEintrag(dummy, dummy2, a, k, u, i)) {
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
           QObject::tr("sctime: accounting stopped"),
           tr("The last active account was %1/%2. It seems to have been closed or renamed. "
              "Please activate a new account to start time accounting!").arg(k,u));
+    connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
+  }
 }
 
 void TimeMainWindow::closeEvent(QCloseEvent * event)
@@ -725,7 +739,7 @@ void TimeMainWindow::driftKorrektur() {
     QFile logFile(configDir.filePath("sctime.log"));
     if (logFile.open(QIODevice::Append)) {
       QTextStream stream(&logFile);
-      stream<< msg << endl;
+      stream<< msg << Qt::endl;
     }
   }
   QMessageBox* msgbox;
@@ -1047,10 +1061,12 @@ void TimeMainWindow::pauseAbzur(bool on)
  */
 void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 {
-  kontoTree->flagClosedPersoenlicheItems();
-  std::vector<int> columnwidthlist;
-  kontoTree->getColumnWidthList(columnwidthlist);
-  settings->setColumnWidthList(columnwidthlist);
+  if (kontoTree!=NULL) {
+    kontoTree->flagClosedPersoenlicheItems();
+    std::vector<int> columnwidthlist;
+    kontoTree->getColumnWidthList(columnwidthlist);
+    settings->setColumnWidthList(columnwidthlist);
+  }
   settings->setLastRecordedTimestamp(lastMinuteTick);
   m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
   m_PCSToday->date=abtListToday->getDatum();
@@ -1059,7 +1075,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
-    XMLWriter* writer=new XMLWriter(settings, abtListToday, m_punchClockListToday, conflicttimeout);
+    XMLWriter* writer=new XMLWriter(settings, networkAccessManager, abtListToday, m_punchClockListToday, conflicttimeout);
     connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
@@ -1068,7 +1084,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
     writer->writeAllSettings();
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
     if (abtList!=abtListToday) {
-      writer=new XMLWriter(settings, abtList, m_punchClockList, conflicttimeout);
+      writer=new XMLWriter(settings, networkAccessManager, abtList, m_punchClockList, conflicttimeout);
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
@@ -1343,7 +1359,7 @@ void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToda
     std::vector<int> columnwidthlist;
     kontoTree->getColumnWidthList(columnwidthlist);
     settings->setColumnWidthList(columnwidthlist);
-    m_dateChanger = new DateChanger(this, datum, changeVisible, changeToday);
+    m_dateChanger = new DateChanger(this, networkAccessManager, datum, changeVisible, changeToday);
     connect(m_dateChanger, &DateChanger::finished, this, &TimeMainWindow::changeDateFinished);
     connect(m_dateChanger, &DateChanger::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     m_dateChanger->start();
@@ -1413,7 +1429,7 @@ void TimeMainWindow::commitKontenliste(DSResult data) {
 #ifndef WASMQUIRKS
   statusBar->showMessage(tr("Commiting account list..."));
 #endif
-  auto commiter=new AccountListCommiter(this,data, settings,kontoTree,abtList,abtListToday, m_punchClockList, !initCompleted);
+  auto commiter=new AccountListCommiter(this, networkAccessManager,data, settings,kontoTree,abtList,abtListToday, m_punchClockList, !initCompleted);
   
   if (checkConfigDir()) {
     checkLock();
@@ -1653,7 +1669,7 @@ void TimeMainWindow::resizeToIfSensible(QDialog* dialog, const QPoint& pos, cons
   {
     return;
   }
-  QRect screenGeometry(QApplication::desktop()->screenGeometry());
+  QRect screenGeometry(QGuiApplication::primaryScreen()->availableGeometry());
   QPoint pos2=QPoint(pos.x()+size.width(), pos.y()+size.height());
   if (screenGeometry.contains(pos)&&screenGeometry.contains(pos2))
   {
@@ -2124,8 +2140,9 @@ void TimeMainWindow::jumpToAlleKonten()
 void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const QString& uko,int idx) {
   UnterKontoEintrag eintrag;
   if ((settings->warnISO8859())&&(abtList->getEintrag(eintrag, abt, ko, uko, idx))) {
-    QTextCodec *codec = QTextCodec::codecForName("ISO 8859-1");
-    if (!codec->canEncode(eintrag.kommentar))
+    QStringEncoder encoder(QStringConverter::Latin1);
+    encoder(eintrag.kommentar);
+    if (encoder.hasError())
       QMessageBox::warning(
             0,
             tr("Warning"),
@@ -2283,7 +2300,6 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
       return;
     }
     QDateTime beforeOpen=QDateTime::currentDateTime();
-    bool shouldswitch=false;
     QMessageBox* msgbox;
     if (isnight) {
        msgbox=new QMessageBox(QMessageBox::Question,
@@ -2462,7 +2478,7 @@ void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
 
 void TimeMainWindow::callDownloadSHDialog() {
 #ifdef DOWNLOADDIALOG
-   auto dialog=new DownloadSHDialog(settings, this);
+   auto dialog=new DownloadSHDialog(settings, networkAccessManager, this);
    connect(dialog, &DownloadSHDialog::workflowFinished, dialog, &DownloadSHDialog::deleteLater);
    dialog->open();
 #endif
@@ -2505,10 +2521,8 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
      return;
   }
   dialogopenfordates+=targetdate;
-  bool istoday=false;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {
-    istoday=true;
   } else {
     // this should not happen, but handle anyways, just in case...
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
@@ -2523,7 +2537,7 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
     msgbox->open();
     return;
   }
-  ConflictDialog *dialog=new ConflictDialog(settings, targetdate, global, ba, this);
+  ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, ba, this);
   connect(dialog, &QMessageBox::finished,
     [=](){
       dialogopenfordates-=targetdate;
@@ -2559,7 +2573,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
     msgbox->open();
     return;
   }
-  ConflictDialog *dialog=new ConflictDialog(settings, targetdate, global, qCompress(remotesettings.toByteArray()), this);
+  ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, qCompress(remotesettings.toByteArray()), this);
   connect(dialog, &QMessageBox::finished,
     [=](){
       if (reader!=NULL) {
@@ -2583,8 +2597,6 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
     reader->ignoreConflict();
     return;
   }
-  AbteilungsListe* conflictedAbtList=NULL;
-  PunchClockList * conflictedPunchClockList=NULL;
   bool istoday=false;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {

@@ -21,7 +21,7 @@
 #define BEREITSCHAFTSVIEW_H
 
 #include <QListView>
-class QStringList;
+#include <QStringList>
 #include "bereitschaftsmodel.h"
 
 class BereitschaftsView: public QListView

@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += warn_on qt uic debug
+CONFIG += warn_on qt uic debug 
 CONFIG += c++11
 # you have to explicitly recompile sctime.cpp whenever you change this value
 VERSION = $$system(git describe --always||echo UNDEFINED)
@@ -28,7 +28,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
 FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
-        punchclockdialogbase.ui pausedialogbase.ui
+        punchclockdialogbase.ui pausedialogbase.ui logindialogbase.ui
 
 # just tell qmake that qrc_generated_translations.cpp depends on all
 # translations qm files - yes, this is somewhat bulky
@@ -65,7 +65,7 @@ defined(qtPrepareTool)|defineTest(qtPrepareTool) {
 	}
 	export($$1)
 }
-qtPrepareTool(QMAKE_RCC, rcc)
+QMAKE_RCC=$$[QT_INSTALL_LIBEXECS]/rcc
 for(resource, GENERATED_RESOURCES) {
 	# file names in build dir *have* to differ from file names in source
 	# dir. Otherwise generatedrcc.input below will find the source dir
@@ -118,7 +118,9 @@ wasm {
   QT += gui-private
 }
 !wasm {
-  QT += sql
+  SOURCES += logindialog.cpp
+  HEADERS += logindialog.h
+  QT += sql webenginewidgets
 }
 
 win32-msvc*{

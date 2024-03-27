@@ -27,7 +27,6 @@
 #include <vector>
 #include <QString>
 #include <QTextStream>
-#include <QNetworkAccessManager>
 #include "abteilungsliste.h"
 #include <QNetworkReply>
 #include "punchclock.h"
@@ -324,7 +323,7 @@ public:
         return m_zeitKontenKommando;
     }
 
-    const char* charmap();
+    static QStringConverter::Encoding charmap();
 
     void setZeitKontenKommando(const QString& command)
     {

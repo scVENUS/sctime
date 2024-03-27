@@ -42,22 +42,21 @@ private:
   int currentversion;
 protected:
   JSONReaderBase();
-  QNetworkAccessManager networkAccessManager;
 };
 
 class JSONReaderUrl: public JSONReaderBase
 {
 Q_OBJECT
 public:
-  JSONReaderUrl(const QString& uri);
+  JSONReaderUrl(QNetworkAccessManager* networkAccessManager, const QString& uri);
   virtual void requestData();
   virtual ~JSONReaderUrl() {};
 public slots:
   virtual void receiveData(QNetworkReply *reply);
   virtual void gotReply();
-  virtual void onErrCompat(QNetworkReply::NetworkError code);
 private:
   const QString uri;
+  QNetworkAccessManager* networkAccessManager;
 };
 
 #ifndef RESTONLY

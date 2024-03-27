@@ -437,7 +437,7 @@ void FindKontoDialog::searchMicroAccount()
               }
               kommentaritem= new QTreeWidgetItem( unterkontoitem, 0);
               kommentaritem->setText(0,"("+kommentar+")");
-              kommentaritem->setTextColor(0, QColor(QRgb(0x404040)));
+              kommentaritem->setForeground(0, QColor(QRgb(0x404040)));
               setFoundItem( kommentaritem );
             }
           }

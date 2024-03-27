@@ -46,16 +46,6 @@ private:
     int sekunden,sekundenAbzur;
     int flags;
 
-    /** Erzeugt eine Kopie des uebergebenen Unterkontoeintrags. */
-    UnterKontoEintrag(const UnterKontoEintrag& uk)
-    {
-      kommentar=uk.kommentar;
-      sekunden=uk.sekunden;
-      sekundenAbzur=uk.sekundenAbzur;
-      flags=uk.flags;
-      m_achievedSpecialRemunSet=m_achievedSpecialRemunSet;
-    }
-
     bool isEmpty()
     {
       return ((kommentar=="")&&(sekunden==0)&&(sekundenAbzur==0));
