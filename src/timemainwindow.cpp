@@ -87,8 +87,10 @@
 #include "xmlreader.h"
 #include "oncalldialog.h"
 #include "conflictdialog.h"
+#ifdef RESTONLY
 #ifndef __EMSCRIPTEN__
 #include "logindialog.h"
+#endif
 #endif
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
