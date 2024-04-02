@@ -28,7 +28,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
 FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
-        punchclockdialogbase.ui pausedialogbase.ui logindialogbase.ui
+        punchclockdialogbase.ui pausedialogbase.ui
 
 # just tell qmake that qrc_generated_translations.cpp depends on all
 # translations qm files - yes, this is somewhat bulky
@@ -120,6 +120,7 @@ wasm {
 !wasm {
   # SOURCES += logindialog.cpp
   # HEADERS += logindialog.h
+  # FORMS += logindialogbase.ui
   # QT += sql webenginewidgets
 }
 
