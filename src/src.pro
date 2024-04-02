@@ -118,9 +118,9 @@ wasm {
   QT += gui-private
 }
 !wasm {
-  SOURCES += logindialog.cpp
-  HEADERS += logindialog.h
-  QT += sql webenginewidgets
+  # SOURCES += logindialog.cpp
+  # HEADERS += logindialog.h
+  # QT += sql webenginewidgets
 }
 
 win32-msvc*{
