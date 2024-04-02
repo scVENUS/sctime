@@ -26,8 +26,10 @@
 #endif
 #include <QProcessEnvironment>
 #ifndef RESTONLY
+#ifdef WIN32
 #include <QSqlDatabase>
 #include <QSqlError>
+#endif
 #endif
 #include <QFileInfo>
 #include <QFile>
@@ -137,7 +139,9 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
 
   JSONReaderBase *jsonreader=NULL;
 #ifndef RESTONLY
+#ifdef WIN32
   trace(QObject::tr("available database drivers: %1.").arg(QSqlDatabase::drivers().join(", ")));
+#endif
   if (!kontenPath.isEmpty())
     kontensources->append(new FileReader(kontenPath, "|", 15));
   if (!bereitPath.isEmpty())
@@ -187,6 +191,7 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
 #endif
     } 
     else {
+#ifdef WIN32
       if (!QSqlDatabase::drivers().contains(dsname)) {
         logError(QObject::tr("database driver or data source not available: ") + dsname);
         continue;
@@ -215,6 +220,7 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
       kontensources->append(new SqlReader(db, kontenQuery));
       bereitsources->append(new SqlReader(db, bereitQuery));
       specialremunsources->append(new SqlReader(db, specialRemunQuery));
+#endif
     }
   }
   if (dsname.compare("rest") == 0) {

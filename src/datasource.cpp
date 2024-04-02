@@ -24,10 +24,12 @@
 #include <QStringConverter>
 #include <QFile>
 #ifndef RESTONLY
+#ifdef WIN32
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#endif
 #endif
 #include <QVariant>
 #include "globals.h"
@@ -125,6 +127,7 @@ static bool readFile(DSResult* const result, QTextStream &ts, const QString& sep
   return true;
 }
 
+#ifdef WIN32
 SqlReader::SqlReader(QSqlDatabase db, const QString &cmd):cmd(cmd),db(db) {}
 
 bool  SqlReader::read(DSResult* const result) {
@@ -160,6 +163,7 @@ void SqlReader::start() {
       emit failed();
    }
 }
+#endif
 
 #ifndef WIN32
 #include <stdlib.h>

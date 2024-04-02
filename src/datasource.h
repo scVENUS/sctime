@@ -24,7 +24,9 @@
 #include <QObject>
 #include <QStringList>
 #ifndef RESTONLY
+#ifdef WIN32
 #include <QSqlDatabase>
+#endif
 #endif
 
 
@@ -87,6 +89,7 @@ private:
   bool read(DSResult* const result);
   };
 
+#ifdef WIN32
 class SqlReader : public Datasource
 {
   Q_OBJECT
@@ -101,6 +104,7 @@ public slots:
 private:
   bool read(DSResult* const result);
 };
+#endif
 
 
 #ifndef WIN32
