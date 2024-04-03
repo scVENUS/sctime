@@ -121,7 +121,7 @@ wasm {
   # SOURCES += logindialog.cpp
   # HEADERS += logindialog.h
   # FORMS += logindialogbase.ui
-  # QT += sql webenginewidgets
+  # QT += webenginewidgets
 }
 
 win32-msvc*{
@@ -140,6 +140,10 @@ win32-g++*{
   CONFIG += embed_manifest_exe
   RC_FILE += sctime.rc
   LIBS += -ladvapi32
+}
+
+win32{
+  QT +=sql
 }
 
 !win32{
