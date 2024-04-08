@@ -82,15 +82,18 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
   QRegularExpression apostrophExp=QRegularExpression("'");
 
   TimeCounter tc(sek), tcAbzur(abzurSek);
+
+  const char * encodingName=QStringConverter::nameForEncoding(charmap());
+
   stream<<
            "#!/bin/sh\n"
-           "# -*- coding: "<<charmap()<<" -*-\n\n"
+           "# -*- coding: "<<encodingName<<" -*-\n\n"
            "set -e\n"
            "trap '[ $? -gt 0 ] && echo \"ABBRUCH in $PWD/$0 bei Zeile $LINENO - nicht alle Buchungen sind uebernommen\" >&2 && exit 1' 0"
            "\n\n"
            "# Zeit Aufrufe von sctime "<< qApp->applicationVersion() <<" generiert \n"
            "# Gesamtzeit: "<<tc.toString()<<"/"<<tcAbzur.toString()<<"\n"
-           "ZEIT_ENCODING="<<charmap()<<"\n"
+           "ZEIT_ENCODING="<<encodingName<<"\n"
            "export ZEIT_ENCODING\n";
 
   AbteilungsListe::iterator abtPos;
