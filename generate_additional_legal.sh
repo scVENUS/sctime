@@ -12,11 +12,11 @@ echo "<RCC>" > $TARGET
 
 echo "  <qresource prefix=\"/additional_legal/\">" >> $TARGET
 # Iterate over files in directory licenses
-for file in `ls licenses/*` ; do
+for file in `find licenses` ; do
 echo "    <file>"../$file"</file>" >> $TARGET    
 done
 # Iterate over files in directory sources
-for file in `ls sources/*` ; do
+for file in `find sources` ; do
 echo  "   <file>"../$file"</file>"  >>  $TARGET
 done
 echo "  </qresource>" >> $TARGET
