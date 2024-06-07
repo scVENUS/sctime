@@ -20,12 +20,13 @@
 #include <QPushButton>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QFileDialog>
 
 TextViewerDialog::TextViewerDialog(QWidget* parent, const QString& title, const QString& name, bool plaintext_links): QDialog(parent) {
   setObjectName(name);
   setWindowTitle(title);
   QVBoxLayout *layout = new QVBoxLayout(this);
-  m_browser = new QTextBrowser(this);
+  m_browser = new DownloadBrowser(this);
   m_browser->setOpenExternalLinks(true);
   layout->addWidget(m_browser);
   layout->addSpacing(7);
@@ -45,14 +46,30 @@ TextViewerDialog::TextViewerDialog(QWidget* parent, const QString& title, const 
 
 // try to persuade qt to show plaintext files not as html
 void TextViewerDialog::sourceChanged(const QUrl &src) {
+    auto path = src.path();
     // if we most probably have an html dont mess with the heuristics
-    if (!src.fragment().isNull() || src.path().endsWith(".htm") || src.path().endsWith(".html")) {
+    if (!src.fragment().isNull() || path.endsWith(".htm") || path.endsWith(".html")) {
         return;
     }
     QNetworkAccessManager nam;
     QNetworkRequest request(src);
     auto reply = nam.get(request);
+
     m_browser->setHtml("");
     m_browser->document()->clear();
     m_browser->setPlainText(reply->readAll());
+}
+
+void DownloadBrowser::doSetSource(const QUrl &url, QTextDocument::ResourceType type) {
+    auto path = url.path();
+    // sources from a resource should be downloaded not displayed
+    if (path.startsWith(":/additional_legal/sources")) {
+        auto srcFile=QFile(path);
+        if (srcFile.open(QIODevice::ReadOnly)) {
+          QFileDialog::saveFileContent(srcFile.readAll(),url.fileName());
+          srcFile.close();
+          return;
+        }
+    }
+    QTextBrowser::doSetSource(url,type);
 }

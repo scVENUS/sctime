@@ -30,6 +30,11 @@ GENERATED_RESOURCES = translations.qrc
 FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
         punchclockdialogbase.ui pausedialogbase.ui
 
+# you can generate legal.qrc by running ../generate_additional_legal.sh after you place licenses and sources into ../licenses and ../sources
+exists(additional_legal.qrc) {
+  RESOURCES += additional_legal.qrc
+}
+
 # just tell qmake that qrc_generated_translations.cpp depends on all
 # translations qm files - yes, this is somewhat bulky
 qrc_generated_translations_cpp.target = qrc_generated_translations.cpp

@@ -407,13 +407,19 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   hilfemenu->addAction(helpAction);
   hilfemenu->addAction(aboutAction);
   hilfemenu->addAction(qtAction);
-  additionalLicensesFile = QCoreApplication::applicationDirPath()+
-                           "/licenses/overview.html";
+  QString overviewstr="/licenses/overview.html";
+  additionalLicensesFile = QCoreApplication::applicationDirPath()+overviewstr;
   QFileInfo infofile(additionalLicensesFile);
 
   if (infofile.exists()) {
     hilfemenu->addAction(addlicAction);
+  } else {
+    additionalLicensesFile = ":/additional_legal"+overviewstr;
+    if (QFile(additionalLicensesFile).exists()) {
+       hilfemenu->addAction(addlicAction);
+    }
   }
+
   hilfemenu->addSeparator();
   hilfemenu->addAction(logAction);
 

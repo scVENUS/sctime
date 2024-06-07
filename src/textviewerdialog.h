@@ -32,4 +32,11 @@ public slots:
     void sourceChanged(const QUrl &src);
 };
 
+class DownloadBrowser: public QTextBrowser {
+    Q_OBJECT
+public:
+    DownloadBrowser(QWidget* parent=nullptr): QTextBrowser(parent) {};
+    virtual void doSetSource(const QUrl &url, QTextDocument::ResourceType type = QTextDocument::UnknownResource) override;
+};
+
 #endif
