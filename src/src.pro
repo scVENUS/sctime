@@ -13,7 +13,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           conflictdialog.cpp \
           datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
-          pausedialog.cpp punchclockdialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
+          pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
           specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
@@ -21,18 +21,24 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           conflictdialog.h \
           datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
-          oncalldialog.h pausedialog.h preferencedialog.h punchclockdialog.h punchclockchecker.h sctimexmlsettings.h\
+          oncalldialog.h punchclock.h pausedialog.h preferencedialog.h punchclockchecker.h sctimexmlsettings.h\
           setupdsm.h specialremunentryhelper.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
           unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
 FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
-        punchclockdialogbase.ui pausedialogbase.ui
+        pausedialogbase.ui
 
 # you can generate legal.qrc by running ../generate_additional_legal.sh after you place licenses and sources into ../licenses and ../sources
 exists(additional_legal.qrc) {
   RESOURCES += additional_legal.qrc
+}
+
+!contains(DEFINES, DISABLE_PUNCHCLOCK) {
+  FORMS+= punchclockdialogbase.ui
+  HEADERS+= punchclockdialog.h 
+  SOURCES+= punchclockdialog.cpp 
 }
 
 # just tell qmake that qrc_generated_translations.cpp depends on all

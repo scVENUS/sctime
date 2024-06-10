@@ -423,7 +423,7 @@ void XMLWriter::writeSettings(bool global) {
       root.appendChild( abttag );
       }
   }
-
+#ifndef DISABLE_PUNCHCLOCK
   if (!global && pcl!=NULL) {
     QDomElement punchclocktag = doc.createElement( "punchclock" );
     for (auto pce: *pcl) {
@@ -437,6 +437,7 @@ void XMLWriter::writeSettings(bool global) {
     }
     root.appendChild(punchclocktag);
   }
+#endif
 
   QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
   filename=configDir.filePath(filename);

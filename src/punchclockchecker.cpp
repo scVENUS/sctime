@@ -55,6 +55,12 @@ bool compare_interval (const WorkEvent& first, const WorkEvent& second) {
     return ((first.time<second.time)||((first.time==second.time)&&first.isBegin&&!second.isBegin));
 }
 
+PunchClockStateBase::PunchClockStateBase() {
+    currentWarning="";
+    warnId=PUNCHWARN::PW_NONE;
+}
+
+#ifndef DISABLE_PUNCHCLOCK
 void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayStateBase) {
     auto yesterdayState=dynamic_cast<const PunchClockStateDE23*>(yesterdayStateBase);
     currentWarning="";
@@ -135,11 +141,6 @@ void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const Pun
     workTimeThisWorkday=worktimeworkday;
 }
 
-PunchClockStateBase::PunchClockStateBase() {
-    currentWarning="";
-    warnId=PUNCHWARN::PW_NONE;
-}
-
 PunchClockStateDE23::PunchClockStateDE23() {
     workEnd=0;
     breakTimeThisWorkday=0;
@@ -215,3 +216,4 @@ QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl)
   }
   return result;
 }
+#endif

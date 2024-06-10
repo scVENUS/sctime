@@ -435,6 +435,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                     }
                 }
             }
+#ifndef DISABLE_PUNCHCLOCK
             if ((elem1.tagName() == "punchclock") && (pcl))
             {
                 pcl->clear();
@@ -460,6 +461,7 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                     }
                 }
             }
+#endif
             if (elem1.tagName() == "general")
             {
                 for (QDomNode node2 = elem1.firstChild(); !node2.isNull(); node2 = node2.nextSibling())

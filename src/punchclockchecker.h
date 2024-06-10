@@ -50,6 +50,7 @@ public:
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState) {};
 };
 
+#ifndef DISABLE_PUNCHCLOCK
 class PunchClockStateDE23: public PunchClockStateBase {
 public:
     PunchClockStateDE23();
@@ -66,6 +67,6 @@ private:
     int workTimeThisWorkday;
     friend class TestPunchClockChecker;
 };
-
+#endif
 
 #endif

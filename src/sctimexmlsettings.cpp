@@ -40,7 +40,10 @@
 #define WIN_CODEC "utf8"
 #include "globals.h"
 #include "util.h"
+#include "punchclock.h"
+#ifndef DISABLE_PUNCHCLOCK
 #include "punchclockchecker.h"
+#endif
 #include "xmlreader.h"
 #include "xmlwriter.h"
 
@@ -147,7 +150,7 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
       }
     }
   }
-
+#ifndef DISABLE_PUNCHCLOCK
   if (pcl!=NULL) {
      PunchClockStateBase* pcc;
     // TODO: implement and use factory
@@ -172,7 +175,7 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
       stream<<Qt::endl;
     }
   }
-
+#endif
   stream<<Qt::endl;
 }
 

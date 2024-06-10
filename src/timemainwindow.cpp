@@ -74,7 +74,9 @@
 #include "specialremunentryhelper.h"
 #include "lock.h"
 #include "datasource.h"
+#ifndef DISABLE_PUNCHCLOCK
 #include "punchclockdialog.h"
+#endif
 #include "setupdsm.h"
 #include "specialremunerationsdialog.h"
 #include "util.h"
@@ -203,9 +205,11 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   changeDateAction->setShortcut(Qt::CTRL|Qt::Key_D);
   connect(changeDateAction, SIGNAL(triggered()), this, SLOT(callDateDialog()));
 
+#ifndef DISABLE_PUNCHCLOCK
   QAction* punchClockAction = new QAction(tr("Punch Clock"), this);
   punchClockAction->setShortcut(Qt::CTRL|Qt::Key_O);
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
+#endif
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
   resetAction->setShortcut(Qt::CTRL|Qt::Key_N);
@@ -401,7 +405,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   kontomenu->addSeparator();
   kontomenu->addAction(quitAction);
   zeitmenu->addAction(changeDateAction);
+#ifndef DISABLE_PUNCHCLOCK
   zeitmenu->addAction(punchClockAction);
+#endif
   zeitmenu->addAction(resetAction);
   settingsmenu->addAction(preferenceAction);
   hilfemenu->addAction(helpAction);
@@ -2448,13 +2454,16 @@ void TimeMainWindow::readIPCMessage() {
 }
 
 void TimeMainWindow::callPunchClockDialog() {
+#ifndef DISABLE_PUNCHCLOCK
   PunchClockDialog* pcDialog=new PunchClockDialog(m_punchClockList, m_PCSToday, this);
   connect(pcDialog, &PunchClockDialog::finished, this, &TimeMainWindow::finishPunchClockDialog);
   pcDialog->setModal(true);
   pcDialog->open();
+#endif
 }
 
 void TimeMainWindow::finishPunchClockDialog() {
+#ifndef DISABLE_PUNCHCLOCK
   auto pcDialog=(PunchClockDialog*)(sender());
   auto result=pcDialog->result();
   if (result==QDialog::Accepted) {
@@ -2469,6 +2478,7 @@ void TimeMainWindow::finishPunchClockDialog() {
     saveLater();
   }
   pcDialog->deleteLater();
+#endif
 }
 
 void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
