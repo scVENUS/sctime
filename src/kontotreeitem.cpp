@@ -18,6 +18,17 @@
 #include "kontotreeview.h"
 #include "kontotreeitem.h"
 
+#include <QPalette>
+
+QColor getStdBgColor(QWidget* widget) {
+  auto pal = widget->palette();
+  return pal.color(QPalette::Base);
+}
+
+QColor getStdFgColor(QWidget* widget) {
+  auto pal = widget->palette();
+  return pal.color(QPalette::WindowText);
+}
 
 KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidgetItem(parent)
 {
@@ -26,7 +37,8 @@ KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommen
   hasSelectableMicroAccounts=false;
   this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
-  m_bgColor=Qt::white;
+  
+  m_bgColor=getStdBgColor(parent);
   setGray();
 }
 
@@ -37,7 +49,7 @@ KontoTreeItem::KontoTreeItem (QTreeWidgetItem * parent, SCTimeXMLSettings::DefCo
   hasSelectableMicroAccounts=false;
   this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
-  m_bgColor=Qt::white;
+  m_bgColor=getStdBgColor(parent->treeWidget());
   setGray();
 }
 
@@ -50,7 +62,7 @@ KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommen
   this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
   setGray();
-  m_bgColor=Qt::white;
+  m_bgColor=getStdBgColor(parent);
 
   this->setText(COL_ACCOUNTS, accountname);
 }
@@ -65,7 +77,7 @@ KontoTreeItem::KontoTreeItem (QTreeWidgetItem *parent, SCTimeXMLSettings::DefCom
   this->sortByCommentText=sortByCommentText;
   this->displaymode=displaymode;
   setGray();
-  m_bgColor=Qt::white;
+  m_bgColor=getStdBgColor(parent->treeWidget());
 
   this->setText(COL_ACCOUNTS, accountname);
 }
@@ -129,7 +141,7 @@ void KontoTreeItem::setGray()
     }
     else
     {
-      setForeground(columns.at(i), QBrush(Qt::black));
+      setForeground(columns.at(i), QBrush(getStdFgColor(this->treeWidget())));
       isGray=false;
     }
   }
@@ -141,7 +153,11 @@ void KontoTreeItem::setBgColor(const QColor bgColor)
     m_bgColor = bgColor;
     for( int i=0; i<NUM_COLUMNS; i++ )
     {
-      setBackground(i, QBrush(bgColor));
+      if (bgColor.isValid()) {
+         setBackground(i, QBrush(bgColor));
+      } else {
+         setBackground(i, QBrush(getStdBgColor(this->treeWidget())));
+      }
     }
   }
 }

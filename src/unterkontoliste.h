@@ -31,7 +31,7 @@ class UnterKontoListe: public std::map<QString,EintragsListe>
     UnterKontoListe(): std::map<QString,EintragsListe>()
     {
       flags=0;
-      m_bgColor=Qt::white;
+      m_bgColor=QColor();
       m_hasColor=false;
     }
 

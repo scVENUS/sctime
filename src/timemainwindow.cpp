@@ -2115,7 +2115,7 @@ void TimeMainWindow::callColorDialog()
    int idx;
    kontoTree->itemInfo(item,top,abt,ko,uko,idx);
 
-   QColor color, initial = Qt::white;
+   QColor color, initial = QColor();
    if (abtList->hasBgColor(abt,ko,uko))
      initial = abtList->getBgColor(abt,ko,uko);
    auto colordialog = new QColorDialog(initial, this);

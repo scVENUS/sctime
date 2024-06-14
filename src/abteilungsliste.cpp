@@ -991,7 +991,7 @@ QColor AbteilungsListe::getBgColor(const QString& abteilung, const QString& kont
     if ((posAbt!=end())&&(posAbt->second.hasBgColor()))
       return posAbt->second.getBgColor();
   }
-  return Qt::white;
+  return QColor();
 }
 
 void AbteilungsListe::unsetBgColor(const QString& abteilung, const QString& konto, const QString& unterkonto)

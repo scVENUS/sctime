@@ -231,7 +231,7 @@ QString SCTimeXMLSettings::color2str(const QColor& color)
 QColor SCTimeXMLSettings::str2color(const QString& str)
 {
   if (str.length()!=7)
-    return Qt::white;
+    return QColor();
   QColor color;
   color.setRed(str.mid(1,2).toInt(NULL,16));
   color.setGreen(str.mid(3,2).toInt(NULL,16));
