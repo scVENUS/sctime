@@ -35,7 +35,7 @@ class EintragsListe: public Map_Int_UnterKontoEintrag
     {
       flags=0;
       m_hasColor=false;
-      m_bgColor=Qt::white;
+      m_bgColor=QColor();
     }
 
     void setDescription(DescData descdata)

@@ -22,7 +22,7 @@
 
 QColor getStdBgColor(QWidget* widget) {
   auto pal = widget->palette();
-  return pal.color(QPalette::Window);
+  return pal.color(QPalette::Base);
 }
 
 KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidgetItem(parent)
@@ -148,7 +148,11 @@ void KontoTreeItem::setBgColor(const QColor bgColor)
     m_bgColor = bgColor;
     for( int i=0; i<NUM_COLUMNS; i++ )
     {
-      setBackground(i, QBrush(bgColor));
+      if (bgColor.isValid()) {
+         setBackground(i, QBrush(bgColor));
+      } else {
+         setBackground(i, QBrush(getStdBgColor(this->treeWidget())));
+      }
     }
   }
 }

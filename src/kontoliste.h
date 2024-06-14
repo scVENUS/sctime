@@ -32,7 +32,7 @@ class KontoListe: public Map_QString_UnterKontoListe
     {
       flags=0;
       m_hasColor=false;
-      m_bgColor=Qt::white;
+      m_bgColor=QColor();
     }
 
     void setFlags(int _flags)
