@@ -524,7 +524,7 @@ void XMLWriter::writeSettings(bool global) {
 #endif // RESTCONFIG
 #endif //NO_XML
   if (!global) {
-     settings->m_lastSave = savetime;
+     settings->m_lastSave = QDateTime::currentDateTimeUtc();;
   }
 }
 
