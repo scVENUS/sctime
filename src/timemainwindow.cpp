@@ -1604,8 +1604,9 @@ void TimeMainWindow::resetDiff()
   {
     abtList->setZeitDifferenz(0);
     zeitChanged();
-  }
-  {
+  } 
+#ifndef DISABLE_PUNCHCLOCK
+  else {
     QString msg;
     if (diff > 0)
     {
@@ -1653,6 +1654,7 @@ void TimeMainWindow::resetDiff()
             });
     msgbox->open();
   }
+#endif
 }
 
 /**
