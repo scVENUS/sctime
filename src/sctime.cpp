@@ -160,7 +160,7 @@ int main(int argc, char **argv ) {
      FS.syncfs(true, function (err) {sctimefsinitdone=true;});
   );
 #endif
-#ifdef WINDOWS
+#ifdef WIN32
   // darkmode needs more testing
   qputenv("QT_QPA_PLATFORM","windows:darkmode=0");
 #endif
