@@ -1599,14 +1599,15 @@ void TimeMainWindow::updateCaption()
 
 void TimeMainWindow::resetDiff()
 {
+#ifndef DISABLE_PUNCHCLOCK
   int diff = abtList->getZeitDifferenz();
   if ((diff == 0) || (abtListToday != abtList))
   {
+#endif
     abtList->setZeitDifferenz(0);
     zeitChanged();
-  } 
 #ifndef DISABLE_PUNCHCLOCK
-  else {
+  } else {
     QString msg;
     if (diff > 0)
     {
