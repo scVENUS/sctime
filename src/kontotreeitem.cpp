@@ -25,6 +25,11 @@ QColor getStdBgColor(QWidget* widget) {
   return pal.color(QPalette::Base);
 }
 
+QColor getStdFgColor(QWidget* widget) {
+  auto pal = widget->palette();
+  return pal.color(QPalette::WindowText);
+}
+
 KontoTreeItem::KontoTreeItem (QTreeWidget * parent, SCTimeXMLSettings::DefCommentDisplayModeEnum displaymode, bool sortByCommentText): QTreeWidgetItem(parent)
 {
   isBoldAccount=false;
@@ -136,7 +141,7 @@ void KontoTreeItem::setGray()
     }
     else
     {
-      setForeground(columns.at(i), QBrush(Qt::black));
+      setForeground(columns.at(i), QBrush(getStdFgColor(this->treeWidget())));
       isGray=false;
     }
   }
