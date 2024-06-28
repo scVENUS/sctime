@@ -40,7 +40,11 @@ JSONSource::JSONSource(JSONReaderBase *jsonreader)
           connect(this->jsonreader, SIGNAL(finished()), this, SLOT(jsonreceived()));
   }
 
-void JSONSource::appendStringToRow(QStringList& row, const QJsonObject& object, const QString& field) {
+void JSONSource::appendStringToRow(QStringList& row, const QJsonObject& object, const QString& field, const QString& defautvalue) {
+  if (!object.contains(field)||object[field].type()!=QJsonValue::String) {
+    row.append(defautvalue);
+    return;
+  }
   row.append(object[field].toString());
 }
 
@@ -79,61 +83,99 @@ JSONAccountSource::JSONAccountSource(JSONReaderBase *jsonreader)
   
 bool JSONAccountSource::convertData(DSResult* const result) {
   QJsonDocument doc=jsonreader->getData();
-  QJsonObject data=doc.object()["AccountTree"].toObject();
-  QJsonArray departments=data["Departments"].toArray();
+  auto accounttree=doc.object()["AccountTree"];
+  if (accounttree.type()!=QJsonValue::Object) {
+      return false;
+  }
+  QJsonObject data=accounttree.toObject();
+  auto departmentsVal=data["Departments"];
+  if (departmentsVal.type()!=QJsonValue::Array) {
+      return false;
+  }
+  QJsonArray departments=departmentsVal.toArray();
   for (const auto &departmentVal: departments) {
+    if (departmentVal.type()!=QJsonValue::Object) {
+      continue;
+    }
     QJsonObject department=departmentVal.toObject();
-    QJsonArray accounts=department["Accounts"].toArray();
+    auto accountsval=department["Accounts"];
+    if (accountsval.type()!=QJsonValue::Array) {
+      continue;
+    }
+    QJsonArray accounts=accountsval.toArray();
     for (const auto &accountVal: accounts) {
+      if (accountVal.type()!=QJsonValue::Object) {
+        continue;
+      }
       QJsonObject account=accountVal.toObject();
       QString respaccount1="";
       QString respaccount2="";
-      QJsonArray resppers=account["ResponsiblePersons"].toArray();
-      if (!resppers.isEmpty()) {
-        respaccount1=resppers.takeAt(0).toString();
+      auto resppersVal=account["ResponsiblePersons"];
+      if (resppersVal.type()==QJsonValue::Array) {
+        QJsonArray resppers=account["ResponsiblePersons"].toArray();
         if (!resppers.isEmpty()) {
-          respaccount2=resppers.takeAt(0).toString();
+          respaccount1=resppers.takeAt(0).toString();
+          if (!resppers.isEmpty()) {
+            respaccount2=resppers.takeAt(0).toString();
+          }
         }
       }
-      QJsonArray subaccounts=account["SubAccounts"].toArray();
+      auto subacoountsVal=account["SubAccounts"];
+      if (subacoountsVal.type()!=QJsonValue::Array) { 
+        continue;
+      }
+      QJsonArray subaccounts=subacoountsVal.toArray();
       for (const auto &subaccountVal: subaccounts) {
+        if (subaccountVal.type()!=QJsonValue::Object) {
+          continue;
+        }
         QJsonObject subaccount=subaccountVal.toObject();
         QStringList row;
-        appendStringToRow(row,department,"Name");
+        appendStringToRow(row,department,"Name","_unknown_");
         appendStringToRow(row,account,"CostCenter");
-        appendStringToRow(row,account,"Name");
+        appendStringToRow(row,account,"Name","_unknown_");
         row.append(respaccount1);
         row.append(respaccount2);
         appendStringToRow(row,account,"InvoicedUntil");
         appendStringToRow(row,account,"NoEntriesBefore");
-        appendStringToRow(row,subaccount,"Name");
-        resppers=subaccount["ResponsiblePersons"].toArray();
-        if (!resppers.isEmpty()) {
-          row.append(resppers.takeAt(0).toString());
+        appendStringToRow(row,subaccount,"Name", "_unknown_");
+        QString ukoresp1="";
+        QString ukoresp2="";
+        resppersVal=account["ResponsiblePersons"];
+        if (resppersVal.type()==QJsonValue::Array) {
+          auto resppers=subaccount["ResponsiblePersons"].toArray();
           if (!resppers.isEmpty()) {
-            row.append(resppers.takeAt(0).toString());
+            ukoresp1=resppers.takeAt(0).toString();
+            if (!resppers.isEmpty()) {
+              ukoresp2=resppers.takeAt(0).toString();
+            }
           }
-          else {
-            row.append("");
-          }
-        }
-        else {
-          row.append("");
-	  row.append("");
-        }
+        }   
+        row.append(ukoresp1);
+	      row.append(ukoresp2);
         appendStringToRow(row,subaccount,"Category");
         appendStringToRow(row,subaccount,"Description");
         appendStringToRow(row,subaccount,"PSP");
-        QJsonArray specialremuns=subaccount["SpecialRemunerations"].toArray();
+        auto specialremunsVal=subaccount["SpecialRemunerations"];
         QStringList srlist;
-        for (const auto &specialremunVal: specialremuns) {
-          srlist.append(specialremunVal.toString());
+        if (resppersVal.type()==QJsonValue::Array) {
+          QJsonArray specialremuns=specialremunsVal.toArray();
+          for (const auto &specialremunVal: specialremuns) {
+            if (specialremunVal.type()!=QJsonValue::String) {
+                continue;
+            }
+            srlist.append(specialremunVal.toString());
+          }
         }
         row.append(srlist.join(","));
-        QJsonArray microaccounts=subaccount["MicroAccounts"].toArray();
         row.append("");
-        if (microaccounts.size()>0) {
+        auto microaccountsVal=subaccount["MicroAccounts"];
+        QJsonArray microaccounts=microaccountsVal.toArray();
+        if ((microaccountsVal==QJsonValue::Array) && (microaccounts.size()>0)) {
           for (const auto &microaccountVal: microaccounts) {
+            if (microaccountVal.type()!=QJsonValue::String) {
+              continue;
+            }
             QString microaccount=microaccountVal.toString();
             row[row.size()-1]=microaccount; // we need a row for each microaccount, so replace it on the row
             result->append(row);            // and insert the new row to the result
@@ -172,7 +214,9 @@ void JSONReaderBase::loadDataNewerThan(int version)
 }
 
 void JSONReaderBase::processByteArray(QByteArray byteData) {
-   data=QJsonDocument::fromJson(byteData);
+   if (!byteData.isNull()&&!byteData.isEmpty()){
+      data=QJsonDocument::fromJson(byteData);
+   }
 }
 
 JSONOnCallSource::JSONOnCallSource(JSONReaderBase *jsonreader)

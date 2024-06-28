@@ -88,7 +88,7 @@ private:
   int currentversion;
 protected:
   JSONReaderBase* jsonreader;
-  void appendStringToRow(QStringList& row, const QJsonObject& object, const QString& field);
+  void appendStringToRow(QStringList& row, const QJsonObject& object, const QString& field, const QString& defaultValue="");
   virtual bool convertData(DSResult* const result)=0;
 };
 
