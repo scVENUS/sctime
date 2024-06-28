@@ -133,7 +133,7 @@ void XMLReader::parse(QIODevice *input)
         }
     }
     if (fileinput!=NULL) {
-      if (!readSuccessRemote&&!fileinput->exists()) {
+      if (!readSuccessRemote||!fileinput->exists()) {
         emit settingsPartRead(global, abtList, pcl, false, "");
         return;
       }
