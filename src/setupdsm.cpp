@@ -149,22 +149,24 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
   if (!specialremunPath.isEmpty())
     specialremunsources->append(new FileReader(specialremunPath, "|", 2));
   if (!jsonPath.isEmpty()) {
+    QUrl jsonUrl=QUrl::fromLocalFile(jsonPath);
     trace(QObject::tr("adding jsonreader: %1.").arg(jsonPath));
-    jsonreader=new JSONReaderUrl(networkAccessManager, "file://"+jsonPath);
+    jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
     kontensources->append(new JSONAccountSource(jsonreader));
-    jsonreader=new JSONReaderUrl(networkAccessManager, "file://"+jsonPath);
+    jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
     bereitsources->append(new JSONOnCallSource(jsonreader));
-    jsonreader=new JSONReaderUrl(networkAccessManager, "file://"+jsonPath);
+    jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
   }
   QString dsname;
   foreach (dsname, dataSourceNames) {
     if (dsname.compare("json") == 0) {
-      jsonreader=new JSONReaderUrl(networkAccessManager, "file://"+configDir.filePath("sctime-offline.json"));
+      QUrl jsonUrl=QUrl::fromLocalFile(configDir.filePath("sctime-offline.json"));
+      jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
       kontensources->append(new JSONAccountSource(jsonreader));
-     jsonreader=new JSONReaderUrl(networkAccessManager, "file://"+configDir.filePath("sctime-offline.json"));
+     jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
       bereitsources->append(new JSONOnCallSource(jsonreader));
-      jsonreader=new JSONReaderUrl(networkAccessManager, "file://"+configDir.filePath("sctime-offline.json"));
+      jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
       specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
     } else
     if (dsname.compare("file") == 0) {

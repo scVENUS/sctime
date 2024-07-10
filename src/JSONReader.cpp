@@ -272,7 +272,7 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
   reply->deleteLater();
   auto err=reply->error();
   if (err!=QNetworkReply::NoError) {
-        trace(tr("Couldn't open json from uri %1.").arg(uri));
+        trace(tr("Couldn't open json from uri %1 with error code %2").arg(uri.toString()).arg(err));
         emit aborted();
         return;
   }
@@ -281,7 +281,7 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
   emit finished();
 }
 
-JSONReaderUrl::JSONReaderUrl(QNetworkAccessManager* networkAccessManager, const QString& _uri): JSONReaderBase(), uri(_uri), networkAccessManager(networkAccessManager) {
+JSONReaderUrl::JSONReaderUrl(QNetworkAccessManager* networkAccessManager, const QUrl& _uri): JSONReaderBase(), uri(_uri), networkAccessManager(networkAccessManager) {
         
 };
 

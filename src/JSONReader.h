@@ -48,14 +48,14 @@ class JSONReaderUrl: public JSONReaderBase
 {
 Q_OBJECT
 public:
-  JSONReaderUrl(QNetworkAccessManager* networkAccessManager, const QString& uri);
+  JSONReaderUrl(QNetworkAccessManager* networkAccessManager, const QUrl& uri);
   virtual void requestData();
   virtual ~JSONReaderUrl() {};
 public slots:
   virtual void receiveData(QNetworkReply *reply);
   virtual void gotReply();
 private:
-  const QString uri;
+  const QUrl uri;
   QNetworkAccessManager* networkAccessManager;
 };
 
