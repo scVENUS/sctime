@@ -171,7 +171,7 @@ bool JSONAccountSource::convertData(DSResult* const result) {
         row.append("");
         auto microaccountsVal=subaccount["MicroAccounts"];
         QJsonArray microaccounts=microaccountsVal.toArray();
-        if ((microaccountsVal==QJsonValue::Array) && (microaccounts.size()>0)) {
+        if ((microaccountsVal.type()==QJsonValue::Array) && (microaccounts.size()>0)) {
           for (const auto &microaccountVal: microaccounts) {
             if (microaccountVal.type()!=QJsonValue::String) {
               continue;
