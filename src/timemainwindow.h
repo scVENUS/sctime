@@ -80,6 +80,7 @@ public:
     void callDateDialog();
     void callAboutBox();
     void callNightTimeDialog(bool isnight);
+    void callCheckinDialog();
     void minuteHochzaehlen();
     void pause();
     void continueAfterPause(int drift, int secSinceTick);

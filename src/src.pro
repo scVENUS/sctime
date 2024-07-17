@@ -10,7 +10,7 @@ TARGET = sctime
 CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
-          conflictdialog.cpp \
+          checkindialog.cpp conflictdialog.cpp \
           datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
@@ -18,7 +18,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
-          conflictdialog.h \
+          checkindialog.h conflictdialog.h \
           datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
           oncalldialog.h punchclock.h pausedialog.h preferencedialog.h punchclockchecker.h sctimexmlsettings.h\
@@ -27,7 +27,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
-FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
+FORMS = checkindialogbase.ui conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
         pausedialogbase.ui
 
 # you can generate legal.qrc by running ../generate_additional_legal.sh after you place licenses and sources into ../licenses and ../sources
@@ -123,10 +123,6 @@ wasm {
   }
   QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=$$DWARF_URL -lidbfs.js
   DEFINES += RESTONLY RESTCONFIG WASMQUIRKS DOWNLOADDIALOG
-  SOURCES += downloadshdialog.cpp
-  HEADERS += downloadshdialog.h
-  FORMS += downloadshdialogbase.ui
-  QT += gui-private
 }
 !wasm {
   # SOURCES += logindialog.cpp
@@ -134,6 +130,14 @@ wasm {
   # FORMS += logindialogbase.ui
   # QT += webenginewidgets
 }
+
+contains(DEFINES, DOWNLOADDIALOG) {
+  SOURCES += downloadshdialog.cpp
+  HEADERS += downloadshdialog.h
+  FORMS += downloadshdialogbase.ui
+  QT += gui-private
+}
+
 
 win32-msvc*{
   CONFIG += embed_manifest_exe

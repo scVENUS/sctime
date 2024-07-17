@@ -97,6 +97,7 @@
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
 #endif
+#include "checkindialog.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -210,6 +211,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   punchClockAction->setShortcut(Qt::CTRL|Qt::Key_O);
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 #endif
+
+  QAction* checkinAction = new QAction(tr("Checkin hours..."), this);
+  checkinAction->setShortcut(Qt::CTRL|Qt::Key_D);
+  connect(checkinAction, SIGNAL(triggered()), this, SLOT(callCheckinDialog()));
 
   QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
   resetAction->setShortcut(Qt::CTRL|Qt::Key_N);
@@ -408,6 +413,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
 #ifndef DISABLE_PUNCHCLOCK
   zeitmenu->addAction(punchClockAction);
 #endif
+  zeitmenu->addAction(checkinAction);
   zeitmenu->addAction(resetAction);
   settingsmenu->addAction(preferenceAction);
   hilfemenu->addAction(helpAction);
@@ -2375,6 +2381,18 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
       msgbox->deleteLater();
    });
    msgbox->open();
+}
+
+/**
+ * Opens the check-in dialog*/
+void TimeMainWindow::callCheckinDialog() 
+{
+    auto checkindialog = new CheckinDialog(settings, networkAccessManager, this);
+    connect(checkindialog, &CheckinDialog::finished,
+    [=](){
+      checkindialog->deleteLater();
+    });
+    checkindialog->open();
 }
 
 /** shows an error message if worked times could not be moved to another entry */
