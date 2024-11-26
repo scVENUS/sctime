@@ -179,21 +179,11 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
   stream<<Qt::endl;
 }
 
-// returns the encoding that the user has chosen by his locale settings
+// returns the encoding
+// note: we ignore the encoding an return always UTF-8 to reduce complexity
+// UTF-8 capable editors are ubiquitous nowadays
 QStringConverter::Encoding SCTimeXMLSettings::charmap() {
-#if defined(WIN32) || defined(Q_OS_MAC)
     return QStringConverter::Utf8;
-#else
-    QString codeset = QString(nl_langinfo(CODESET)).toUpper();
-  // FIXME: this heuristics might go wrong in some special cases (for example euro sign and iso-8859-15 encoding), but there does 
-  // not seem to be a better way using QT that works with all QT6 versions
-  // the best way to fix encoding issues would probably be to have the command always output utf8, which would reduce complexity here
-    if ((codeset!="UTF-8") || (codeset!="UTF8")) {
-      return QStringConverter::Latin1;
-    } else {
-      return QStringConverter::Utf8;
-    }
-#endif
 }
 
 int SCTimeXMLSettings::compVersion(const QString& v1, const QString& v2)
