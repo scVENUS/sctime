@@ -284,7 +284,10 @@ int main(int argc, char **argv ) {
   app->exec();
   
   // warning: dont rely on anything being executed beyond that point
+
+  #ifndef __linux__ // do not delete app on linux as this triggers some obscure hang in ~QXcbConnection with certain x2go settings
   delete app;
+  #endif
   delete global;
   return 0;
 }
