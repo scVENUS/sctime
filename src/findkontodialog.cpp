@@ -110,7 +110,7 @@ void FindKontoDialog::createConnects()
   connect (okButton,      SIGNAL(clicked()), this, SLOT(accept()));
   connect (cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
   connect (searchButton, SIGNAL(clicked()), this, SLOT(doSearch()));
-  connect (typeChoose,   SIGNAL(currentIndexChanged(QString)), this, SLOT(reloadValueChoose()));
+  connect (typeChoose,   SIGNAL(currentIndexChanged(int)), this, SLOT(reloadValueChoose()));
   connect (resultTree,   SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(accept()));
   connect (resultTree,   SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),
     this, SLOT(toggleButton(QTreeWidgetItem*, QTreeWidgetItem*)));
