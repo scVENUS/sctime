@@ -126,6 +126,7 @@ wasm {
   SOURCES += downloadshdialog.cpp
   HEADERS += downloadshdialog.h
   FORMS += downloadshdialogbase.ui
+  QT_WASM_EXTRA_EXPORTED_METHODS += ENV
   QT += gui-private
 }
 !wasm {
