@@ -125,6 +125,16 @@ QString getRestBaseUrl() {
   return baseurl;
 }
 
+// returns the directory URL for static files
+QString getStaticUrl() {
+  auto env = QProcessEnvironment::systemEnvironment();
+  QString staticurl = env.value("SCTIME_STATIC_URL");
+  if (staticurl.isNull()||staticurl.isEmpty()) {
+     staticurl=getRestBaseUrl()+STATIC_URL;
+  }
+  return staticurl;
+}
+
 QString getIdentifier() {
   return QSysInfo::machineHostName();
 }

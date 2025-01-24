@@ -30,11 +30,13 @@ void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);
 QString getRestBaseUrl();
+QString getStaticUrl();
 QString getIdentifier();
 
 #define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"
 #define REST_COMMITED_ENDPOINT "sctimegui/v1/commiteddata"
 #define REST_ACCOUNTINGMETA_ENDPOINT "sctimegui/v1/accountingmetadata"
-#define REFRESH_URL "static/refresh.html"
+#define STATIC_URL "static/"
+#define REFRESH_URL_PART "refresh.html"
 
 #endif

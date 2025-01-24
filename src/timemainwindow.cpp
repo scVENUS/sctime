@@ -2520,7 +2520,7 @@ void TimeMainWindow::sessionInvalid() {
     connect(msgbox, &QMessageBox::finished,
     [=](){
       dialogopen=false;
-      emscripten_run_script(QString("window.open('%1', '%2');").arg(getRestBaseUrl()+REFRESH_URL).arg(tr("Refresh Session")).toUtf8().data());
+      emscripten_run_script(QString("window.open('%1', '%2');").arg(getStaticUrl()+REFRESH_URL_PART).arg(tr("Refresh Session")).toUtf8().data());
     });
     msgbox->open();
 #endif
