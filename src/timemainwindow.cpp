@@ -1709,11 +1709,12 @@ void TimeMainWindow::showContextMenu(const QPoint &pos)
       int d=kontoTree->getItemDepth(item);
 
       if ((d==2)&&(col==KontoTreeItem::COL_ACCOUNTS)) {
-         QMenu menu(tr("Account menu"), this);
-         menu.addAction(copyAction);
-         menu.addAction(copyLinkAction);
-         menu.addAction(inPersKontAction);
-         menu.exec(kontoTree->viewport()->mapToGlobal(pos));
+         QMenu* menu =new QMenu(tr("Account menu"), this);
+         menu->addAction(copyAction);
+         menu->addAction(copyLinkAction);
+         menu->addAction(inPersKontAction);
+         connect(menu,&QMenu::aboutToHide, menu, &QMenu::deleteLater);
+         menu->popup(kontoTree->viewport()->mapToGlobal(pos));
       }
 }
 
