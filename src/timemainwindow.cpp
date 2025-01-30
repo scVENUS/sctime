@@ -1313,7 +1313,7 @@ void TimeMainWindow::eintragEntfernen()
   if (abtList->isAktiv(abt,ko,uko,idx)) {
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
          tr("Warning"), tr("Cannot delete active entry"),
-         QMessageBox::Ok, QMessageBox::NoButton);
+         QMessageBox::Ok);
       connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
       msgbox->open();
       return;
