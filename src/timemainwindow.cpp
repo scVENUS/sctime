@@ -2374,7 +2374,7 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
           auto questionBox=new QMessageBox(QMessageBox::Question,
                   tr("sctime: move worked time to new entry"),
                   tr("Should %1 minutes be moved to the new selected entry?").arg(int(delta/60)),
-                  QMessageBox::Yes, QMessageBox::No);
+                  QMessageBox::Yes|QMessageBox::No);
           connect(questionBox, QMessageBox::finished, [=]() {
             if (questionBox->result()==QMessageBox::Yes) {
               if (beforeOpen.daysTo(QDateTime::currentDateTime())>=1) {
