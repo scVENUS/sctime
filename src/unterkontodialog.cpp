@@ -62,7 +62,9 @@ UnterKontoDialog::UnterKontoDialog(const QString& abt,const QString& ko, const  
   EintragsListe::iterator etiter;
 
   if (!abtList->findEintrag(etiter,m_unterkonto, abt, ko, uko,idx)) {
-    QMessageBox::information(parent,tr("sctime: Settings of subaccount"), tr("Subaccount not found!"));
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Information, tr("sctime: Settings of subaccount"), tr("Subaccount not found!"));
+    connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
     return;
   }
   et = etiter->second;
@@ -314,10 +316,12 @@ void UnterKontoDialog::checkInput()
   QStringEncoder encoder(SCTimeXMLSettings::charmap());
   encoder(getComment());
   if (encoder.hasError()) {
-    QMessageBox::critical(0,tr("Error"),tr("Error: The entered "
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, tr("Error"),tr("Error: The entered "
         "description contains a character that cannot be displayed in "
-	"your locale."),
-            QMessageBox::Ok | QMessageBox::Default,0);
+	      "your locale."),
+        QMessageBox::Ok | QMessageBox::Default,0);
+    connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
     reject();
   } else
     accept();

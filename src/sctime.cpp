@@ -67,8 +67,13 @@ QString SCTIME_IPC;
 QString clientId;
 
 static void fatal(const QString& title, const QString& body) {
-  QMessageBox::critical(NULL, title, body, QMessageBox::Ok);
-  exit(1);
+  QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, title, body, QMessageBox::Ok);
+  QObject::connect(msgbox, &QMessageBox::finished, [=]()
+  {
+    msgbox->deleteLater();
+    exit(1);
+  });
+  msgbox->open();
 }
 
 static const QString help(QObject::tr(
@@ -283,7 +288,9 @@ int main(int argc, char **argv ) {
       QFileInfo info(configDir,"settings.xml");
       if (info.exists()) {
         QDateTime lasttime=info.lastModified();
-        QMessageBox::critical(NULL, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
+        QObject::connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+        msgbox->open();
       }
   }
   // the more elegant version does not work for older QT (for example 5.7)
