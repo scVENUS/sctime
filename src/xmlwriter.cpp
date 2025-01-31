@@ -442,6 +442,7 @@ void XMLWriter::writeSettings(bool global) {
   QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
   filename=configDir.filePath(filename);
   QFile fnew(filename + ".tmp");
+  #ifndef __EMSCRIPTEN__ // we cannot share local filesystem on WASM, so this error cannot occour
   QDateTime filemod = QFileInfo(filename).lastModified();
   if (!global && settings->m_lastSave.isValid() && filemod.isValid() && filemod>settings->m_lastSave.addSecs(30)) {
       QMessageBox::StandardButton answer = QMessageBox::question(NULL, QObject::tr("sctime: saving settings"), QObject::tr("%1 has been modified since the last changes done by this sctime instance. Do you wanto to overwrite theses changes?").arg(fnew.fileName()));
@@ -450,8 +451,12 @@ void XMLWriter::writeSettings(bool global) {
          return;
       }
   }
+  #endif
   if (!fnew.open(QIODevice::WriteOnly)) {
-      QMessageBox::critical(NULL, QObject::tr("sctime: saving settings"), QObject::tr("opening file %1 for writing failed. Please make sure the sctime settings directory is available. Details: %2").arg(fnew.fileName(), fnew.errorString()));
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+            QObject::tr("sctime: saving settings"), QObject::tr("opening file %1 for writing failed. Please make sure the sctime settings directory is available. Details: %2").arg(fnew.fileName(), fnew.errorString()));
+      connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
       emit settingsWriteFailed("write failed");
       return;
   }
@@ -468,26 +473,34 @@ void XMLWriter::writeSettings(bool global) {
     // Backup erstellen für settings.xml
     QFile fbackup(filename + ".bak");
     if (fbackup.exists()) fbackup.remove();
-    if (!fcurrent.copy(fbackup.fileName()))
-      QMessageBox::warning(NULL, QObject::tr("sctime: saving settings"),
-                           QObject::tr("%1 cannot be copied to %2: %3").arg(filename, fbackup.fileName(), fcurrent.errorString()));
-    else
+    if (!fcurrent.copy(fbackup.fileName())) {
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+            QObject::tr("sctime: saving settings"),
+            QObject::tr("%1 cannot be copied to %2: %3").arg(filename, fbackup.fileName(), fcurrent.errorString()));
+      connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
+    } else
       settings->backupSettingsXml = false;
   }
 #ifndef WIN32
   // unter Windows funktioniert kein "rename", wenn es den Zielnamen schon gibt.
   // Doch unter UNIX kann ich damit Dateien atomar ersetzen.
   if (rename(fnew.fileName().toLocal8Bit(), filename.toLocal8Bit())!=0) {
-      QMessageBox::information(NULL, QObject::tr("sctime: saving settings"),
-                        QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, strerror(errno)));
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Information,
+            QObject::tr("sctime: saving settings"),
+            QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, strerror(errno)));
+      connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
       emit settingsWriteFailed("rename error");
       return;
   }
 #else
   fcurrent.remove();
   if (!fnew.rename(filename)) {
-    QMessageBox::critical(NULL, QObject::tr("sctime: saving settings"),
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, QObject::tr("sctime: saving settings"),
                          QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, fnew.errorString()));
+    connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
     emit settingsWriteFailed("rename error");
     return;
   }

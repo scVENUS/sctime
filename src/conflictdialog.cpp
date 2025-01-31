@@ -81,8 +81,11 @@ void ConflictDialog::performMerge() {
         emit finished(2);
     } else {
         emit finished(2);
-        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+                              QObject::tr("sctime: reading configuration file"),
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+        connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+        msgbox->open();
     }
 
 }
@@ -131,8 +134,11 @@ void ConflictDialog::performReplace() {
         emit finished(1);
     } else {
         emit finished(1);
-        QMessageBox::critical(NULL, QObject::tr("sctime: reading configuration file"),
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+                              QObject::tr("sctime: reading configuration file"),
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+        connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+        msgbox->open();
     }
 }
 

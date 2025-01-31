@@ -63,7 +63,9 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   targetfile.remove();
 
   if (!workfile.open(QIODevice::WriteOnly)) {
-      QMessageBox::warning(NULL, QObject::tr("sctime: writing shell script"), workfile.fileName() + ": " + workfile.errorString());
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning, QObject::tr("sctime: writing shell script"), workfile.fileName() + ": " + workfile.errorString());
+      connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
       return;
   }
   QTextStream stream( & workfile);
@@ -72,8 +74,10 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
   workfile.close();
 
   if (!workfile.rename(filename)) {
-    QMessageBox::critical(NULL, QObject::tr("sctime: saving sh file"),
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, QObject::tr("sctime: saving sh file"),
                          QObject::tr("%1 cannot be renamed to %2: %3").arg(workfile.fileName(), filename, workfile.errorString()));
+    connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
   }
 }
 

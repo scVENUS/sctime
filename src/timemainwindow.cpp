@@ -707,10 +707,12 @@ void TimeMainWindow::resume() {
   sekunden += pauseSecs; // damit  sich driftKorrektur() nicht beschwert
   lastMinuteTick = now;
   if (pauseSecs > 12 * 3600 * 3600) {
-    QMessageBox::information(
-        this,  tr("sctime: resume"),
+    QMessageBox *msgboxinfo=new QMessageBox(QMessageBox::Information,
+          tr("sctime: resume"),
           tr("The machine was suspended from %1 until %2. Please check and adjust accounted time if necessary!")
           .arg(before.toString(), now.toString()));
+    connect(msgboxinfo, &QMessageBox::finished, msgboxinfo, &QMessageBox::deleteLater);
+    msgboxinfo->open();
     return;
   }
   auto msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: resume"),
@@ -992,7 +994,10 @@ void TimeMainWindow::updateTaskbarTitle(int zeit)
 void TimeMainWindow::showWorkdayWarning() {
   QString warning=m_PCSToday->currentWarning;
   if ((warning!="")&&(settings->workingTimeWarnings())) {
-     QMessageBox::warning(0, tr("Warning"),warning);
+     QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+          tr("Warning"),warning);
+     connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+     msgbox->open();
   }
 }
 
@@ -1306,8 +1311,11 @@ void TimeMainWindow::eintragEntfernen()
   KontoTreeItem *topi, *abti, *koi, *ukoi, *eti;
 
   if (abtList->isAktiv(abt,ko,uko,idx)) {
-      QMessageBox::warning(NULL, tr("Warning"), tr("Cannot delete active entry"),
-                              QMessageBox::Ok, QMessageBox::NoButton);
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+         tr("Warning"), tr("Cannot delete active entry"),
+         QMessageBox::Ok);
+      connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
       return;
   }
 
@@ -1652,6 +1660,7 @@ void TimeMainWindow::resetDiff()
               }
               abtList->setZeitDifferenz(0);
               zeitChanged();
+              msgbox->deleteLater();
             });
     msgbox->open();
   }
@@ -2040,7 +2049,10 @@ void TimeMainWindow::callBereitschaftsDialog(QTreeWidgetItem * item) {
   UnterKontoListe::iterator ukiter;
 
   if (!abtList->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
-    QMessageBox::critical(this, tr("sctime: On-call times"), tr("subaccount not found!"));
+    QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+          tr("sctime: On-call times"), tr("subaccount not found!"));
+    connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+    msgbox->open();
     return;
   }  
 
@@ -2061,7 +2073,10 @@ void TimeMainWindow::finishBereitschaftsDialog(QString abt, QString ko, QString 
       UnterKontoListe::iterator ukiter;
 
       if (!abtList->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
-        QMessageBox::critical(this, tr("sctime: On-call times"), tr("subaccount not found!"));
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+        tr("sctime: On-call times"), tr("subaccount not found!"));
+        connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+        msgbox->open();
         return;
       }
       ukiter->second.setBereitschaft(bereitschaftenNeu);
@@ -2160,13 +2175,15 @@ void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const 
   if ((settings->warnISO8859())&&(abtList->getEintrag(eintrag, abt, ko, uko, idx))) {
     QStringEncoder encoder(QStringConverter::Latin1);
     encoder(eintrag.kommentar);
-    if (encoder.hasError())
-      QMessageBox::warning(
-            0,
+    if (encoder.hasError()) {
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
             tr("Warning"),
             tr("Warning: The entered comment contains a character that is not part of "
                "ISO-8859-1 and might not render correctly on some platforms. "
                "This may cause problems with custom reporting scripts."));
+      connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
+    }
   }
 }
 
@@ -2354,23 +2371,28 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
           return;
         }
         if ((!paused)&&(newidx!=oldidx)&&(delta>=60)) {
-          int result=QMessageBox::question(
-            this, tr("sctime: move worked time to new entry"),
+          auto questionBox=new QMessageBox(QMessageBox::Question,
+                  tr("sctime: move worked time to new entry"),
                   tr("Should %1 minutes be moved to the new selected entry?").arg(int(delta/60)),
-                  QMessageBox::Yes, QMessageBox::No);
-          if (result==QMessageBox::Yes) {
-            if (beforeOpen.daysTo(QDateTime::currentDateTime())>=1) {
-              cantMoveTimeDialog(delta);
-              mutex.unlock();
-              return;
-            }
-            abtListToday->changeZeit(abt, ko, uko, oldidx, -delta, false, true, pausedAbzur);
-            abtListToday->changeZeit(abt, ko, uko, newidx, delta, false, true, pausedAbzur);
+                  QMessageBox::Yes|QMessageBox::No);
+          connect(questionBox, &QMessageBox::finished, [=]() {
+            if (questionBox->result()==QMessageBox::Yes) {
+              if (beforeOpen.daysTo(QDateTime::currentDateTime())>=1) {
+                cantMoveTimeDialog(delta);
+                mutex.unlock();
+                return;
+              }
+              abtListToday->changeZeit(abt, ko, uko, oldidx, -delta, false, true, pausedAbzur);
+              abtListToday->changeZeit(abt, ko, uko, newidx, delta, false, true, pausedAbzur);
             
-            kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
-          }
+              kontoTree->refreshAllItemsInUnterkonto(abt,ko,uko);
+            }
+            saveLater();
+            questionBox->deleteLater();
+          });
+          questionBox->open();
+
         }
-        saveLater();
       }
       mutex.unlock();
       msgbox->deleteLater();
@@ -2381,10 +2403,12 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
 /** shows an error message if worked times could not be moved to another entry */
 void TimeMainWindow::cantMoveTimeDialog(int delta)
 {
-  QMessageBox::warning(
-            this, tr("sctime: could not move worked time to new entry"),
-                  tr("A date change has occurrred - therefore %1 minutes of work time won't be moved automatically to the new entry. Please check your entries manually.").arg(int(delta/60)),
-                  QMessageBox::Ok);
+  QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
+            tr("sctime: could not move worked time to new entry"),
+            tr("A date change has occurrred - therefore %1 minutes of work time won't be moved automatically to the new entry. Please check your entries manually.").arg(int(delta/60)),
+            QMessageBox::Ok);
+  connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+  msgbox->open();
 }
 
 /**
