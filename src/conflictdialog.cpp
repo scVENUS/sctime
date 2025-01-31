@@ -24,6 +24,10 @@
 #include "timemainwindow.h"
 #include "globals.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
     tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
     setupUi(this);
@@ -143,9 +147,14 @@ void ConflictDialog::performReplace() {
     }
 }
 
+// this function terminates the application hard, without saving files, etc. This avoids additional conflicts with other sessions.
 void ConflictDialog::performClose() {
-    qApp->quit();
-    emit finished(0);
+    qApp->exit();
+#ifdef __EMSCRIPTEN__
+    emscripten_run_script(QString(" document.documentElement.innerHTML = \"<html><head><title>sctime - session closed</title></head><body>This session has been closed.</body></html>\"").toUtf8().data());
+#else
+    exit(0);
+#endif
 }
 
 void ConflictDialog::errorDialog() {
