@@ -27,6 +27,7 @@
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
     tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
     setupUi(this);
+    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
