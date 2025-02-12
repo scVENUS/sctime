@@ -71,6 +71,8 @@ void SctimeApp::init(Lock* lock, QStringList& dataSourceNames, const QString& ze
 
   DSM* dsm=new DSM(dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile,offlinefile);
   QNetworkAccessManager *networkAccessManager=new QNetworkAccessManager();
+  // do not redirect for REST Requests, to avoid getting send to login pages, etc, which will not work anyways in REST.
+  networkAccessManager->setRedirectPolicy(QNetworkRequest::ManualRedirectPolicy);
 
   mainWindow = new TimeMainWindow(m_lock, networkAccessManager, dsm, logfile);
 #ifndef WIN32
