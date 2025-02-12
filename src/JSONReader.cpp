@@ -263,6 +263,7 @@ bool JSONSpecialRemunSource::convertData(DSResult* const result) {
 void JSONReaderUrl::requestData()
 {
   auto request = QNetworkRequest(QUrl(uri));
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
   QNetworkReply *reply = networkAccessManager->get(request);
   connect(reply, &QNetworkReply::finished, this, &JSONReaderUrl::gotReply);
 }

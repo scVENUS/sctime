@@ -53,6 +53,7 @@ void TextViewerDialog::sourceChanged(const QUrl &src) {
     }
     QNetworkAccessManager nam;
     QNetworkRequest request(src);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     auto reply = nam.get(request);
 
     m_browser->setHtml("");

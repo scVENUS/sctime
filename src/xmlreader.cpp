@@ -78,6 +78,7 @@ void XMLReader::openREST() {
       postfix =  "?date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
     auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + postfix));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     QNetworkReply *reply = networkAccessManager->get(request);
     connect(reply, &QNetworkReply::finished, this, &XMLReader::gotReply);
 }

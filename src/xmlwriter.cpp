@@ -60,6 +60,7 @@ void XMLWriter::onErr(QNetworkReply* input) {
 
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   QNetworkRequest request(url);
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
   QNetworkReply *reply = networkAccessManager->put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
