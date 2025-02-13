@@ -41,7 +41,7 @@ JSONSource::JSONSource(JSONReaderBase *jsonreader)
   }
 
 void JSONSource::appendStringToRow(QStringList& row, const QJsonObject& object, const QString& field, const QString& defautvalue) {
-  if (!object.contains(field)||object[field].type()!=QJsonValue::String) {
+  if (!object.contains(field)||object[field].isNull()||object[field].type()!=QJsonValue::String) {
     row.append(defautvalue);
     return;
   }
