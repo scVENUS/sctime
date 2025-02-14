@@ -101,12 +101,13 @@ void XMLReader::parse(QIODevice *input)
     bool readSuccessRemote=false;
 
     if (netinput!=NULL) {
-        if (netinput->error()!=QNetworkReply::NoError) {
+        auto sctimerestresponse=netinput->rawHeader("sctime-rest-response");
+        if ((netinput->error()!=QNetworkReply::NoError)||(QString(sctimerestresponse)!="true")) {
             logError("trying to open local file");
             if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=404 && !settings->restCurrentlyOffline()) {
                emit offlineSwitched(true);
             }
-            if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+            if ((netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(QString(sctimerestresponse)!="true")) {
                emit unauthorized();
             }
             auto f=openFile(true);

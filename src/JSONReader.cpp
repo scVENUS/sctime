@@ -276,6 +276,12 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
         emit aborted();
         return;
   }
+  auto sctimerestresponse=reply->rawHeader("sctime-rest-response");
+  if (QString(sctimerestresponse)!="true") {
+    trace(tr("Couldn't open json from uri %1 because sctime-rest-response header is missing").arg(uri.toString()));
+    emit aborted();
+    return;
+  }
   QByteArray byteData = reply->readAll();
   processByteArray(byteData);
   emit finished();

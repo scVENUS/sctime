@@ -22,6 +22,11 @@ void XMLWriter::checkReply(QNetworkReply* input) {
       return;
    }
    if (input->isFinished()) {
+      auto sctimerestresponse=input->rawHeader("sctime-rest-response");
+      if (QString(sctimerestresponse)!="true") {
+        trace(tr("Couldn't open xml because sctime-rest-response header is missing: %1").arg(QString(sctimerestresponse)));
+        onErr(input);
+      }
       if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
          auto conflictingclient=input->rawHeader("sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
@@ -50,7 +55,8 @@ void XMLWriter::onErr(QNetworkReply* input) {
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
-    if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+    auto sctimerestresponse=input->rawHeader("sctime-rest-response");
+    if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(QString(sctimerestresponse)!="true")) {
       emit unauthorized();
     }
     // we have already saved them locally, so should be able to continue anyway
@@ -61,6 +67,7 @@ void XMLWriter::onErr(QNetworkReply* input) {
 void XMLWriter::writeBytes(QUrl url, QByteArray ba) {
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+  request.setMaximumRedirectsAllowed(0);
   QNetworkReply *reply = networkAccessManager->put(request, ba);
   connect(reply, &QNetworkReply::finished, this, &XMLWriter::gotReply);
 }
