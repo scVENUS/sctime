@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += warn_on qt uic debug 
+CONFIG += warn_on qt uic
 CONFIG += c++11
 # you have to explicitly recompile sctime.cpp whenever you change this value
 VERSION = $$system(git describe --always||echo UNDEFINED)
@@ -121,7 +121,8 @@ wasm {
   isEmpty(DWARF_URL) {
     DWARF_URL = http://127.0.0.1:8888/static/sctime.wasm.debug.wasm
   }
-  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=$$DWARF_URL -lidbfs.js
+  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=$$DWARF_URL -lidbfs.js -sASYNCIFY
+  QMAKE_LFLAGS += -lidbfs.js -sASYNCIFY -Os
   DEFINES += RESTONLY RESTCONFIG WASMQUIRKS DOWNLOADDIALOG
   SOURCES += downloadshdialog.cpp
   HEADERS += downloadshdialog.h
