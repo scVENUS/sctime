@@ -64,6 +64,7 @@ AbteilungsListe::AbteilungsListe(const QDate& _datum, AbteilungsListe* abtlist):
   // Copy golbal special remunerations
   setGlobalSpecialRemunNames(abtlist->getGlobalSpecialRemunNames());
 
+
   AbteilungsListe::iterator abtPos;
 
   for (abtPos=abtlist->begin(); abtPos!=abtlist->end(); ++abtPos) {
@@ -79,6 +80,9 @@ AbteilungsListe::AbteilungsListe(const QDate& _datum, AbteilungsListe* abtlist):
         QString unterkonto=ukontPos->first;
         insertEintrag(abt,konto,unterkonto);
         setDescription(abt,konto,unterkonto,eintragsliste->description());
+        if (eintragsliste->hasBgColor()) {
+          setBgColor(eintragsliste->getBgColor(),abt,konto,unterkonto);
+        }
         setUnterKontoFlags(abt,konto,unterkonto,eintragsliste->getFlags(),FLAG_MODE_OVERWRITE);
 
         // Default Kommentare kopieren
@@ -93,6 +97,12 @@ AbteilungsListe::AbteilungsListe(const QDate& _datum, AbteilungsListe* abtlist):
         // Copy special remunerations
         itUk->second.setSpecialRemunNames(eintragsliste->getSpecialRemunNames());
       }
+      if (unterkontoliste->hasBgColor()) {
+        setBgColor(unterkontoliste->getBgColor(),abt,konto);
+      }
+    }
+    if (kontoliste->hasBgColor()) {
+      setBgColor(kontoliste->getBgColor(),abt);
     }
   }
 }
