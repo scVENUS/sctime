@@ -66,7 +66,7 @@ class TimeMainWindow: public QMainWindow
     Q_OBJECT
 public:
     TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessManager, DSM* dsm, QString logfile);
-    QTreeWidget* getKontoTree();
+    QTreeWidget *getKontoTree();
     virtual ~TimeMainWindow();
     SCTimeXMLSettings* settings;
     void infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links=false);
@@ -155,6 +155,8 @@ public:
     void switchRestCurrentlyOffline(bool offline);
 
     void readInitialSetting();
+    void readSettingsFromFile();
+    void applySettings();
 
 
   signals:        

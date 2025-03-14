@@ -97,6 +97,7 @@
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
 #endif
+#include <qfiledialog.h>
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -296,6 +297,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QAction* downloadSHAction = new QAction(tr("Download sh files"), this);
   connect(downloadSHAction, SIGNAL(triggered()), this, SLOT(callDownloadSHDialog()));
 
+  QAction* readSettingsFromFileAction = new QAction(tr("Import settings"), this);
+  connect(readSettingsFromFileAction, SIGNAL(triggered()), this, SLOT(readSettingsFromFile()));
+
 
   jumpAction = new QAction(tr("S&how selected account in 'all accounts'"), this);
 
@@ -394,8 +398,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   kontomenu->addAction(copyLinkAction);
   kontomenu->addAction(pasteLinkAction);
   kontomenu->addAction(refreshAction);
+  settingsmenu->addAction(preferenceAction);
 #ifdef DOWNLOADDIALOG
   kontomenu->addAction(downloadSHAction);
+  settingsmenu->addAction(readSettingsFromFileAction);
 #endif
   kontomenu->addSeparator();
   kontomenu->addAction(bgColorChooseAction);
@@ -409,7 +415,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   zeitmenu->addAction(punchClockAction);
 #endif
   zeitmenu->addAction(resetAction);
-  settingsmenu->addAction(preferenceAction);
   hilfemenu->addAction(helpAction);
   hilfemenu->addAction(aboutAction);
   hilfemenu->addAction(qtAction);
@@ -441,6 +446,21 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
 #else
   QTimer::singleShot(100, this, SLOT(readInitialSetting()));
 #endif
+}
+
+void TimeMainWindow::readSettingsFromFile() {
+  QFileDialog::getOpenFileContent("Settings XML (*.xml)", [=](const QString &fileName, const QByteArray &fileContent){
+    XMLReader *reader=new XMLReader(settings, networkAccessManager, true, false, false, abtList, m_punchClockList);
+    QDomDocument *doc=new QDomDocument();
+    doc->setContent(fileContent);
+    connect(reader, &XMLReader::settingsPartRead, [=](){
+      refreshKontoListe();
+      reader->deleteLater();
+      delete doc;
+    });
+    reader->fillSettingsFromDocument(*doc, settings);
+    applySettings();
+  });
 }
 
 void TimeMainWindow::readInitialSetting() {
@@ -478,31 +498,9 @@ void TimeMainWindow::readInitialSetting() {
 }
 
 void TimeMainWindow::initialSettingsRead() {
-  std::vector<QString> xmlfilelist;
   std::vector<int> columnwidthlist;
-  settings->getDefaultCommentFiles(xmlfilelist);
-  qtDefaultFont=QApplication::font();
-  if (settings->useCustomFont())
-  {
-    QString custFont=settings->customFont();
-    int custFontSize=settings->customFontSize();
-    QApplication::setFont(QFont(custFont,custFontSize));
-  }
-  
-  defaultCommentReader.read(abtList,xmlfilelist);
-  DefaultTagReader defaulttagreader;
-  defaulttagreader.read(&defaultTags);
-
-  // restore size+position
-  #ifndef RESTONLY
-  QSize size = QSize(700,400);
-  QPoint pos = QPoint(0,0);
-  settings->getMainWindowGeometry(pos,size);
-  resize(size);
-  move(pos);
-  #endif
-
   settings->getColumnWidthList(columnwidthlist);
+  
 
   QAction* min1MinusAction = new QAction(tr("Minimal decrease time"), this);
   min1MinusAction->setShortcut(Qt::CTRL|Qt::Key_Comma);
@@ -510,7 +508,6 @@ void TimeMainWindow::initialSettingsRead() {
 
   kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
   connect(kontoTree, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem * )), this, SLOT(changeShortCutSettings(QTreeWidgetItem * ) ));
-  kontoTree->closeFlaggedPersoenlicheItems();
   kontoTree->showPersoenlicheKontenSummenzeit(settings->persoenlicheKontensumme());
   kontoTree->addAction(min1MinusAction);
 #ifndef Q_OS_MAC
@@ -518,16 +515,7 @@ void TimeMainWindow::initialSettingsRead() {
 #endif
 
   setCentralWidget(kontoTree);
-
-  if (!settings->showTypeColumn()) {
-    kontoTree->hideColumn(KontoTreeItem::COL_TYPE);
-  }
-  if (!settings->showPSPColumn()) {
-    kontoTree->hideColumn(KontoTreeItem::COL_PSP);
-  }
-
-  configClickMode(settings->singleClickActivation());
-  updateSpecialModes(true);
+  applySettings();  
   switchRestCurrentlyOffline(false);
 
   loadPCCData(settings->previousPCCData());
@@ -552,14 +540,8 @@ void TimeMainWindow::initialSettingsRead() {
   changeShortCutSettings(NULL); // Unterkontenmenues deaktivieren...
 
   updateCaption();
-  kontoTree->setAcceptDrops(settings->dragNDrop());
-  kontoTree->showAktivesProjekt();
-  kontoTree->updateColumnWidth();
+
   kontoTree->setContextMenuPolicy(Qt::CustomContextMenu);
-  //close the flagged items, needed if "Summe in pers. Konten" is 
-  //selected
-  kontoTree->closeFlaggedPersoenlicheItems();
-  showAdditionalButtons(settings->powerUserView());
 
   m_dsm->setup(settings, networkAccessManager);
 
@@ -594,6 +576,51 @@ void TimeMainWindow::initialSettingsRead() {
   saveLaterTimer->setSingleShot(true);
   connect(saveLaterTimer, &QTimer::timeout, this, &TimeMainWindow::save);
 #endif
+}
+
+void TimeMainWindow::applySettings() {
+  kontoTree->setAcceptDrops(settings->dragNDrop());
+  kontoTree->showAktivesProjekt();
+  kontoTree->updateColumnWidth();
+  //close the flagged items, needed if "Summe in pers. Konten" is 
+  //selected
+  kontoTree->closeFlaggedPersoenlicheItems();
+  showAdditionalButtons(settings->powerUserView());
+  std::vector<QString> xmlfilelist;
+  settings->getDefaultCommentFiles(xmlfilelist);
+  qtDefaultFont=QApplication::font();
+  if (settings->useCustomFont())
+  {
+    QString custFont=settings->customFont();
+    int custFontSize=settings->customFontSize();
+    QApplication::setFont(QFont(custFont,custFontSize));
+  }
+  
+  defaultCommentReader.read(abtList,xmlfilelist);
+  DefaultTagReader defaulttagreader;
+  defaulttagreader.read(&defaultTags);
+
+  // restore size+position
+  #ifndef RESTONLY
+  QSize size = QSize(700,400);
+  QPoint pos = QPoint(0,0);
+  settings->getMainWindowGeometry(pos,size);
+  resize(size);
+  move(pos);
+  #endif
+
+  kontoTree->closeFlaggedPersoenlicheItems();
+
+  if (!settings->showTypeColumn()) {
+    kontoTree->hideColumn(KontoTreeItem::COL_TYPE);
+  }
+  if (!settings->showPSPColumn()) {
+    kontoTree->hideColumn(KontoTreeItem::COL_PSP);
+  }
+
+  configClickMode(settings->singleClickActivation());
+  updateSpecialModes(true);
+
 }
 
 void TimeMainWindow::displayLastLogEntry(){

@@ -11,6 +11,7 @@
 
 void XMLReader::open()
 {
+  connect(this, &XMLReader::settingsPartRead, this, &XMLReader::continueAfterReading, Qt::UniqueConnection);
   bool usefilestorageonly=true;
 #ifdef RESTCONFIG
   SCTimeXMLSettings *settings = (SCTimeXMLSettings *)(parent());
