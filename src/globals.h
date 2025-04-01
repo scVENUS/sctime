@@ -26,6 +26,7 @@ extern QDir configDir;
 extern QString lockfilePath;
 extern QString SCTIME_IPC;
 extern QString clientId;
+extern QString clientinfo;
 void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);

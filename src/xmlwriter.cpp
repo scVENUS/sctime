@@ -531,7 +531,7 @@ void XMLWriter::writeSettings(bool global) {
       postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
     bastream.flush();
-    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&conflicttimeout=" + QString::number(conflicttimeout) + postfix), qCompress(ba));
+    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&clientinfo=" + QUrl::toPercentEncoding(clientinfo) +"&conflicttimeout=" + QString::number(conflicttimeout) + postfix), qCompress(ba));
   }
 
 #endif // RESTCONFIG
