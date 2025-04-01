@@ -2022,14 +2022,14 @@ void TimeMainWindow::callDateDialog()
   DateDialog * dateDialog=new DateDialog(abtList->getDatum(), this);
   connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeVisibleDate(const QDate&)));
   dateDialog->setAttribute(Qt::WA_DeleteOnClose);
-  dateDialog->show();
+  dateDialog->open();
 }
 
 void TimeMainWindow::infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links) {
   dialog = new TextViewerDialog(this,title,name, plaintext_links);
   dialog->resize(x, y);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->show();
+  dialog->open();
 }
 
 void TimeMainWindow::callHelpDialog() {
