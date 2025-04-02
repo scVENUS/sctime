@@ -2624,6 +2624,7 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
       saveWithTimeout(0);
   });
   dialog->open();
+  dialog->adjustSize();
 }
 
 void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings) {
