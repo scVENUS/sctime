@@ -2043,10 +2043,14 @@ void TimeMainWindow::callHelpDialog() {
 void TimeMainWindow::callAboutBox() {
   TextViewerDialog* dialog;
   infoDialog(dialog, tr("About sctime"), tr("sctime about"), 400, 350);
+  QString clientidline="";
+#ifdef __EMSCRIPTEN__
+  clientidline="<tr><td>ClientID:</td><td>"+clientId+"</td></tr>";
+#endif
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   dialog->browser()->setHtml(tr(
         "<h1><img src=':/scLogo_15Farben' />sctime</h1>"
-        "<table><tr><td>Version:</td><td>%1</td></tr>"
+        "<table><tr><td>Version:</td><td>%1</td></tr>%4"
         "<tr><td>Qt-Version:</td><td>%2 (development)</td></tr>"
         "<tr><td></td><td>%3 (runtime)</td></tr>"
         "<tr><td>Developers:</td><td>Johannes Abt, Alexander Wuetz, Florian Schmitt</td></tr>"
@@ -2056,7 +2060,7 @@ void TimeMainWindow::callAboutBox() {
         "<tr><td>RT:</td><td><a href='mailto:zeittools-rt@science-computing.de'>zeittools-rt@science-computing.de</a></td></tr>"
         "<tr><td>Project page:</td><td><a href='http://github.com/scVENUS/sctime/'>http://github.com/scVENUS/sctime/</a></td></tr>"
         "</table><p>This program is licensed under the GNU Public License v3.</p>")
-                   .arg(qApp->applicationVersion(), QT_VERSION_STR, qVersion()));
+                   .arg(qApp->applicationVersion(), QT_VERSION_STR, qVersion(), clientidline));
 }
 
 void TimeMainWindow::logDialog() {
