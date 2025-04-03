@@ -97,6 +97,7 @@
 #ifdef DOWNLOADDIALOG
 #include "downloadshdialog.h"
 #endif
+#include "deletesettingsdialog.h"
 #include <qfiledialog.h>
 
 
@@ -297,9 +298,11 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QAction* downloadSHAction = new QAction(tr("Download sh files"), this);
   connect(downloadSHAction, SIGNAL(triggered()), this, SLOT(callDownloadSHDialog()));
 
-  QAction* readSettingsFromFileAction = new QAction(tr("Import settings"), this);
+  QAction* readSettingsFromFileAction = new QAction(tr("Import"), this);
   connect(readSettingsFromFileAction, SIGNAL(triggered()), this, SLOT(readSettingsFromFile()));
 
+  QAction* deleteSettingsAction = new QAction(tr("Delete settings files"), this);
+  connect(deleteSettingsAction, SIGNAL(triggered()), this, SLOT(callDeleteSettingsDialog()));
 
   jumpAction = new QAction(tr("S&how selected account in 'all accounts'"), this);
 
@@ -402,6 +405,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
 #ifdef DOWNLOADDIALOG
   kontomenu->addAction(downloadSHAction);
   settingsmenu->addAction(readSettingsFromFileAction);
+  settingsmenu->addAction(deleteSettingsAction);
 #endif
   kontomenu->addSeparator();
   kontomenu->addAction(bgColorChooseAction);
@@ -2709,4 +2713,14 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
       saveWithTimeout(0);
   });
   msgbox->open();
+}
+
+void TimeMainWindow::callDeleteSettingsDialog() {
+  DeleteSettingsDialog *dialog=new DeleteSettingsDialog(this, networkAccessManager);
+  connect(dialog, &DeleteSettingsDialog::processingDone,
+    [=](){
+      dialog->deleteLater();
+  });
+  dialog->open();
+  dialog->adjustSize();
 }

@@ -216,6 +216,7 @@ public:
     void finishCantSaveDialog();
     void callSwitchDateErrorDialog();
     void callDownloadSHDialog();
+    void callDeleteSettingsDialog();
     void initialSettingsRead();
     void readIPCMessage();
     void showContextMenu(const QPoint &pos);
