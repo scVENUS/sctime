@@ -35,6 +35,7 @@ ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManage
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
+    connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
 }
 
 void ConflictDialog::performMerge() {
@@ -155,6 +156,10 @@ void ConflictDialog::performClose() {
 #else
     exit(0);
 #endif
+}
+
+void ConflictDialog::performKeep() {
+  emit finished(1);
 }
 
 void ConflictDialog::errorDialog() {

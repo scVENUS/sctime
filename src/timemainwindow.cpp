@@ -2670,6 +2670,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
       
   });
   dialog->open();
+  dialog->adjustSize();
 }
 
 void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings) {
