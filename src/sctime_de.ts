@@ -25,7 +25,7 @@
         <location filename="conflictdialogbase.ui" line="35"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There seems to be another session existing, that has also produced data.&lt;/p&gt;&lt;p&gt;You have several options now:&lt;/p&gt;&lt;p&gt;Close this session: in this case you&apos;ll loose data from this session, but you can continue in the existing session.&lt;/p&gt;&lt;p&gt;Replace local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be replaced by the data from the existing session. &lt;/p&gt;&lt;p&gt;Merge local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be merged with the data from the existing session. Merging might lead to duplicated entries, please check your data if you do this...&lt;/p&gt;&lt;p&gt;Keep data disables the existing session and keeps your local data unchanged. The data on the server from the other session will be ignored and overwritten.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There seems to be another session existing, that has also produced data.&lt;/p&gt;&lt;p&gt;You have several options now:&lt;/p&gt;&lt;p&gt;Close this session: in this case you&apos;ll loose data from this session, but you can continue in the existing session.&lt;/p&gt;&lt;p&gt;Replace local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be replaced by the data from the existing session. &lt;/p&gt;&lt;p&gt;Merge local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be merged with the data from the existing session. Merging might lead to duplicated entries, please check your data if you do this...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
-        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Es scheint eine andere Session zu geben, die ebenfalls Daten erzeugt hat.&lt;/p&gt;&lt;p&gt;Du hast nun folgende Optionen:&lt;/p&gt;&lt;p&gt;Diese Session schliessen: In diesem Fall verlierst Du die Daten dieser Session, aber Du kannst in der anderen, existierenden Session weiterarbeiten.&lt;/p&gt;&lt;p&gt;Lokale Daten mit Daten aus existierender Session ersetzen: in diesem Fall wird der Schreibzugriff der anderen existierenden Session unterbunden, und alle Daten die in diesem Fenster erfasst wurden, werden durch Daten der existierenden Session ersetzt. &lt;/p&gt;&lt;p&gt;Lokale Daten mit Daten von existierender Session mergen: in diesem Fall wird der Schreibzugriff der anderen existierenden Session unterbunden, und die Daten die in diesem Fenster erfasst wurden, werden mit denen der existierenden Session gemergt, also zusammengeführt. Mergen kann zu doppelten Einträgen führen, bitte prüfe Deine Daten, wenn Du diese Option wählst...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Es scheint eine andere Session zu geben, die ebenfalls Daten erzeugt hat.&lt;/p&gt;&lt;p&gt;Du hast nun folgende Optionen:&lt;/p&gt;&lt;p&gt;Diese Session schliessen: In diesem Fall verlierst Du die Daten dieser Session, aber Du kannst in der anderen, existierenden Session weiterarbeiten.&lt;/p&gt;&lt;p&gt;Lokale Daten mit Daten aus existierender Session ersetzen: in diesem Fall wird der Schreibzugriff der anderen existierenden Session unterbunden, und alle Daten die in diesem Fenster erfasst wurden, werden durch Daten der existierenden Session ersetzt. &lt;/p&gt;&lt;p&gt;Lokale Daten mit Daten von existierender Session mergen: in diesem Fall wird der Schreibzugriff der anderen existierenden Session unterbunden, und die Daten die in diesem Fenster erfasst wurden, werden mit denen der existierenden Session gemergt, also zusammengeführt. Mergen kann zu doppelten Einträgen führen, bitte prüfe Deine Daten, wenn Du diese Option wählst...&lt;/p&gt;&lt;p&gt;Daten behalten: deaktiviert die existierende Session und behält Deine lokalen Daten. Von der anderen session stammende Daten auf dem Server werden ignoriert und überschrieben.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="conflictdialogbase.ui" line="60"/>
@@ -35,7 +35,7 @@
     <message>
         <location filename="conflictdialogbase.ui" line="74"/>
         <source>Keep data</source>
-        <translation type="unfinished"></translation>
+        <translation>Daten behalten</translation>
     </message>
     <message>
         <location filename="conflictdialogbase.ui" line="50"/>
@@ -96,12 +96,12 @@
         <location filename="deletesettingsdialog.cpp" line="49"/>
         <source>This operation deletes all your working times that you have not checked in.
 Proceed?</source>
-        <translation type="unfinished"></translation>
+        <translation>Diese Funktion löscht alle Zeiteinträge, die noch nicht eingecheckt sind.\nMöchtest Du fortfahren?</translation>
     </message>
     <message>
         <location filename="deletesettingsdialog.cpp" line="100"/>
         <source>The file could not be deleted on the server. Error code is %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Die Datei konnte nicht auf dem Server gelöscht werden. Der Fehlerode lautet %1</translation>
     </message>
 </context>
 <context>
@@ -1215,12 +1215,12 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
     <message>
         <location filename="deletesettingsdialog.cpp" line="48"/>
         <source>sctime: deleting data</source>
-        <translation type="unfinished"></translation>
+        <translation>sctime: lösche Daten</translation>
     </message>
     <message>
         <location filename="deletesettingsdialog.cpp" line="99"/>
         <source>sctime: error on deleting file on server</source>
-        <translation type="unfinished"></translation>
+        <translation>sctime: Fehler beim löschen von Server-Datei</translation>
     </message>
 </context>
 <context>
@@ -1335,12 +1335,12 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
     <message>
         <location filename="timemainwindow.cpp" line="301"/>
         <source>Import</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Importieren</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="304"/>
         <source>Delete settings files</source>
-        <translation type="unfinished"></translation>
+        <translation>Konfigurationsdaten löschen</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="310"/>
