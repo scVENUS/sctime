@@ -36,7 +36,7 @@ void SpecialRemunEntryHelper::checkSREntry(AbteilungsListe *abtListToday, int id
                   QMessageBox::Question, tr("sctime: wrong special remunerations"),
                   tr("There is another entry with the same comment and the correct special remunerations. Do you want to switch to this entry? "
                      "Otherwise a new entry will be created."),
-                  QMessageBox::Yes|QMessageBox::No);
+                  QMessageBox::Yes|QMessageBox::No, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, [=](){
            if (msgbox->result()==QMessageBox::Yes) {
               emit checked(true,correctidx);

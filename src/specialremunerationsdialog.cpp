@@ -32,7 +32,7 @@ SpecialRemunerationsDialog::SpecialRemunerationsDialog(AbteilungsListe* _abtlist
     UnterKontoListe *ukl;
 
     if (!abtlist->findUnterKonto(ukiter, ukl, abt, ko, uko)) {
-      QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, tr("sctime: Special Remuneration times"), tr("No subaccount selected!"));
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, tr("sctime: Special Remuneration times"), tr("No subaccount selected!"),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
       connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
       msgbox->open();
       return;

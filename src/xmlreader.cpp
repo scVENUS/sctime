@@ -59,7 +59,7 @@ QFile* XMLReader::openFile(bool handleerr) {
                 settings->backupSettingsXml = false;
             // keine Fehlerausgabe, wenn "zeit-HEUTE.xml" fehlt
             auto msgbox=new QMessageBox(QMessageBox::Warning, tr("sctime: opening configuration file"),
-                           tr("%1 : %2").arg(f->fileName(), f->errorString()));
+                           tr("%1 : %2").arg(f->fileName(), f->errorString()),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
             connect(msgbox, &QMessageBox::finished,[=](){
                msgbox->deleteLater();
             });
@@ -227,7 +227,7 @@ void XMLReader::parse(QIODevice *input)
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
             tr("sctime: reading configuration file"),
             QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg),
-            QMessageBox::Ok);
+            QMessageBox::Ok, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
         msgbox->open();
         return;

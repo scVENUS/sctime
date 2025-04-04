@@ -89,7 +89,7 @@ void ConflictDialog::performMerge() {
         emit finished(2);
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
                               QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
     }
@@ -142,7 +142,7 @@ void ConflictDialog::performReplace() {
         emit finished(1);
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
                               QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
     }
@@ -166,7 +166,7 @@ void ConflictDialog::errorDialog() {
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
             tr("sctime: unresolvable conflict"),
             tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
-            QMessageBox::Ok);
+            QMessageBox::Ok, dynamic_cast<QWidget*>(this->parent()));
     connect(msgbox, &QMessageBox::finished,
     [=](){
       msgbox->deleteLater();
