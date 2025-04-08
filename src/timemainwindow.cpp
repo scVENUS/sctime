@@ -1186,7 +1186,7 @@ void TimeMainWindow::checkLock() {
     msg->setModal(true);
     qDebug() << tr("The program will now quit without saving.") << m_lock->errorString();
     QTimer::singleShot(10000, this, SLOT(quit()));
-    connect(msg, &QMessageBox::finished, this, &QMessageBox::deleteLater);
+    connect(msg, &QMessageBox::finished, msg, &QMessageBox::deleteLater);
     msg->open();
     return;
   }
@@ -1195,7 +1195,7 @@ void TimeMainWindow::checkLock() {
     msg->setText(tr("Unclear state of Lockfile. Please check that there is no other instance of sctime running and that you have access to the sctime config directory. Otherwise loss of data may occur."));
     msg->setInformativeText(m_lock->errorString());
     msg->setModal(true);
-    connect(msg, &QMessageBox::finished, this, &QMessageBox::deleteLater);
+    connect(msg, &QMessageBox::finished, msg, &QMessageBox::deleteLater);
     qDebug() << tr("Unkown state of lockfile.") << m_lock->errorString();
     msg->open();
   }
@@ -1382,7 +1382,7 @@ void TimeMainWindow::callSwitchDateErrorDialog()
     QString msgtext = tr("Could not switch day due to problems with saving. ATTENTION: that also means that the clock might be running on the wrong day. Please fix the problem with saving and switch manually to the current date afterwards.");
     msg->setText(msgtext);
     qDebug() << msgtext;
-    connect(msg, &QMessageBox::finished, this, &QMessageBox::deleteLater);
+    connect(msg, &QMessageBox::finished, msg, &QMessageBox::deleteLater);
     msg->open();
 }
 
