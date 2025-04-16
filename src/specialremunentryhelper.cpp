@@ -46,6 +46,7 @@ void SpecialRemunEntryHelper::checkSREntry(AbteilungsListe *abtListToday, int id
            msgbox->deleteLater();
         });
         msgbox->open();
+        msgbox->raise();
      } else {
         emit checked(false,0);
      }

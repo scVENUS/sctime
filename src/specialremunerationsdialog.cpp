@@ -35,6 +35,7 @@ SpecialRemunerationsDialog::SpecialRemunerationsDialog(AbteilungsListe* _abtlist
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, tr("sctime: Special Remuneration times"), tr("No subaccount selected!"),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
       connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
       return;
     }
     abteilung=abt;

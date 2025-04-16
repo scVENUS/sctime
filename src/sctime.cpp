@@ -75,6 +75,7 @@ static void fatal(const QString& title, const QString& body) {
     exit(1);
   });
   msgbox->open();
+  msgbox->raise();
 }
 
 static const QString help(QObject::tr(
@@ -292,6 +293,7 @@ int main(int argc, char **argv ) {
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
         QObject::connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
       }
   }
   // the more elegant version does not work for older QT (for example 5.7)

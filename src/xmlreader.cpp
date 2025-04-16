@@ -64,6 +64,7 @@ QFile* XMLReader::openFile(bool handleerr) {
                msgbox->deleteLater();
             });
             msgbox->open();
+            msgbox->raise();
         }
         emit settingsPartRead(global, abtList, pcl, false, "");
         delete f;
@@ -230,6 +231,7 @@ void XMLReader::parse(QIODevice *input)
             QMessageBox::Ok, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
         return;
     }
 

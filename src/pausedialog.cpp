@@ -30,6 +30,7 @@ void PauseDialog::startPause() {
   connect(&pauseTimer, SIGNAL(timeout()),this,SLOT(updateTime()));
   pauseTimer.start();
   open();
+  raise();
   adjustSize();
 }
 

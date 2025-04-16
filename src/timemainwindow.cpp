@@ -649,6 +649,7 @@ void TimeMainWindow::aktivesKontoPruefen(){
              "Please activate a new account to start time accounting!").arg(k,u),QMessageBox::NoButton,this);
     connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
     msgbox->open();
+    msgbox->raise();
   }
 }
 
@@ -744,6 +745,7 @@ void TimeMainWindow::resume() {
           .arg(before.toString(), now.toString()), QMessageBox::NoButton, this);
     connect(msgboxinfo, &QMessageBox::finished, msgboxinfo, &QMessageBox::deleteLater);
     msgboxinfo->open();
+    msgboxinfo->raise();
     return;
   }
   auto msgbox=new QMessageBox(QMessageBox::Question, tr("sctime: resume"),
@@ -759,6 +761,7 @@ void TimeMainWindow::resume() {
     msgbox->deleteLater();
    });
    msgbox->open();
+   msgbox->raise();
 }
 
 void TimeMainWindow::zeitKorrektur(int delta) {
@@ -810,7 +813,8 @@ void TimeMainWindow::driftKorrektur() {
     }
     msgbox->deleteLater();
    });
-  msgbox->open();      
+  msgbox->open();
+  msgbox->raise();     
 }
 
 /* Wird durch einen Timer einmal pro Minute aufgerufen,
@@ -984,21 +988,21 @@ void TimeMainWindow::zeitChanged()
     // der nächste kommen kann. Da wir ueber einen QTimer aufgerufen wurden,
     // und wir weiter Tick-Events bekommen muessen, muessen wir den Arbeitszeitdialog asynchron starten.
     // Das tun wir ueber einen weiteren QTimer (das klappt, weil wir hier einen Wegwerftimer benutzen.
-    QTimer::singleShot(0, this, SLOT(showWorkdayWarning()));
+    QTimer::singleShot(3000, this, SLOT(showWorkdayWarning()));
   }
   if ((clocktime>settings->nightModeBegin())&&(oldlastclocktime<=settings->nightModeBegin())) {
-    QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
+    QTimer::singleShot(3000, this, SLOT(callNightTimeBeginDialog()));
   } else {
     foreach (QTime t, settings->nightModeAdditionalDialogTimes()) {
       if ((clocktime>t) && (oldlastclocktime<=t)) {
-        QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
+        QTimer::singleShot(5000, this, SLOT(callNightTimeBeginDialog()));
         break;
       }
     }
   }
 
   if ((clocktime>settings->nightModeEnd())&&(oldlastclocktime<=settings->nightModeEnd())) {
-    QTimer::singleShot(0, this, SLOT(callNightTimeEndDialog()));
+    QTimer::singleShot(3000, this, SLOT(callNightTimeEndDialog()));
   }
 
   saveLater();
@@ -1029,6 +1033,7 @@ void TimeMainWindow::showWorkdayWarning() {
           tr("Warning"),warning,QMessageBox::NoButton, this);
      connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
      msgbox->open();
+     msgbox->raise();
   }
 }
 
@@ -1170,6 +1175,7 @@ void TimeMainWindow::callCantSaveDialog() {
     qDebug() << tr("An error occured when saving data.");
     connect(msg, &QMessageBox::finished, this, &TimeMainWindow::finishCantSaveDialog);
     msg->open();
+    msg->raise();
   }
 }
 
@@ -1188,6 +1194,7 @@ void TimeMainWindow::checkLock() {
     QTimer::singleShot(10000, this, SLOT(quit()));
     connect(msg, &QMessageBox::finished, msg, &QMessageBox::deleteLater);
     msg->open();
+    msg->raise();
     return;
   }
   if (m_lock->check()!=LS_OK) {
@@ -1198,6 +1205,7 @@ void TimeMainWindow::checkLock() {
     connect(msg, &QMessageBox::finished, msg, &QMessageBox::deleteLater);
     qDebug() << tr("Unkown state of lockfile.") << m_lock->errorString();
     msg->open();
+    msg->raise();
   }
 }
 
@@ -1349,6 +1357,7 @@ void TimeMainWindow::eintragEntfernen()
          QMessageBox::Ok, this);
       connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
       return;
   }
 
@@ -1384,6 +1393,7 @@ void TimeMainWindow::callSwitchDateErrorDialog()
     qDebug() << msgtext;
     connect(msg, &QMessageBox::finished, msg, &QMessageBox::deleteLater);
     msg->open();
+    msg->raise();
 }
 
 void TimeMainWindow::loadPCCData(const QString& pccdata) {
@@ -1567,6 +1577,7 @@ void TimeMainWindow::inPersoenlicheKonten(bool hinzufuegen)
          msgbox->deleteLater();
        });
     msgbox->open();
+    msgbox->raise();
   } else {
     doChange();
   }
@@ -1697,6 +1708,7 @@ void TimeMainWindow::resetDiff()
               msgbox->deleteLater();
             });
     msgbox->open();
+    msgbox->raise();
   }
 #endif
 }
@@ -1798,6 +1810,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
   resizeToIfSensible(m_unterKontoDialog,pos,size);
   connect(m_unterKontoDialog, SIGNAL(finished(int)), this, SLOT(cleanupUnterKontoDialog(int)));
   m_unterKontoDialog->open();
+  m_unterKontoDialog->raise();
 }
 
 void TimeMainWindow::cleanupUnterKontoDialog(int result)
@@ -1856,6 +1869,7 @@ void TimeMainWindow::callFindKontoDialog()
   FindKontoDialog* findKontoDialog=new FindKontoDialog(abtList,this);
   connect(findKontoDialog,&FindKontoDialog::finished, this, &TimeMainWindow::finishFindKontoDialog);
   findKontoDialog->open();
+  findKontoDialog->raise();
 }
 
 void TimeMainWindow::finishFindKontoDialog() 
@@ -1899,6 +1913,7 @@ void TimeMainWindow::callPreferenceDialog()
   PreferenceDialog *preferenceDialog=new PreferenceDialog(settings, oldshowtypecolumn, oldshowpspcolumn, olddisplaymode, this);
   connect(preferenceDialog,&PreferenceDialog::finishedWithInfo, this, &TimeMainWindow::finishPreferenceDialog);
   preferenceDialog->open();
+  preferenceDialog->raise();
 }
 
 void TimeMainWindow::finishPreferenceDialog(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode) {
@@ -2030,6 +2045,7 @@ void TimeMainWindow::callDateDialog()
   connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeVisibleDate(const QDate&)));
   dateDialog->setAttribute(Qt::WA_DeleteOnClose);
   dateDialog->open();
+  dateDialog->raise();
 }
 
 void TimeMainWindow::infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links) {
@@ -2037,6 +2053,7 @@ void TimeMainWindow::infoDialog(TextViewerDialog *&dialog, const QString& title,
   dialog->resize(x, y);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   dialog->open();
+  dialog->raise();
 }
 
 void TimeMainWindow::callHelpDialog() {
@@ -2091,6 +2108,7 @@ void TimeMainWindow::callBereitschaftsDialog(QTreeWidgetItem * item) {
           tr("sctime: On-call times"), tr("subaccount not found!"), QMessageBox::NoButton, this);
     connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
     msgbox->open();
+    msgbox->raise();
     return;
   }  
 
@@ -2100,6 +2118,7 @@ void TimeMainWindow::callBereitschaftsDialog(QTreeWidgetItem * item) {
   connect(oncalldialog, &OnCallDialog::finishedWithInfo, this, &TimeMainWindow::finishBereitschaftsDialog);
 
   oncalldialog->open();
+  oncalldialog->raise();
 }
 
 void TimeMainWindow::finishBereitschaftsDialog(QString abt, QString ko, QString uko, QStringList bereitschaften, QStringList bereitschaftenNeu) {
@@ -2115,6 +2134,7 @@ void TimeMainWindow::finishBereitschaftsDialog(QString abt, QString ko, QString 
         tr("sctime: On-call times"), tr("subaccount not found!"), QMessageBox::NoButton, this);
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
         return;
       }
       ukiter->second.setBereitschaft(bereitschaftenNeu);
@@ -2132,6 +2152,7 @@ void TimeMainWindow::callSpecialRemunerationsDialog(QTreeWidgetItem * item) {
   SpecialRemunerationsDialog* srDialog= new SpecialRemunerationsDialog(abtList, abt,ko,uko,idx, this);
   connect(srDialog, &SpecialRemunerationsDialog::finishedWithInfo, this, &TimeMainWindow::finishSpecialRemunerationsDialog);
   srDialog->open();
+  srDialog->raise();
 }
 
 void TimeMainWindow::finishSpecialRemunerationsDialog(QString abt, QString ko, QString uko) {
@@ -2184,6 +2205,7 @@ void TimeMainWindow::callColorDialog()
      colordialog->deleteLater();
    });
    colordialog->open();
+   colordialog->raise();
 }
 
 void TimeMainWindow::removeBgColor() {
@@ -2221,6 +2243,7 @@ void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const 
                "This may cause problems with custom reporting scripts."), QMessageBox::NoButton, this);
       connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
     }
   }
 }
@@ -2429,6 +2452,7 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
             questionBox->deleteLater();
           });
           questionBox->open();
+          questionBox->raise();
 
         }
       }
@@ -2436,6 +2460,7 @@ void TimeMainWindow::callNightTimeDialog(bool isnight)
       msgbox->deleteLater();
    });
    msgbox->open();
+   msgbox->raise();
 }
 
 /** shows an error message if worked times could not be moved to another entry */
@@ -2447,6 +2472,7 @@ void TimeMainWindow::cantMoveTimeDialog(int delta)
             QMessageBox::Ok, this);
   connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
   msgbox->open();
+  msgbox->raise();
 }
 
 /**
@@ -2472,9 +2498,9 @@ void TimeMainWindow::updateSpecialModes(bool afterPause) {
   if (!settings->nightModeBegin().isNull() && !settings->nightModeEnd().isNull()) {
     if (afterPause) {
         if (timestamp.time()>settings->nightModeBegin()||timestamp.time()<settings->nightModeEnd()) {
-           QTimer::singleShot(0, this, SLOT(callNightTimeBeginDialog()));
+           QTimer::singleShot(3000, this, SLOT(callNightTimeBeginDialog()));
         } else {
-           QTimer::singleShot(0, this, SLOT(callNightTimeEndDialog()));
+           QTimer::singleShot(3000, this, SLOT(callNightTimeEndDialog()));
         }
     }
   }
@@ -2525,6 +2551,7 @@ void TimeMainWindow::callPunchClockDialog() {
   connect(pcDialog, &PunchClockDialog::finished, this, &TimeMainWindow::finishPunchClockDialog);
   pcDialog->setModal(true);
   pcDialog->open();
+  pcDialog->raise();
 #endif
 }
 
@@ -2565,6 +2592,7 @@ void TimeMainWindow::callDownloadSHDialog() {
    auto dialog=new DownloadSHDialog(settings, networkAccessManager, this);
    connect(dialog, &DownloadSHDialog::workflowFinished, dialog, &DownloadSHDialog::deleteLater);
    dialog->open();
+   dialog->raise();
 #endif
 }
 
@@ -2586,6 +2614,7 @@ void TimeMainWindow::sessionInvalid() {
       emscripten_run_script(QString("window.open('%1', '%2');").arg(getStaticUrl()+REFRESH_URL_PART).arg(tr("Refresh Session")).toUtf8().data());
     });
     msgbox->open();
+    msgbox->raise();
 #endif
 }
 
@@ -2619,6 +2648,7 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
       msgbox->deleteLater();
     });
     msgbox->open();
+    msgbox->raise();
     return;
   }
   ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, ba, this);
@@ -2632,6 +2662,7 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
   });
   dialog->open();
   dialog->adjustSize();
+  dialog->raise();
 }
 
 void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings) {
@@ -2656,6 +2687,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
       msgbox->deleteLater();
     });
     msgbox->open();
+    msgbox->raise();
     return;
   }
   ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, qCompress(remotesettings.toByteArray()), this);
@@ -2674,6 +2706,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
   });
   dialog->open();
   dialog->adjustSize();
+  dialog->raise();
 }
 
 void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings) {
@@ -2698,6 +2731,7 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
       msgbox->deleteLater();
     });
     msgbox->open();
+    msgbox->raise();
     return;
   }
   QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
@@ -2717,6 +2751,7 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
       saveWithTimeout(0);
   });
   msgbox->open();
+  msgbox->raise();
 }
 
 void TimeMainWindow::callDeleteSettingsDialog() {
@@ -2727,4 +2762,5 @@ void TimeMainWindow::callDeleteSettingsDialog() {
   });
   dialog->open();
   dialog->adjustSize();
+  dialog->raise();
 }

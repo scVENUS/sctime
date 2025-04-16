@@ -65,6 +65,7 @@ UnterKontoDialog::UnterKontoDialog(const QString& abt,const QString& ko, const  
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Information, tr("sctime: Settings of subaccount"), tr("Subaccount not found!"));
     connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
     msgbox->open();
+    msgbox->raise();
     return;
   }
   et = etiter->second;
@@ -322,6 +323,7 @@ void UnterKontoDialog::checkInput()
         QMessageBox::Ok | QMessageBox::Default,0);
     connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
     msgbox->open();
+    msgbox->raise();
     reject();
   } else
     accept();

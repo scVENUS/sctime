@@ -66,6 +66,7 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning, QObject::tr("sctime: writing shell script"), workfile.fileName() + ": " + workfile.errorString(), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
       connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
       return;
   }
   QTextStream stream( & workfile);
@@ -78,6 +79,7 @@ void SCTimeXMLSettings::writeShellSkript(AbteilungsListe* abtList, PunchClockLis
                          QObject::tr("%1 cannot be renamed to %2: %3").arg(workfile.fileName(), filename, workfile.errorString()),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
     connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
     msgbox->open();
+    msgbox->raise();
   }
 }
 

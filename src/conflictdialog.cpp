@@ -92,6 +92,7 @@ void ConflictDialog::performMerge() {
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
     }
 
 }
@@ -145,6 +146,7 @@ void ConflictDialog::performReplace() {
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
     }
 }
 
@@ -172,6 +174,7 @@ void ConflictDialog::errorDialog() {
       msgbox->deleteLater();
     });
     msgbox->open();
+    msgbox->raise();
 }
 
 

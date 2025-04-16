@@ -50,6 +50,7 @@ void DeleteSettingsDialog::checkInput() {
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         connect(msgbox, &QMessageBox::accepted, this, &DeleteSettingsDialog::performDelete);
         msgbox->open();
+        msgbox->raise();
     } else {
         performDelete();
     }
@@ -100,6 +101,7 @@ void DeleteSettingsDialog::performDelete() {
                 tr("The file could not be deleted on the server. Error code is %1").arg(reply->error()),QMessageBox::NoButton,parent);
           connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
           msgbox->open();
+          msgbox->raise();
         } else 
         if (doStop) {
           DeleteSettingsDialog::stopApp();

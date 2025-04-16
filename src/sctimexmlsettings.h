@@ -29,6 +29,7 @@
 #include <QTextStream>
 #include "abteilungsliste.h"
 #include <QNetworkReply>
+#include <QStringConverter>
 #include "punchclock.h"
 
 class AbteilungsListe;
