@@ -213,7 +213,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 #endif
 
-  QAction* resetAction = new QAction( tr("&Set accountable equal worked"), this);
+  QAction* resetAction = new QAction( tr("Re&set difference"), this);
   resetAction->setShortcut(Qt::CTRL|Qt::Key_N);
   connect(resetAction, SIGNAL(triggered()), this, SLOT(resetDiff()));
 
