@@ -29,12 +29,13 @@
 #endif
 
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
-    tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
+    connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
 }
 
 void ConflictDialog::performMerge() {
@@ -88,9 +89,10 @@ void ConflictDialog::performMerge() {
         emit finished(2);
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
                               QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
     }
 
 }
@@ -141,9 +143,10 @@ void ConflictDialog::performReplace() {
         emit finished(1);
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
                               QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg));
+                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
         connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
     }
 }
 
@@ -157,16 +160,21 @@ void ConflictDialog::performClose() {
 #endif
 }
 
+void ConflictDialog::performKeep() {
+  emit finished(1);
+}
+
 void ConflictDialog::errorDialog() {
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
             tr("sctime: unresolvable conflict"),
             tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
-            QMessageBox::Ok);
+            QMessageBox::Ok, dynamic_cast<QWidget*>(this->parent()));
     connect(msgbox, &QMessageBox::finished,
     [=](){
       msgbox->deleteLater();
     });
     msgbox->open();
+    msgbox->raise();
 }
 
 

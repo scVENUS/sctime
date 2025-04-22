@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += warn_on qt uic debug 
+CONFIG += warn_on qt uic
 CONFIG += c++11
 # you have to explicitly recompile sctime.cpp whenever you change this value
 VERSION = $$system(git describe --always||echo UNDEFINED)
@@ -11,7 +11,7 @@ CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
           conflictdialog.cpp \
-          datasource.cpp datechanger.cpp datedialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
+          datasource.cpp datechanger.cpp datedialog.cpp deletesettingsdialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
@@ -19,7 +19,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
           conflictdialog.h \
-          datechanger.h datedialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
+          datechanger.h datedialog.h deletesettingsdialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
           oncalldialog.h punchclock.h pausedialog.h preferencedialog.h punchclockchecker.h sctimexmlsettings.h\
           setupdsm.h specialremunentryhelper.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
@@ -28,7 +28,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
 FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
-        pausedialogbase.ui
+        pausedialogbase.ui deletesettingsdialogbase.ui
 
 # you can generate legal.qrc by running ../generate_additional_legal.sh after you place licenses and sources into ../licenses and ../sources
 exists(additional_legal.qrc) {
@@ -121,7 +121,8 @@ wasm {
   isEmpty(DWARF_URL) {
     DWARF_URL = http://127.0.0.1:8888/static/sctime.wasm.debug.wasm
   }
-  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=$$DWARF_URL -lidbfs.js
+  QMAKE_LFLAGS_DEBUG = -gseparate-dwarf -s SEPARATE_DWARF_URL=$$DWARF_URL -lidbfs.js -sASYNCIFY
+  QMAKE_LFLAGS += -lidbfs.js -sASYNCIFY -Os
   DEFINES += RESTONLY RESTCONFIG WASMQUIRKS DOWNLOADDIALOG
   SOURCES += downloadshdialog.cpp
   HEADERS += downloadshdialog.h

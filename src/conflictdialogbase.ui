@@ -9,9 +9,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>576</width>
-    <height>364</height>
+    <width>452</width>
+    <height>298</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>sctime: conflict on saving</string>
@@ -19,8 +25,17 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QLabel" name="label">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There seems to be another session existing, that has also produced data.&lt;/p&gt;&lt;p&gt;You have several options now:&lt;/p&gt;&lt;p&gt;Close this session: in this case you'll loose data from this session, but you can continue in the existing session.&lt;/p&gt;&lt;p&gt;Replace local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be replaced by the data from the existing session. &lt;/p&gt;&lt;p&gt;Merge local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be merged with the data from the existing session. Merging might lead to duplicated entries, please check your data if you do this...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There seems to be another session existing, that has also produced data.&lt;/p&gt;&lt;p&gt;You have several options now:&lt;/p&gt;&lt;p&gt;Close this session: in this case you'll loose data from this session, but you can continue in the existing session.&lt;/p&gt;&lt;p&gt;Replace local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be replaced by the data from the existing session. &lt;/p&gt;&lt;p&gt;Merge local data with data from existing session: in this case further writing from the other, existing session will be disabled, and the data, that you recorded in this window will be merged with the data from the existing session. Merging might lead to duplicated entries, please check your data if you do this...&lt;/p&gt;&lt;p&gt;Keep data disables the existing session and keeps your local data unchanged. The data on the server from the other session will be ignored and overwritten.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="scaledContents">
+      <bool>false</bool>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -30,6 +45,16 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
+      <widget class="QPushButton" name="buttonReplace">
+       <property name="text">
+        <string>Replace data</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="buttonClose">
        <property name="text">
         <string>Close this session</string>
@@ -37,16 +62,16 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="buttonReplace">
+      <widget class="QPushButton" name="buttonMerge">
        <property name="text">
-        <string>Replace data</string>
+        <string>Merge data</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="buttonMerge">
+      <widget class="QPushButton" name="buttonKeep">
        <property name="text">
-        <string>Merge data</string>
+        <string>Keep data</string>
        </property>
       </widget>
      </item>

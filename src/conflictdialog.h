@@ -40,6 +40,7 @@ public slots:
   void performMerge();
   void performReplace();
   void performClose();
+  void performKeep();
   void errorDialog();
 
 private:

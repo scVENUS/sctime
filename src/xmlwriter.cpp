@@ -461,9 +461,10 @@ void XMLWriter::writeSettings(bool global) {
   #endif
   if (!fnew.open(QIODevice::WriteOnly)) {
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
-            QObject::tr("sctime: saving settings"), QObject::tr("opening file %1 for writing failed. Please make sure the sctime settings directory is available. Details: %2").arg(fnew.fileName(), fnew.errorString()));
+            QObject::tr("sctime: saving settings"), QObject::tr("opening file %1 for writing failed. Please make sure the sctime settings directory is available. Details: %2").arg(fnew.fileName(), fnew.errorString()),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
       connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
       emit settingsWriteFailed("write failed");
       return;
   }
@@ -483,9 +484,10 @@ void XMLWriter::writeSettings(bool global) {
     if (!fcurrent.copy(fbackup.fileName())) {
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
             QObject::tr("sctime: saving settings"),
-            QObject::tr("%1 cannot be copied to %2: %3").arg(filename, fbackup.fileName(), fcurrent.errorString()));
+            QObject::tr("%1 cannot be copied to %2: %3").arg(filename, fbackup.fileName(), fcurrent.errorString()),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
       connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
     } else
       settings->backupSettingsXml = false;
   }
@@ -495,9 +497,10 @@ void XMLWriter::writeSettings(bool global) {
   if (rename(fnew.fileName().toLocal8Bit(), filename.toLocal8Bit())!=0) {
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Information,
             QObject::tr("sctime: saving settings"),
-            QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, strerror(errno)));
+            QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, strerror(errno)),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
       connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
       msgbox->open();
+      msgbox->raise();
       emit settingsWriteFailed("rename error");
       return;
   }
@@ -505,9 +508,10 @@ void XMLWriter::writeSettings(bool global) {
   fcurrent.remove();
   if (!fnew.rename(filename)) {
     QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, QObject::tr("sctime: saving settings"),
-                         QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, fnew.errorString()));
+                         QObject::tr("%1 cannot be renamed to %2: %3").arg(fnew.fileName(), filename, fnew.errorString()), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
     connect(msgbox, &QMessageBox::finished,msgbox, &QMessageBox::deleteLater);
     msgbox->open();
+    msgbox->raise();
     emit settingsWriteFailed("rename error");
     return;
   }
@@ -538,7 +542,7 @@ void XMLWriter::writeSettings(bool global) {
       postfix =  "&date=" + abtList->getDatum().toString("yyyy-MM-dd");
     }
     bastream.flush();
-    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&conflicttimeout=" + QString::number(conflicttimeout) + postfix), qCompress(ba));
+    writeBytes(QUrl(baseurl + "/" + REST_SETTINGS_ENDPOINT + "?clientid=" + clientId + "&clientinfo=" + QUrl::toPercentEncoding(clientinfo) +"&conflicttimeout=PT" + QString::number(conflicttimeout) + "S" + postfix), qCompress(ba));
   }
 
 #endif // RESTCONFIG

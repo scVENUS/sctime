@@ -97,6 +97,7 @@ void PreferenceDialog::selectCustomFont() {
       dialog->deleteLater();
     });
     dialog->open();
+    dialog->raise();
 }
 
 PreferenceDialog::~PreferenceDialog()

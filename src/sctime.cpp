@@ -65,6 +65,7 @@ QString PERSOENLICHE_KONTEN_STRING;
 QString ALLE_KONTEN_STRING;
 QString SCTIME_IPC;
 QString clientId;
+QString clientinfo;
 
 static void fatal(const QString& title, const QString& body) {
   QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, title, body, QMessageBox::Ok);
@@ -74,6 +75,7 @@ static void fatal(const QString& title, const QString& body) {
     exit(1);
   });
   msgbox->open();
+  msgbox->raise();
 }
 
 static const QString help(QObject::tr(
@@ -291,12 +293,21 @@ int main(int argc, char **argv ) {
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical, QObject::tr("Unclean state"), QObject::tr("It looks like the last instance of sctime might have crashed, probably at %1. Please check if the recorded times of that date are correct.").arg(lasttime.toLocalTime().toString()), QMessageBox::Ok);
         QObject::connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
         msgbox->open();
+        msgbox->raise();
       }
   }
   // the more elegant version does not work for older QT (for example 5.7)
   // clientId=QUuid::createUuid().toString(QUuid::WithoutBraces);
   QString uuid=QUuid::createUuid().toString();
   clientId=uuid.mid(1,uuid.length()-2); // remove curly braces
+  clientinfo="sctime-"+app->applicationVersion();
+  #ifdef __EMSCRIPTEN__
+  char *str = (char*)EM_ASM_PTR({
+      return stringToNewUTF8(navigator.userAgent);
+  });
+  clientinfo += " on " + QString(str);
+  free(str); // Each call to _malloc() must be paired with free(), or heap memory will leak!(jsString);
+  #endif
   app->init(&local, dataSourceNames, zeitkontenfile, bereitschaftsfile, specialremunfile, offlinefile, logfile, accountlink);
   app->exec();
   
