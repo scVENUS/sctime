@@ -113,6 +113,19 @@ mit einem Doppelpunkt enden.</p>
 <p>Die Standardkommentare kann man so in die Datenbank eintragen:
 <tt>zeitmikro --eintragen KONTO UNTERKONTO</tt></p>
 
+<h3>Anwesenheitszeiterfassung</h3>
+<p>sctime erfasst Anwesenheitszeiten. Dies wird genutzt, um die Einhaltung der vorgeschriebenen Pausen zu prüfen, 
+und ggf. Warndialoge zur Erinnerung an fehlende Pausen zu generieren.</p>
+<p>Zur Dokumentation wird eine bereinigte Zusammenfassung der Anwesenheitszeiten in den zeit-*.sh-Dateien abgelegt.
+Als Anwesenheitszeit zählt sctime automatisch alle Zeiträume, in denen es läuft und nicht pausiert ist.
+Die erfassten Zeiten können im Anwesenheitszeiten-Dialog (erreichbar über Zeit->Anwesenheiten) eingesehen und
+bei Bedarf korrigiert werden.</p>
+<p>Wenn die auf Konten gebuchte Gesamtzeit geändert wurde (z.B. einige Minuten einem Konto hinzugefügt wurden, 
+da man vergessen hat die Pause rechtzeitig heraus zu nehmen), bekommt man als Unterstützung beim Aufruf von 
+"Zeit->Differenz auf Null" angeboten, den Beginn des aktuellen Arbeitsintervalls in den Anwesenheitszeiten 
+ebenfalls entsprechend zu korrigieren.
+</p>
+
 <a name="settings"><h2>Einstellungen</h2></a>
 <h3>Schriften unter UNIX</h3>
 <p>Unter KDE werden die Einstellungen die Desktops &uuml;bernommen.
