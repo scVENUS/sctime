@@ -22,13 +22,13 @@ void XMLWriter::checkReply(QNetworkReply* input) {
       return;
    }
    if (input->isFinished()) {
-      auto sctimerestresponse=input->rawHeader("sctime-rest-response");
+      auto sctimerestresponse=getRestHeader(input,"sctime-rest-response");
       if (QString(sctimerestresponse)!="true") {
         trace(tr("Couldn't open xml because sctime-rest-response header is missing: %1").arg(QString(sctimerestresponse)));
         onErr(input);
       }
       if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
-         auto conflictingclient=input->rawHeader("sctime-client-info");
+         auto conflictingclient=getRestHeader(input,"sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
          emit offlineSwitched(false);
@@ -55,7 +55,7 @@ void XMLWriter::onErr(QNetworkReply* input) {
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
-    auto sctimerestresponse=input->rawHeader("sctime-rest-response");
+    auto sctimerestresponse=getRestHeader(input, "sctime-rest-response");
     if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(QString(sctimerestresponse)!="true")) {
       emit unauthorized();
     }

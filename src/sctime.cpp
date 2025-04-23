@@ -142,6 +142,17 @@ QString getStaticUrl() {
   return staticurl;
 }
 
+QString getRestHeader(const QNetworkReply* reply, const QString& name) {
+   QByteArray uheader=name.toUtf8();
+   if (name.startsWith("sctime-") && !reply->hasRawHeader(uheader)) {
+      QString cookieheader=reply->rawHeader("set-cookie");
+      QString ctheader=reply->rawHeader("content-type");
+      trace("cookieheader="+cookieheader);
+      trace("ctheader="+ctheader);
+   }
+   return reply->rawHeader(uheader);
+}
+
 QString getIdentifier() {
   return QSysInfo::machineHostName();
 }
