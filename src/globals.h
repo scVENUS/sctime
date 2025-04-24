@@ -22,6 +22,7 @@
 #include <QDir>
 class DatasourceManager;
 class Lock;
+class QNetworkReply;
 extern QDir configDir;
 extern QString lockfilePath;
 extern QString SCTIME_IPC;

@@ -26,6 +26,7 @@
 #include <QCommandLineOption>
 #include <QLocalSocket>
 #include <QProcessEnvironment>
+#include <QNetworkReply>
 #include <QUuid>
 
 #ifdef __EMSCRIPTEN__
