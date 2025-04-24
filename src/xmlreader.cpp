@@ -165,7 +165,7 @@ void XMLReader::parse(QIODevice *input)
         auto rootElemLocal=doclocal.documentElement();
         
         QString localID=rootElemLocal.attribute("identifier");
-        QString localDateStr=rootElemRemote.attribute("date");
+        QString localDateStr=rootElemLocal.attribute("date");
         QDateTime localDate=QDateTime::fromString(localDateStr, Qt::ISODate);
         if (remoteDate==localDate) {
            if (remoteID==localID) {
