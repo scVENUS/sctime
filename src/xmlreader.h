@@ -15,6 +15,11 @@ class XMLReader: public QObject
 {
      Q_OBJECT;
      public:
+       /* creates an XMLReader
+         global: read also global settings
+         forceLocalRead: set to true ensure that only local files are used. This is equivalent to having restSaveOffline enabled in settings, but on a case by case base.
+         autoContinueOnConflict: set to true if you want xmlreader to finish reading even if there is a conflict.
+       */
        XMLReader(SCTimeXMLSettings* parent, QNetworkAccessManager *networkAccessManager, bool global, bool forceLocalRead, bool autoContinueOnConflict, AbteilungsListe* abtList, PunchClockList* pcl): QObject(parent), global(global), forceLocalRead(forceLocalRead), autoContinueOnConflict(autoContinueOnConflict), abtList(abtList), pcl(pcl), networkAccessManager(networkAccessManager) {
           continueThisConflict=false;
        };
