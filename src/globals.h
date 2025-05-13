@@ -31,10 +31,7 @@ extern QString clientinfo;
 void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);
-QString getRestBaseUrl();
-QString getStaticUrl();
 QString getIdentifier();
-QString getRestHeader(const QNetworkReply* reply, const QString& name);
 
 #define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"
 #define REST_COMMITED_ENDPOINT "sctimegui/v1/commiteddata"

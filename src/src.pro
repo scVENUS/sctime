@@ -16,7 +16,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
           specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
-          textviewerdialog.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
+          textviewerdialog.cpp resthelper.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
           conflictdialog.h \
           datechanger.h datedialog.h deletesettingsdialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
@@ -24,7 +24,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           oncalldialog.h punchclock.h pausedialog.h preferencedialog.h punchclockchecker.h sctimexmlsettings.h\
           setupdsm.h specialremunentryhelper.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
           unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
-          specialremuntypemap.h JSONReader.h util.h textviewerdialog.h sctimeapp.h xmlreader.h xmlwriter.h
+          specialremuntypemap.h JSONReader.h util.h textviewerdialog.h resthelper.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
 FORMS = conflictdialogbase.ui datedialogbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \

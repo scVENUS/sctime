@@ -68,6 +68,7 @@
 #include "kontotreeview.h"
 #include "unterkontodialog.h"
 #include "kontotreeview.h"
+#include "resthelper.h"
 #include "defaultcommentreader.h"
 #include "abteilungsliste.h"
 #include "sctimexmlsettings.h"

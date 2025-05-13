@@ -8,6 +8,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include "globals.h"
+#include "resthelper.h"
 
 void XMLReader::open()
 {
@@ -104,6 +105,7 @@ void XMLReader::parse(QIODevice *input)
 
     if (netinput!=NULL) {
         auto sctimerestresponse=getRestHeader(netinput,"sctime-rest-response");
+        auto clientinfo=getRestHeader(netinput,"sctime-client-info");
         if ((netinput->error()!=QNetworkReply::NoError)||(QString(sctimerestresponse)!="true")) {
             logError("trying to open local file");
             if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=404 && !settings->restCurrentlyOffline()) {

@@ -17,6 +17,7 @@
 
 #include "deletesettingsdialog.h"
 #include "globals.h"
+#include "resthelper.h"
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QMessageBox>

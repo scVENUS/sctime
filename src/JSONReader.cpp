@@ -19,6 +19,7 @@
 
 #include "JSONReader.h"
 #include "globals.h"
+#include "resthelper.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>

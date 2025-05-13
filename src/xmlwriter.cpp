@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include "sctimexmlsettings.h"
 #include "globals.h"
+#include "resthelper.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>

@@ -17,6 +17,7 @@
 
 
 #include "setupdsm.h"
+#include "resthelper.h"
 
 #ifdef WIN32
 # include <windows.h>
