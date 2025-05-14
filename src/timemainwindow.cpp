@@ -2040,8 +2040,13 @@ void TimeMainWindow::callDateDialog()
     int custFontSize=settings->customFontSize();
     QApplication::setFont(QFont(custFont,custFontSize));
   }
-
-  DateDialog * dateDialog=new DateDialog(abtList->getDatum(), this);
+  QWidget* ddparent=NULL;
+  #ifdef __EMSCRIPTEN__
+  // in WASM we need to set the dialog modal as a workaround because we have no full window management. In all other cases we want
+  // to have the dialog non-modal, so that we can interact with the main window.
+  ddparent=this;
+  #endif
+  DateDialog * dateDialog=new DateDialog(abtList->getDatum(), ddparent);
   connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeVisibleDate(const QDate&)));
   dateDialog->setAttribute(Qt::WA_DeleteOnClose);
   dateDialog->open();
