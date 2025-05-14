@@ -81,6 +81,21 @@ QString unquote(const QString& input) {
   return result;
 }
 
+QString unRFC9651(const QString& input) {
+  // remove the RFC 9651 encoding (only for cases string and and display sring are implemented for now)
+  if (input.startsWith("\"")) {
+      return unquote(input);
+  }
+  if (input.startsWith("%")) {
+      QRegularExpression regex(R"(^\%\"|\"$)");
+      QString result=input;
+      result.replace(regex, "");
+      result=QUrl::fromPercentEncoding(result.toUtf8());
+      return result;
+  }
+  return input;
+}
+
 QString getRestHeader(const QNetworkReply* reply, const QString& name) {
    QByteArray uheader=name.toUtf8();
    if (name.startsWith("sctime-") && !reply->hasRawHeader(uheader)) {
@@ -90,15 +105,13 @@ QString getRestHeader(const QNetworkReply* reply, const QString& name) {
           if (part.startsWith(name+"=")) {
               QString value = part.section("=", 1);
               value =unquote(value);
-              trace("unquote value="+value);
               return value;
           } else if (part.startsWith(name+"*=")) {
               QString value = part.section("=", 1);
               value = unRFC8187(value);
-              trace("unRFC8187 value="+value);
               return value;
           } 
       }
    }
-   return reply->rawHeader(uheader);
+   return unRFC9651(reply->rawHeader(uheader));
 }

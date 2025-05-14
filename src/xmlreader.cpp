@@ -105,8 +105,11 @@ void XMLReader::parse(QIODevice *input)
 
     if (netinput!=NULL) {
         auto sctimerestresponse=getRestHeader(netinput,"sctime-rest-response");
+        trace("sctime-rest-response="+sctimerestresponse);
         auto clientinfo=getRestHeader(netinput,"sctime-client-info");
+        trace("sctime-client-info="+clientinfo);
         auto modified=getRestHeader(netinput,"sctime-modified");
+        trace("sctime-modified="+modified);
         if ((netinput->error()!=QNetworkReply::NoError)||(QString(sctimerestresponse)!="true")) {
             logError("trying to open local file");
             if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=404 && !settings->restCurrentlyOffline()) {
