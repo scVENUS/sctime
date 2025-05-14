@@ -83,22 +83,17 @@ QString unquote(const QString& input) {
 
 QString getRestHeader(const QNetworkReply* reply, const QString& name) {
    QByteArray uheader=name.toUtf8();
-   //QString modheader=reply->rawHeader("Sctime-Modified");
    if (name.startsWith("sctime-") && !reply->hasRawHeader(uheader)) {
       QString ctheader=reply->header(QNetworkRequest::ContentTypeHeader).toString();
-      trace("ctheader="+ctheader);
-      trace("name="+name);
       QStringList parts = splitIgnoringQuotes(ctheader);
       foreach (const QString &part, parts) {
           if (part.startsWith(name+"=")) {
               QString value = part.section("=", 1);
-              trace("value="+value);
               value =unquote(value);
               trace("unquote value="+value);
               return value;
           } else if (part.startsWith(name+"*=")) {
               QString value = part.section("=", 1);
-              trace("value="+value);
               value = unRFC8187(value);
               trace("unRFC8187 value="+value);
               return value;
