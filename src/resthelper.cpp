@@ -98,6 +98,7 @@ QString unRFC9651(const QString& input) {
 
 QString getRestHeader(const QNetworkReply* reply, const QString& name) {
    QByteArray uheader=name.toUtf8();
+   #ifdef URA_HEADER_WORKAROUND
    if (name.startsWith("sctime-") && !reply->hasRawHeader(uheader)) {
       QString ctheader=reply->header(QNetworkRequest::ContentTypeHeader).toString();
       QStringList parts = splitIgnoringQuotes(ctheader);
@@ -113,5 +114,6 @@ QString getRestHeader(const QNetworkReply* reply, const QString& name) {
           } 
       }
    }
+   #endif
    return unRFC9651(reply->rawHeader(uheader));
 }

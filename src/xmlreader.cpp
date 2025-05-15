@@ -104,18 +104,19 @@ void XMLReader::parse(QIODevice *input)
     bool readSuccessRemote=false;
 
     if (netinput!=NULL) {
-        auto sctimerestresponse=getRestHeader(netinput,"sctime-rest-response");
-        trace("sctime-rest-response="+sctimerestresponse);
         auto clientinfo=getRestHeader(netinput,"sctime-client-info");
-        trace("sctime-client-info="+clientinfo);
         auto modified=getRestHeader(netinput,"sctime-modified");
-        trace("sctime-modified="+modified);
-        if ((netinput->error()!=QNetworkReply::NoError)||(QString(sctimerestresponse)!="true")) {
+        bool isrestresponse=true;
+        #ifdef ENSURE_REST_HEADER
+        auto sctimerestresponse=getRestHeader(netinput,"sctime-rest-response");
+        isrestresponse=(sctimerestresponse=="true");
+        #endif
+        if ((netinput->error()!=QNetworkReply::NoError)||(!isrestresponse)) {
             logError("trying to open local file");
             if (netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)!=404 && !settings->restCurrentlyOffline()) {
                emit offlineSwitched(true);
             }
-            if ((netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(QString(sctimerestresponse)!="true")) {
+            if ((netinput->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(!isrestresponse)) {
                emit unauthorized();
             }
             auto f=openFile(true);

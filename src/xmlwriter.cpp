@@ -56,8 +56,12 @@ void XMLWriter::onErr(QNetworkReply* input) {
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
+    bool isrestresponse=true;
+    #ifdef ENSURE_REST_HEADER
     auto sctimerestresponse=getRestHeader(input, "sctime-rest-response");
-    if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(QString(sctimerestresponse)!="true")) {
+    isrestresponse=(sctimerestresponse=="true");
+    #endif
+    if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(!isrestresponse)) {
       emit unauthorized();
     }
     // we have already saved them locally, so should be able to continue anyway
