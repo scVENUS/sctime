@@ -10,6 +10,7 @@
 #include <QBuffer>
 #include "sctimexmlsettings.h"
 #include "globals.h"
+#include "resthelper.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -22,8 +23,13 @@ void XMLWriter::checkReply(QNetworkReply* input) {
       return;
    }
    if (input->isFinished()) {
+      auto sctimerestresponse=getRestHeader(input,"sctime-rest-response");
+      if (QString(sctimerestresponse)!="true") {
+        trace(tr("Couldn't open xml because sctime-rest-response header is missing: %1").arg(QString(sctimerestresponse)));
+        onErr(input);
+      }
       if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
-         auto conflictingclient=input->rawHeader("sctime-client-info");
+         auto conflictingclient=getRestHeader(input,"sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
          emit offlineSwitched(false);
@@ -50,7 +56,12 @@ void XMLWriter::onErr(QNetworkReply* input) {
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
-    if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401) {
+    bool isrestresponse=true;
+    #ifdef ENSURE_REST_HEADER
+    auto sctimerestresponse=getRestHeader(input, "sctime-rest-response");
+    isrestresponse=(sctimerestresponse=="true");
+    #endif
+    if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(!isrestresponse)) {
       emit unauthorized();
     }
     // we have already saved them locally, so should be able to continue anyway

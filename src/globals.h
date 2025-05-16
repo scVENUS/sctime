@@ -22,6 +22,7 @@
 #include <QDir>
 class DatasourceManager;
 class Lock;
+class QNetworkReply;
 extern QDir configDir;
 extern QString lockfilePath;
 extern QString SCTIME_IPC;
@@ -30,8 +31,6 @@ extern QString clientinfo;
 void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);
-QString getRestBaseUrl();
-QString getStaticUrl();
 QString getIdentifier();
 
 #define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"

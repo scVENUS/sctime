@@ -25,7 +25,6 @@
 #include <QCommandLineParser>
 #include <QCommandLineOption>
 #include <QLocalSocket>
-#include <QProcessEnvironment>
 #include <QUuid>
 
 #ifdef __EMSCRIPTEN__
@@ -116,30 +115,6 @@ QString absolutePath(QString path) {
 	    return path.replace(0, 1, homedir);
     }
     return QFileInfo(path).absoluteFilePath();
-}
-
-QString getRestBaseUrl() {
-  auto env = QProcessEnvironment::systemEnvironment();
-  QString baseurl = env.value("SCTIME_BASE_URL");
-#ifdef __EMSCRIPTEN__
-  if (baseurl.isNull()||baseurl.isEmpty()) {
-     auto location = emscripten::val::global("location");
-     auto href = QString::fromStdString(location["href"].as<std::string>());
-     int lastSlash=href.lastIndexOf("/");
-     baseurl = href.replace(lastSlash,href.length(),"/../");
-  }
-#endif
-  return baseurl;
-}
-
-// returns the directory URL for static files
-QString getStaticUrl() {
-  auto env = QProcessEnvironment::systemEnvironment();
-  QString staticurl = env.value("SCTIME_STATIC_URL");
-  if (staticurl.isNull()||staticurl.isEmpty()) {
-     staticurl=getRestBaseUrl()+STATIC_URL;
-  }
-  return staticurl;
 }
 
 QString getIdentifier() {
