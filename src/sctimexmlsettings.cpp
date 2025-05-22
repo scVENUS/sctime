@@ -167,7 +167,7 @@ void SCTimeXMLSettings::writeShellSkriptToStream(QTextStream& stream, Abteilungs
     #endif
     QString consolidatedIntervals=pcc->getConsolidatedIntervalString(pcl);
     delete pcc;
-    if (!consolidatedIntervals.isEmpty()) {
+    if ((!consolidatedIntervals.isEmpty()&&writeConsolidatedIntervals())) {
       stream<<Qt::endl<<"# Source intervals for zeitarbeit (they are consolidated according to legal requirements in the actual command):";
       stream<<Qt::endl<<"#";
       

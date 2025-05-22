@@ -536,6 +536,10 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                         {
                             settings->m_workingTimeWarnings = (elem2.attribute("on") != "no");
                         }
+                        if (elem2.tagName() == "write_consolidated_intervals")
+                        {
+                            settings->m_writeConsolidatedIntervals = (elem2.attribute("on") != "no");
+                        }
                         if (elem2.tagName() == "aktives_konto")
                         {
                             aktiveskontotag = elem2; // Aktives Konto merken und zum Schluss setzen, damit es vorher erzeugt wurde

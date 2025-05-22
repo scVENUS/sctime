@@ -97,6 +97,7 @@ public:
       m_overtimeRegulatedModeActive = false;
       m_overtimeOtherModeActive = false;
       m_publicHolidayModeActive = false;
+      m_writeConsolidatedIntervals = true;
 
       m_lastSave = QDateTime();
 
@@ -462,6 +463,14 @@ public:
         m_restSaveOffline=b;
     }
 
+    bool writeConsolidatedIntervals() {
+        return m_writeConsolidatedIntervals;
+    }
+
+    void setWriteConsolidatedIntervals(bool b)  {
+        m_writeConsolidatedIntervals=b;
+    }
+
 
     QString backends;
 
@@ -529,6 +538,8 @@ public:
     bool m_overtimeRegulatedModeActive;
     bool m_overtimeOtherModeActive;
     bool m_publicHolidayModeActive;
+
+    bool m_writeConsolidatedIntervals;
 
     // database backend
     QString defaultdatabaseserver;

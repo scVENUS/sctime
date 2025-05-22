@@ -133,6 +133,12 @@ void XMLWriter::writeSettings(bool global) {
         generaltag.appendChild(maxworktag);
     }
 
+    if (settings->m_writeConsolidatedIntervals==false) {
+        QDomElement writecitag = doc.createElement( "write_consolidated_intervals" );
+        writecitag.setAttribute("on","no");
+        generaltag.appendChild(writecitag);
+    }
+
     QDomElement mainwindowpositiontag = doc.createElement( "windowposition" );
     mainwindowpositiontag.setAttribute("x",settings->mainwindowPosition.x());
     mainwindowpositiontag.setAttribute("y",settings->mainwindowPosition.y());

@@ -51,8 +51,16 @@ PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtype
     showSpecialRemunSelector->setChecked(settings->showSpecialRemunSelector());
     warnISO8859->setChecked(settings->warnISO8859());
     sortByCommentTextCheckbox->setChecked(settings->sortByCommentText());
+#ifndef DISABLE_PUNCHCLOCK
+    disableWriteConsolidatedIntervalsCheckbox->setEnabled(true);
+#else
+     disableWriteConsolidatedIntervalsCheckbox->setVisible(false);
+#endif
+    disableWriteConsolidatedIntervalsCheckbox->setChecked(!settings->writeConsolidatedIntervals());
 #ifdef RESTCONFIG
     stayOfflineCheckbox->setEnabled(true);
+#else
+    stayOfflineCheckbox->setVisible(false);
 #endif
     stayOfflineCheckbox->setChecked(settings->restSaveOffline());
 
@@ -123,6 +131,7 @@ void PreferenceDialog::postprocess() {
         settings->setWarnISO8859(warnISO8859->isChecked());
         settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
         settings->setRestSaveOffline(stayOfflineCheckbox->isChecked());
+        settings->setWriteConsolidatedIntervals(!disableWriteConsolidatedIntervalsCheckbox->isChecked());
         SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
         if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
             dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;

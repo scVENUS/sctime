@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>503</width>
-    <height>504</height>
+    <width>521</width>
+    <height>534</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabGeneral">
       <attribute name="title">
@@ -117,6 +117,22 @@
             </property>
             <property name="text">
              <string>Stay offline after initialization</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="disableWriteConsolidatedIntervalsCheckbox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="statusTip">
+             <string>Do not write consolidated intervals in sh file (check your companies regulations if you change this.</string>
+            </property>
+            <property name="text">
+             <string>Do not write consolidated intervals in sh file</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
@@ -315,7 +331,7 @@
              <number>5</number>
             </property>
             <attribute name="headerDefaultSectionSize">
-             <number>40</number>
+             <number>55</number>
             </attribute>
             <column>
              <property name="text">
