@@ -38,7 +38,7 @@ PunchClockDialog::PunchClockDialog(PunchClockList *pcl, PunchClockStateBase *pcs
   if (pcl!=NULL) {
     fillFromList(pcl);
   }
-  punchClockTable->setHorizontalHeaderLabels(QStringList()<<QObject::tr("Begin time")<<QObject::tr("End time"));
+  punchClockTable->setHorizontalHeaderLabels(QStringList()<<QObject::tr("Begin time")<<QObject::tr("End time")<<"");
   
   if (m_pcs==NULL) {
     previewBrowser->hide();
@@ -47,6 +47,8 @@ PunchClockDialog::PunchClockDialog(PunchClockList *pcl, PunchClockStateBase *pcs
     QString consolidated=m_pcs->getConsolidatedIntervalString(pcl);
     previewBrowser->setText(consolidated);
   }
+  punchClockTable->setSelectionMode(QAbstractItemView::SingleSelection);
+  punchClockTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 }
 
 PunchClockDialog::~PunchClockDialog()
