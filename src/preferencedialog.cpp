@@ -54,7 +54,7 @@ PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtype
 #ifndef DISABLE_PUNCHCLOCK
     disableWriteConsolidatedIntervalsCheckbox->setEnabled(true);
 #else
-     disableWriteConsolidatedIntervalsCheckbox->setVisible(false);
+    disableWriteConsolidatedIntervalsCheckbox->setVisible(false);
 #endif
     disableWriteConsolidatedIntervalsCheckbox->setChecked(!settings->writeConsolidatedIntervals());
 #ifdef RESTCONFIG

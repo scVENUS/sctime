@@ -13,7 +13,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           conflictdialog.cpp \
           datasource.cpp datechanger.cpp datedialog.cpp deletesettingsdialog.cpp defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
-          pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp\
+          pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp syncofflinehelper.cpp \
           setupdsm.cpp timemainwindow.cpp unterkontodialog.cpp\
           specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp resthelper.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
@@ -23,7 +23,7 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
           oncalldialog.h punchclock.h pausedialog.h preferencedialog.h punchclockchecker.h sctimexmlsettings.h\
           setupdsm.h specialremunentryhelper.h statusbar.h timecounter.h timeedit.h timemainwindow.h\
-          unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h\
+          unterkontodialog.h unterkontoeintrag.h unterkontoliste.h specialremunerationsdialog.h syncofflinehelper.h\
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h resthelper.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc

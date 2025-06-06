@@ -47,6 +47,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QStringEncoder>
+#include <QFileDialog>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
@@ -99,7 +100,7 @@
 #include "downloadshdialog.h"
 #endif
 #include "deletesettingsdialog.h"
-#include <qfiledialog.h>
+#include "syncofflinehelper.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -305,6 +306,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QAction* deleteSettingsAction = new QAction(tr("Delete settings files"), this);
   connect(deleteSettingsAction, SIGNAL(triggered()), this, SLOT(callDeleteSettingsDialog()));
 
+  QAction* syncAllAction = new QAction(tr("Sync All"), this);
+  connect(syncAllAction, SIGNAL(triggered()), this, SLOT(syncAll()));
+
   jumpAction = new QAction(tr("S&how selected account in 'all accounts'"), this);
 
 #ifndef WASMQUIRKS // leads to issues in WASM, disable for now
@@ -420,6 +424,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   zeitmenu->addAction(punchClockAction);
 #endif
   zeitmenu->addAction(resetAction);
+  zeitmenu->addAction(syncAllAction);
   hilfemenu->addAction(helpAction);
   hilfemenu->addAction(aboutAction);
   hilfemenu->addAction(qtAction);
@@ -2769,4 +2774,24 @@ void TimeMainWindow::callDeleteSettingsDialog() {
   dialog->open();
   dialog->adjustSize();
   dialog->raise();
+}
+
+AbteilungsListe* TimeMainWindow::getEmptyAbtList(QDate date) {
+  return new AbteilungsListe(date, abtListToday);
+}
+
+void TimeMainWindow::syncAll() {
+  SyncOfflineHelper *helper=new SyncOfflineHelper(settings, networkAccessManager, this);
+  connect(helper, &SyncOfflineHelper::finished, helper, &SyncOfflineHelper::deleteLater);
+  helper->syncAll();
+}
+
+QDate TimeMainWindow::getOpenCurrentDate()
+{
+  return abtListToday->getDatum();
+}
+
+QDate TimeMainWindow::getOpenDate()
+{
+  return abtList->getDatum();
 }

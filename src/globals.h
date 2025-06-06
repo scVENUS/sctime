@@ -34,6 +34,7 @@ QString absolutePath(QString);
 QString getIdentifier();
 
 #define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"
+#define REST_LIST_SETTINGS_ENDPOINT "sctimegui/v1/listsettingsdata"
 #define REST_COMMITED_ENDPOINT "sctimegui/v1/commiteddata"
 #define REST_ACCOUNTINGMETA_ENDPOINT "sctimegui/v1/accountingmetadata"
 #define STATIC_URL "static/"

@@ -71,6 +71,8 @@ public:
     SCTimeXMLSettings* settings;
     void infoDialog(TextViewerDialog *&dialog, const QString& title, const QString& name, int x, int y, bool plaintext_links=false);
 
+    AbteilungsListe* getEmptyAbtList(QDate date);
+
     friend class DateChanger;
     friend class ConflictDialog;
     
@@ -158,6 +160,9 @@ public:
     void readSettingsFromFile();
     void applySettings();
 
+    QDate getOpenCurrentDate();
+    QDate getOpenDate();
+
 
   signals:        
     /** Wird ausgeloest, falls sich die Gesamtzeit geaendert hat. Uebergeben wird die neue Gesamtzahl der Sekunden. */
@@ -227,6 +232,7 @@ public:
     void writeConflictDialog(QDate targetdate, bool global, const QByteArray ba);
     void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
     void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
+    void syncAll();
     
   protected:
     virtual void moveEvent( QMoveEvent *event);

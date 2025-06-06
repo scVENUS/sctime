@@ -102,6 +102,7 @@ void XMLReader::parse(QIODevice *input)
     int errLine, errCol;
     bool readSuccessLocal=false;
     bool readSuccessRemote=false;
+    bool unmergedExists=false;
 
     if (netinput!=NULL) {
         auto clientinfo=getRestHeader(netinput,"sctime-client-info");
@@ -148,8 +149,20 @@ void XMLReader::parse(QIODevice *input)
         return;
       }
       resname=fileinput->fileName();
+      QFile unmerged(resname+ ".unmerged");
+      unmergedExists = unmerged.exists();
       readSuccessLocal = doclocal.setContent(fileinput, &errMsg, &errLine, &errCol);
       fileinput->close();
+
+      if (!readSuccessRemote) {
+        if (unmergedExists) {
+            if (unmerged.open(QIODevice::ReadOnly)) {
+                readSuccessRemote = docremote.setContent(&unmerged, &errMsg, &errLine, &errCol);
+                unmerged.close();
+            }
+
+        }
+      }
     }
 
     auto rootElemRemote=docremote.documentElement();
@@ -241,6 +254,9 @@ void XMLReader::parse(QIODevice *input)
         msgbox->open();
         msgbox->raise();
         return;
+    }
+    if (unmergedExists) {
+        QFile::remove(resname+ ".unmerged");
     }
 
     fillSettingsFromDocument(doc, settings);
@@ -480,215 +496,219 @@ void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* s
                     QDomElement elem2 = node2.toElement();
                     if (!elem2.isNull())
                     {
-                        if (elem2.tagName() == "timeincrement")
-                        {
-                            QString secondsstr = elem2.attribute("seconds");
-                            if (secondsstr.isNull())
-                                continue;
-                            settings->timeInc = secondsstr.toInt();
-                        }
-                        if (elem2.tagName() == "fasttimeincrement")
-                        {
-                            QString secondsstr = elem2.attribute("seconds");
-                            if (secondsstr.isNull())
-                                continue;
-                            settings->fastTimeInc = secondsstr.toInt();
-                        }
-                        if (elem2.tagName() == "zeitkommando")
-                        {
-                            QString kommandostr = elem2.firstChild().toCharacterData().data();
-                            if (kommandostr.isNull())
-                                continue;
-                            settings->zeitKommando = kommandostr;
-                        }
-                        if (elem2.tagName() == "zeitkontenkommando")
-                        {
-                            QString zeitkontenkommandostr = elem2.firstChild().toCharacterData().data();
-                            if (zeitkontenkommandostr.isNull())
-                                continue;
-                            settings->setZeitKontenKommando(zeitkontenkommandostr);
-                        }
-                        if (elem2.tagName() == "defcommentdisplay")
-                        {
-                            QString dmstring = elem2.attribute("mode");
-                            if (dmstring.isNull())
-                                continue;
-                            SCTimeXMLSettings::DefCommentDisplayModeEnum dm = SCTimeXMLSettings::DM_BOLD;
-                            if (dmstring == "DefaultCommentsNotUsedBold")
-                            {
-                                dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
-                            }
-                            else if (dmstring == "NotBold")
-                            {
-                                dm = SCTimeXMLSettings::DM_NOTBOLD;
-                            }
-                            settings->setDefCommentDisplayMode(dm);
-                        }
-                        if (elem2.tagName() == "dragndrop")
-                        {
-                            settings->setDragNDrop(elem2.attribute("on") == "yes");
-                        }
-                        if (elem2.tagName() == "persoenliche_kontensumme")
-                        {
-                            settings->setPersoenlicheKontensumme(elem2.attribute("on") == "yes");
-                        }
-                        if (elem2.tagName() == "working_time_warnings")
-                        {
-                            settings->m_workingTimeWarnings = (elem2.attribute("on") != "no");
-                        }
-                        if (elem2.tagName() == "write_consolidated_intervals")
-                        {
-                            settings->m_writeConsolidatedIntervals = (elem2.attribute("on") != "no");
-                        }
                         if (elem2.tagName() == "aktives_konto")
                         {
                             aktiveskontotag = elem2; // Aktives Konto merken und zum Schluss setzen, damit es vorher erzeugt wurde
                         }
-                        if (elem2.tagName() == "windowposition")
+                        if (global)
                         {
-                            bool ok;
-                            int x = QString(elem2.attribute("x")).toInt(&ok);
-                            int y = QString(elem2.attribute("y")).toInt(&ok);
-                            if (ok)
+                            if (elem2.tagName() == "timeincrement")
                             {
-                                QPoint pos(x, y);
-                                QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
-                                if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
-                                    settings->mainwindowPosition = pos;
+                                QString secondsstr = elem2.attribute("seconds");
+                                if (secondsstr.isNull())
+                                    continue;
+                                settings->timeInc = secondsstr.toInt();
                             }
-                        }
-                        if (elem2.tagName() == "windowsize")
-                        {
-                            QString xstr = elem2.attribute("width");
-                            if (xstr.isNull())
-                                continue;
-                            QString ystr = elem2.attribute("height");
-                            if (ystr.isNull())
-                                continue;
-                            settings->mainwindowSize = QSize(xstr.toInt(), ystr.toInt());
-                        }
-                        if (elem2.tagName() == "saveeintrag")
-                        {
-                            settings->alwaysSaveEintrag = (elem2.attribute("always") == "yes");
-                        }
-                        if (elem2.tagName() == "typecolumn")
-                        {
-                            settings->m_showTypeColumn = (elem2.attribute("show") == "yes");
-                        }
-                        if (elem2.tagName() == "pccdata")
-                        {
-                            settings->m_currentPCCdata = elem2.attribute("current");
-                            settings->m_prevPCCdata = elem2.attribute("previous");
-                        }
-                        if (elem2.tagName() == "pspcolumn")
-                        {
-                            settings->m_showPSPColumn = (elem2.attribute("show") == "yes");
-                        }
-                        if (elem2.tagName() == "specialremunselector")
-                        {
-                            settings->setShowSpecialRemunSelector(elem2.attribute("show") == "yes");
-                        }
-                        if (elem2.tagName() == "usedefaultcommentifunique")
-                        {
-                            settings->m_useDefaultCommentIfUnique = (elem2.attribute("on") == "yes");
-                        }
-                        if (elem2.tagName() == "poweruserview")
-                        {
-                            settings->setPowerUserView((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "overtimeregulatedmode")
-                        {
-                            settings->setOvertimeRegulatedModeActive((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "overtimeothermode")
-                        {
-                            settings->setOvertimeOtherModeActive((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "nightmode")
-                        {
-                            settings->setNightModeActive((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "publicholidaymode")
-                        {
-                            settings->setPublicHolidayModeActive((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "lastrecordedtimestamp")
-                        {
-                            QDateTime ts = QDateTime::fromString(elem2.attribute("value"), SCTimeXMLSettings::timestampFormat());
-                            settings->setLastRecordedTimestamp(ts);
-                        }
-                        if (elem2.tagName() == "customfont")
-                        {
-                            settings->setUseCustomFont(true);
-                            settings->setCustomFont(elem2.attribute("family"));
-                            settings->setCustomFontSize(elem2.attribute("size").toInt());
-                        }
-                        if (elem2.tagName() == "singleclickactivation")
-                        {
-                            settings->setSingleClickActivation((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "warnISO8859")
-                        {
-                            settings->setWarnISO8859((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "sortByCommentText")
-                        {
-                            settings->setSortByCommentText((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "stayoffline")
-                        {
-                            settings->setRestSaveOffline((elem2.attribute("on") == "yes"));
-                        }
-                        if (elem2.tagName() == "kontodlgwindowposition")
-                        {
-                            bool ok;
-                            int x = QString(elem2.attribute("x")).toInt(&ok);
-                            int y = QString(elem2.attribute("y")).toInt(&ok);
-                            if (ok)
+                            if (elem2.tagName() == "fasttimeincrement")
                             {
-                                QPoint pos(x, y);
-                                QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
-                                if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
-                                    settings->unterKontoWindowPosition = pos;
+                                QString secondsstr = elem2.attribute("seconds");
+                                if (secondsstr.isNull())
+                                    continue;
+                                settings->fastTimeInc = secondsstr.toInt();
                             }
-                        }
-                        if (elem2.tagName() == "kontodlgwindowsize")
-                        {
-                            QString xstr = elem2.attribute("width");
-                            if (xstr.isNull())
-                                continue;
-                            QString ystr = elem2.attribute("height");
-                            if (ystr.isNull())
-                                continue;
-                            settings->unterKontoWindowSize = QSize(xstr.toInt(), ystr.toInt());
-                        }
-                        if ((global) && (elem2.tagName() == "defaultcommentsfile"))
-                        {
-                            settings->defaultcommentfiles.push_back(elem2.attribute("name", "defaultcomments.xml"));
-                        }
-                        if ((global) && (elem2.tagName() == "column"))
-                        {
-                            settings->columnwidth.push_back(elem2.attribute("width", "50").toInt());
-                        }
-                        if (global && elem2.tagName() == "backends")
-                        {
-                            settings->backends = elem2.attribute("names", settings->defaultbackends);
-                            if (SCTimeXMLSettings::compVersion("0.80.1", lastVersion) != -1) // in case of upgrade add new backend
+                            if (elem2.tagName() == "zeitkommando")
                             {
-                                settings->backends.replace("file", "json file");
+                                QString kommandostr = elem2.firstChild().toCharacterData().data();
+                                if (kommandostr.isNull())
+                                    continue;
+                                settings->zeitKommando = kommandostr;
+                            }
+                            if (elem2.tagName() == "zeitkontenkommando")
+                            {
+                                QString zeitkontenkommandostr = elem2.firstChild().toCharacterData().data();
+                                if (zeitkontenkommandostr.isNull())
+                                    continue;
+                                settings->setZeitKontenKommando(zeitkontenkommandostr);
+                            }
+                            if (elem2.tagName() == "defcommentdisplay")
+                            {
+                                QString dmstring = elem2.attribute("mode");
+                                if (dmstring.isNull())
+                                    continue;
+                                SCTimeXMLSettings::DefCommentDisplayModeEnum dm = SCTimeXMLSettings::DM_BOLD;
+                                if (dmstring == "DefaultCommentsNotUsedBold")
+                                {
+                                    dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
+                                }
+                                else if (dmstring == "NotBold")
+                                {
+                                    dm = SCTimeXMLSettings::DM_NOTBOLD;
+                                }
+                                settings->setDefCommentDisplayMode(dm);
+                            }
+                            if (elem2.tagName() == "dragndrop")
+                            {
+                                settings->setDragNDrop(elem2.attribute("on") == "yes");
+                            }
+                            if (elem2.tagName() == "persoenliche_kontensumme")
+                            {
+                                settings->setPersoenlicheKontensumme(elem2.attribute("on") == "yes");
+                            }
+                            if (elem2.tagName() == "working_time_warnings")
+                            {
+                                settings->m_workingTimeWarnings = (elem2.attribute("on") != "no");
+                            }
+                            if (elem2.tagName() == "write_consolidated_intervals")
+                            {
+                                settings->m_writeConsolidatedIntervals = (elem2.attribute("on") != "no");
                             }
 
-                            for (QDomNode node3 = elem2.firstChild(); !node3.isNull(); node3 = node3.nextSibling())
+                            if (elem2.tagName() == "windowposition")
                             {
-                                QDomElement elem3 = node3.toElement();
-                                if (!elem3.isNull())
+                                bool ok;
+                                int x = QString(elem2.attribute("x")).toInt(&ok);
+                                int y = QString(elem2.attribute("y")).toInt(&ok);
+                                if (ok)
                                 {
-                                    if (elem3.tagName() == "database")
+                                    QPoint pos(x, y);
+                                    QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
+                                    if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
+                                        settings->mainwindowPosition = pos;
+                                }
+                            }
+                            if (elem2.tagName() == "windowsize")
+                            {
+                                QString xstr = elem2.attribute("width");
+                                if (xstr.isNull())
+                                    continue;
+                                QString ystr = elem2.attribute("height");
+                                if (ystr.isNull())
+                                    continue;
+                                settings->mainwindowSize = QSize(xstr.toInt(), ystr.toInt());
+                            }
+                            if (elem2.tagName() == "saveeintrag")
+                            {
+                                settings->alwaysSaveEintrag = (elem2.attribute("always") == "yes");
+                            }
+                            if (elem2.tagName() == "typecolumn")
+                            {
+                                settings->m_showTypeColumn = (elem2.attribute("show") == "yes");
+                            }
+                            if (elem2.tagName() == "pccdata")
+                            {
+                                settings->m_currentPCCdata = elem2.attribute("current");
+                                settings->m_prevPCCdata = elem2.attribute("previous");
+                            }
+                            if (elem2.tagName() == "pspcolumn")
+                            {
+                                settings->m_showPSPColumn = (elem2.attribute("show") == "yes");
+                            }
+                            if (elem2.tagName() == "specialremunselector")
+                            {
+                                settings->setShowSpecialRemunSelector(elem2.attribute("show") == "yes");
+                            }
+                            if (elem2.tagName() == "usedefaultcommentifunique")
+                            {
+                                settings->m_useDefaultCommentIfUnique = (elem2.attribute("on") == "yes");
+                            }
+                            if (elem2.tagName() == "poweruserview")
+                            {
+                                settings->setPowerUserView((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "overtimeregulatedmode")
+                            {
+                                settings->setOvertimeRegulatedModeActive((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "overtimeothermode")
+                            {
+                                settings->setOvertimeOtherModeActive((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "nightmode")
+                            {
+                                settings->setNightModeActive((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "publicholidaymode")
+                            {
+                                settings->setPublicHolidayModeActive((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "lastrecordedtimestamp")
+                            {
+                                QDateTime ts = QDateTime::fromString(elem2.attribute("value"), SCTimeXMLSettings::timestampFormat());
+                                settings->setLastRecordedTimestamp(ts);
+                            }
+                            if (elem2.tagName() == "customfont")
+                            {
+                                settings->setUseCustomFont(true);
+                                settings->setCustomFont(elem2.attribute("family"));
+                                settings->setCustomFontSize(elem2.attribute("size").toInt());
+                            }
+                            if (elem2.tagName() == "singleclickactivation")
+                            {
+                                settings->setSingleClickActivation((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "warnISO8859")
+                            {
+                                settings->setWarnISO8859((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "sortByCommentText")
+                            {
+                                settings->setSortByCommentText((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "stayoffline")
+                            {
+                                settings->setRestSaveOffline((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "kontodlgwindowposition")
+                            {
+                                bool ok;
+                                int x = QString(elem2.attribute("x")).toInt(&ok);
+                                int y = QString(elem2.attribute("y")).toInt(&ok);
+                                if (ok)
+                                {
+                                    QPoint pos(x, y);
+                                    QRect rootwinsize(QGuiApplication::primaryScreen()->availableGeometry());
+                                    if (rootwinsize.contains(pos)) // Position nicht setzen, wenn Fenster sonst ausserhalb
+                                        settings->unterKontoWindowPosition = pos;
+                                }
+                            }
+                            if (elem2.tagName() == "kontodlgwindowsize")
+                            {
+                                QString xstr = elem2.attribute("width");
+                                if (xstr.isNull())
+                                    continue;
+                                QString ystr = elem2.attribute("height");
+                                if (ystr.isNull())
+                                    continue;
+                                settings->unterKontoWindowSize = QSize(xstr.toInt(), ystr.toInt());
+                            }
+                            if ((global) && (elem2.tagName() == "defaultcommentsfile"))
+                            {
+                                settings->defaultcommentfiles.push_back(elem2.attribute("name", "defaultcomments.xml"));
+                            }
+                            if ((global) && (elem2.tagName() == "column"))
+                            {
+                                settings->columnwidth.push_back(elem2.attribute("width", "50").toInt());
+                            }
+                            if (global && elem2.tagName() == "backends")
+                            {
+                                settings->backends = elem2.attribute("names", settings->defaultbackends);
+                                if (SCTimeXMLSettings::compVersion("0.80.1", lastVersion) != -1) // in case of upgrade add new backend
+                                {
+                                    settings->backends.replace("file", "json file");
+                                }
+
+                                for (QDomNode node3 = elem2.firstChild(); !node3.isNull(); node3 = node3.nextSibling())
+                                {
+                                    QDomElement elem3 = node3.toElement();
+                                    if (!elem3.isNull())
                                     {
-                                        settings->databaseserver = elem3.attribute("server", settings->defaultdatabaseserver);
-                                        settings->database = elem3.attribute("name", settings->defaultdatabase);
-                                        settings->databaseuser = elem3.attribute("user");
-                                        settings->databasepassword = elem3.attribute("password");
+                                        if (elem3.tagName() == "database")
+                                        {
+                                            settings->databaseserver = elem3.attribute("server", settings->defaultdatabaseserver);
+                                            settings->database = elem3.attribute("name", settings->defaultdatabase);
+                                            settings->databaseuser = elem3.attribute("user");
+                                            settings->databasepassword = elem3.attribute("password");
+                                        }
                                     }
                                 }
                             }

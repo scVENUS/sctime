@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <QDomDocument>
 #include <QByteArray>
 
 #include "sctimexmlsettings.h"
@@ -22,6 +23,7 @@ class XMLWriter: public QObject
     public:
       virtual void writeAllSettings();
       virtual void writeSettings(bool global);
+      virtual QDomDocument settings2Doc(bool global);
       virtual void onErr(QNetworkReply* input);
       virtual void writeBytes(QUrl url, QByteArray bytes);
 
