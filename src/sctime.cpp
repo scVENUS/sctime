@@ -117,8 +117,30 @@ QString absolutePath(QString path) {
     return QFileInfo(path).absoluteFilePath();
 }
 
-QString getIdentifier() {
+QString getMachineIdentifier() {
+#ifdef __EMSCRIPTEN__ // we might have different browser on the same machine
+  static QString machineId;
+  QFile machineIdFile(configDir.absoluteFilePath("machineid.txt"));
+  if (machineId.isEmpty())
+  {
+    if (!machineIdFile.exists())
+    {
+      machineId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+      machineIdFile.open(QIODevice::WriteOnly);
+      machineIdFile.write(machineId.toUtf8());
+      machineIdFile.close();
+    }
+    else
+    {
+      machineIdFile.open(QIODevice::ReadOnly);
+      machineId = QString::fromUtf8(machineIdFile.readAll());
+      machineIdFile.close();
+    }
+  }
+  return QSysInfo::machineHostName()+ "-" + machineId;
+#else
   return QSysInfo::machineHostName();
+#endif
 }
 
 /** tries to open a link in an existing instance

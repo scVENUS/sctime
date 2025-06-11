@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QDateTime>
+#include <QStringList>
 #include "timemainwindow.h"
 
 class QNetworkAccessManager;
@@ -39,6 +40,8 @@ public:
           partstodo=0;
        };
        static void setNeedSyncMark(QDate date, bool needsync);
+       static void removeUnmergedData(QDate date);
+       QSet<QDate> getUncleanDates();
 public slots:
        void syncAll();
 private slots:
@@ -60,6 +63,7 @@ private:
        SCTimeXMLSettings* settings;
        TimeMainWindow* tmw;
        int partstodo;
+       QSet<QDate> uncleanDates;
 };
 
 #endif

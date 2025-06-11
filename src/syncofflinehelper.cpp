@@ -67,7 +67,6 @@ void SyncOfflineHelper::setLastSyncTime(const QDateTime &time) {
 
 void SyncOfflineHelper::syncAll()
 {
-    trace("Syncing remote data to local storage.");
     QString baseurl = getRestBaseUrl();
     auto lastSyncTime = getLastSyncTime();
     auto dateFrom = QDate::currentDate().addDays(-90);
@@ -90,12 +89,12 @@ void SyncOfflineHelper::syncAll()
                     QDateTime syncTime = QDateTime::fromString(timestamp, Qt::ISODate);
                     if (syncTime.isValid()) {
                         setLastSyncTime(syncTime);
-                        trace("Last sync time updated to: " + syncTime.toString(Qt::ISODate));
+                        //trace("Last sync time updated to: " + syncTime.toString(Qt::ISODate));
                     } else {
-                        trace("Invalid timestamp format received: " + timestamp);
+                        //trace("Invalid timestamp format received: " + timestamp);
                     }
                 } else {
-                    trace("Timestamp not found in the response.");
+                    //trace("Timestamp not found in the response.");
                 }
                 QJsonValue settingsFilesMetaValue = jsonObject.value("settingsfilesmeta");
                 if (settingsFilesMetaValue.isArray()) {
@@ -105,25 +104,23 @@ void SyncOfflineHelper::syncAll()
                     ServerFileStatus serverFileStatus;
                     if (value.isObject()) {
                         QJsonObject fileObject = value.toObject();
-                        serverFileStatus.lastModified = QDateTime::fromString(fileObject.value("lastModified").toString(), Qt::ISODate);
-                        serverFileStatus.clientId = fileObject.value("clientId").toString();
-                        serverFileStatus.clientInfo = fileObject.value("clientInfo").toString();
+                        serverFileStatus.lastModified = QDateTime::fromString(fileObject.value("modified").toString(), Qt::ISODate);
+                        serverFileStatus.clientId = fileObject.value("client_id").toString();
+                        serverFileStatus.clientInfo = fileObject.value("client_info").toString();
                         serverFileStatus.date = QDate::fromString(fileObject.value("date").toString(), "yyyy-MM-dd");
                         serverFileStatuses->append(serverFileStatus);
-                        trace("Received file status: " + serverFileStatus.clientInfo + " for date " + serverFileStatus.date.toString() + " with last modified time " + serverFileStatus.lastModified.toString(Qt::ISODate));
+                        //trace("Received file status: " + serverFileStatus.clientInfo + " for date " + serverFileStatus.date.toString() + " with last modified time " + serverFileStatus.lastModified.toString(Qt::ISODate));
                       } else {
-                        trace("Received JSON value is not an object.");
+                        logError("Received JSON value is not an object.");
                       }
                   }
                 }
             } else  {
-               trace("Received JSON response is not an object.");
+               logError("Received JSON response is not an object.");
             }
 
             connect(this, &SyncOfflineHelper::finishedRemoteToLocal, [this, serverFileStatuses]() {
-                trace("Finished syncing remote data to local storage.");
                 connect(this, &SyncOfflineHelper::finishedLocalToRemote, [this, serverFileStatuses]() {
-                  trace("Finished syncing local data to remote storage.");
                   delete serverFileStatuses;
 #ifdef __EMSCRIPTEN__
                   // sync previously written files in browser
@@ -144,7 +141,6 @@ void SyncOfflineHelper::syncAll()
 }
 
 void SyncOfflineHelper::nextStepRemoteToLocal() {
-    trace("SyncOfflineHelper::nextStep called");
     partstodo--;
     if (partstodo <= 0) {
         partstodo=0;
@@ -153,7 +149,6 @@ void SyncOfflineHelper::nextStepRemoteToLocal() {
 }
 
 void SyncOfflineHelper::nextStepLocalToRemote() {
-    trace("SyncOfflineHelper::nextStep called");
     partstodo--;
     if (partstodo <= 0) {
         partstodo=0;
@@ -162,24 +157,27 @@ void SyncOfflineHelper::nextStepLocalToRemote() {
 }
 
 void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
-    trace("Syncing remote data to local storage for " + QString::number(list.size()) + " files.");
     partstodo++;
     for (const ServerFileStatus &fileStatus : list) {
         QString *filename = new QString("zeit-" + fileStatus.date.toString("yyyy-MM-dd") + ".xml");
         QFileInfo fileInfo(configDir.absoluteFilePath(*filename));
         bool fileExists = fileInfo.exists();
-        if (fileStatus.clientId==clientId && fileExists && fileInfo.lastModified() >= fileStatus.lastModified) {
-            trace("Skipping file " + *filename + " as it is already up to date.");
+        // Check if the file is already up to date - the remote file cannot be newer than the local file, as it is written with the same client, but
+        // be paranoid and also check for date with a small buffer
+        if (fileStatus.clientId==clientId && fileExists && fileInfo.lastModified().addSecs(30) >= fileStatus.lastModified) {
+            //trace("Skipping file " + *filename + " as it is already up to date.");
             continue;
         }
         if (fileStatus.date == tmw->getOpenDate() || fileStatus.date == tmw->getOpenCurrentDate()) {
-            trace("Skipping file " + *filename + " as it is currently open.");
+            //trace("Skipping file " + *filename + " as it is currently open.");
             continue;
         }
         AbteilungsListe *abtList=tmw->getEmptyAbtList(fileStatus.date);
         PunchClockList *pcl=new PunchClockList();
         XMLReader* xmlReader= new XMLReader(settings, networkAccessManager, false, false, true, abtList, pcl);
         QDateTime* fileModified = new QDateTime(fileStatus.lastModified);
+        trace("Syncing remote file " + *filename + " for date " + fileStatus.date.toString("yyyy-MM-dd") + " with last modified time " + fileStatus.lastModified.toString(Qt::ISODate) + " and client ID " + fileStatus.clientId);
+        uncleanDates.insert(fileStatus.date);
         partstodo++;
         connect(xmlReader, &XMLReader::settingsRead, [fileExists, filename, this, fileModified, abtList, pcl, xmlReader]() {
             QString targetFilename;
@@ -189,6 +187,10 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
                 targetFilename = configDir.absoluteFilePath(*filename);
             }
             XMLWriter xmlWriter(settings, networkAccessManager, abtList,pcl);
+            // ensure the XMLWriter has the correct metadata
+            xmlWriter.setSavetime(xmlReader->lastRemoteSaveTime());
+            xmlWriter.setIdentifier(xmlReader->lastRemoteID());
+
             QDomDocument doc = xmlWriter.settings2Doc(false);
             QFile file(targetFilename);
             if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -198,7 +200,6 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
                 out << doc.toString();
                 file.setFileTime(*fileModified, QFileDevice::FileModificationTime);
                 file.close();
-                trace("Wrote settings to " + targetFilename);
             } else {
                 logError("Failed to write settings to " + targetFilename + ": " + file.errorString());
             }
@@ -215,7 +216,6 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
 }
 
 void SyncOfflineHelper::syncLocalToRemoteList(QList<ServerFileStatus> &list) {
-    trace("Syncing local data to remote storage for " + QString::number(list.size()) + " files.");
     partstodo++;
     // loop over all files with extension .needssync in configDir
     QDir dir(configDir);
@@ -232,12 +232,26 @@ void SyncOfflineHelper::syncLocalToRemoteList(QList<ServerFileStatus> &list) {
             QFileInfo fileInfo(configDir.absoluteFilePath(fileNameNS));
             auto fs = serverFileStatusMap.value(fileNameNS);
             if (fs.lastModified>fileInfo.lastModified()) {
-                trace("Skipping file " + fileName + " as it is already up to date.");
+                // trace("Skipping file " + fileName + " as it is already up to date.");
                 continue;
             }
         }
+        
+        QDate date = QDate::fromString(fileName.replace("zeit-", "").replace(".xml", ""), "yyyy-MM-dd");
+        if (!date.isValid()) {
+            logError("Invalid date in file name " + fileName + ": " + fileName.replace("zeit-", "").replace(".xml", ""));
+            continue;
+        }
+        trace("Syncing local file " + fileName + " for date " + date.toString("yyyy-MM-dd") + " from " + filePathNS);
         QString filePath = filePathNS;
         filePath.replace(".needssync", ".xml");
+
+        if (QFile::exists(filePath+".unmerged")) {
+            logError("File " + filePath + " already exists as unmerged, skipping.");
+            uncleanDates.insert(date);
+            continue;
+        }
+
         QFile file(filePath);
         QDomDocument doc;
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -251,11 +265,7 @@ void SyncOfflineHelper::syncLocalToRemoteList(QList<ServerFileStatus> &list) {
             logError("Failed to open file " + filePath + ": " + file.errorString());
             continue;
         }
-        QDate date = QDate::fromString(fileName.replace("zeit-", "").replace(".xml", ""), "yyyy-MM-dd");
-        if (!date.isValid()) {
-            logError("Invalid date in file name " + fileName + ": " + fileName.replace("zeit-", "").replace(".xml", ""));
-            continue;
-        }
+        
         AbteilungsListe *abtList=tmw->getEmptyAbtList(date);
         PunchClockList *pcl=new PunchClockList();
         XMLReader xmlReader(settings, networkAccessManager, false, true, true, abtList, pcl);
@@ -264,7 +274,6 @@ void SyncOfflineHelper::syncLocalToRemoteList(QList<ServerFileStatus> &list) {
         QString* filePathNSPtr = new QString(filePathNS);
         partstodo++;
         connect(xmlWriter, &XMLWriter::settingsWritten, [=]() {
-            trace("Delete " + *filePathNSPtr);
             QFile::remove(*filePathNSPtr);
             
             xmlWriter->deleteLater();
@@ -288,22 +297,31 @@ void SyncOfflineHelper::setNeedSyncMark(QDate date, bool needsync) {
         if (!file.exists()) {
             if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 file.close();
-                trace("Created sync marker file: " + filename);
             } else {
                 logError("Failed to create sync marker file: " + filename + ": " + file.errorString());
             }
-        } else {
-            trace("Sync marker file already exists: " + filename);
-        }
+        } 
     } else {
         if (file.exists()) {
-            if (file.remove()) {
-                trace("Removed sync marker file: " + filename);
-            } else {
-                logError("Failed to remove sync marker file: " + filename + ": " + file.errorString());
+            if (!file.remove()) {
+               logError("Failed to remove sync marker file: " + filename + ": " + file.errorString());
             }
-        } else {
-            trace("No sync marker file to remove: " + filename);
-        }
+        } 
     }
+}
+
+void SyncOfflineHelper::removeUnmergedData(QDate date) {
+    QString filename = "zeit-" + date.toString("yyyy-MM-dd") + ".xml.unmerged";
+    //trace("Removing unmerged data file: " + filename);
+    QFile file(configDir.absoluteFilePath(filename));
+    if (file.exists()) {
+       if (!file.remove()) {
+          logError("Failed to remove unmerged data file: " + filename + ": " + file.errorString());
+       } 
+    }
+}
+
+QSet<QDate> SyncOfflineHelper::getUncleanDates()
+{
+    return uncleanDates;
 }

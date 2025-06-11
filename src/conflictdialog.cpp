@@ -23,6 +23,7 @@
 #include "qmessagebox.h"
 #include "timemainwindow.h"
 #include "globals.h"
+#include <iostream>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -30,6 +31,16 @@
 
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
     QDialog(tmw), tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
+    setupUi(this);
+    setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
+    connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
+    connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
+    connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
+    connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
+}
+
+ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw, QDomDocument docLocal): 
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager), docLocal(docLocal) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
@@ -61,10 +72,20 @@ void ConflictDialog::performMerge() {
 
     bool istoday=false;
     if (tmw->abtList->getDatum()==targetdate) {
+      if (!docLocal.isNull()) {
+        // load local document
+        XMLReader reader(settings, networkAccessManager, global, false, true, tmw->abtList, tmw->m_punchClockList);
+        reader.fillSettingsFromDocument(docLocal, settings);
+      } 
       conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtList);
       conflictedPunchClockList=new PunchClockList();
     } else if (tmw->abtListToday->getDatum()==targetdate) {
       istoday=true;
+      if (!docLocal.isNull()) {
+        // load local document
+        XMLReader reader(settings, networkAccessManager, global, false, true, tmw->abtListToday, tmw->m_punchClockListToday);
+        reader.fillSettingsFromDocument(docLocal, settings);
+      } 
       conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtListToday);
       conflictedPunchClockList=new PunchClockList();
     } else {
@@ -73,12 +94,12 @@ void ConflictDialog::performMerge() {
       return;
     }
 
-    XMLReader *reader=new XMLReader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
+    XMLReader reader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
     QDomDocument doc("settings");
     bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);
     if (success) {
-        reader->fillSettingsFromDocument(doc, settings);
+        reader.fillSettingsFromDocument(doc, settings);
         if (istoday) {
            mergeAbtList(tmw->abtListToday, conflictedAbtList);
         } else {
@@ -111,7 +132,7 @@ void ConflictDialog::performReplace() {
       conflictedPunchClockList=new PunchClockList();
     } else if (tmw->abtListToday->getDatum()==targetdate) {
       istoday=true;
-      conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtList);
+      conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtListToday);
       conflictedPunchClockList=new PunchClockList();
     } else {
       // this should not happen, but handle anyways, just in case...
@@ -140,6 +161,7 @@ void ConflictDialog::performReplace() {
         }
         emit finished(1);
     } else {
+        std::cout<< "error"<<std::endl;
         emit finished(1);
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
                               QObject::tr("sctime: reading configuration file"),
@@ -161,6 +183,11 @@ void ConflictDialog::performClose() {
 }
 
 void ConflictDialog::performKeep() {
+  if (!docLocal.isNull()) {
+     // load local document
+     XMLReader reader(settings, networkAccessManager, global, false, true, tmw->abtList, tmw->m_punchClockList);
+     reader.fillSettingsFromDocument(docLocal, settings);
+ } 
   emit finished(1);
 }
 

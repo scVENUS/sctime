@@ -166,19 +166,10 @@ void XMLReader::parse(QIODevice *input)
     }
 
     auto rootElemRemote=docremote.documentElement();
-    QString clientID=clientId;
+    QString machineID=getMachineIdentifier();
     QString remoteDateStr=rootElemRemote.attribute("date");
-    QString remoteID=rootElemRemote.attribute("identifier");
-    QDateTime remoteDate=QDateTime::fromString(remoteDateStr, Qt::ISODate);
-    if (readSuccessRemote && (clientID!=remoteID) && (remoteDate.secsTo(QDateTime::currentDateTime())<150)) {
-        logError(tr("conflict detected. clientid is %1 remoteid is %2").arg(clientID).arg(remoteID));
-        emit conflicted(abtList->getDatum(), global, docremote);
-        if (!autoContinueOnConflict&&!continueThisConflict) {
-           return;
-        } else {
-            continueThisConflict =false;
-        }
-    }
+    remoteID=rootElemRemote.attribute("identifier");
+    remoteSaveTime=QDateTime::fromString(remoteDateStr, Qt::ISODate);
 
     bool readsuccess=false;
     QDomDocument doc;
@@ -188,7 +179,7 @@ void XMLReader::parse(QIODevice *input)
         QString localID=rootElemLocal.attribute("identifier");
         QString localDateStr=rootElemLocal.attribute("date");
         QDateTime localDate=QDateTime::fromString(localDateStr, Qt::ISODate);
-        if (remoteDate==localDate) {
+        if (remoteSaveTime==localDate) {
            if (remoteID==localID) {
              // standard case, just proceed
              readsuccess=true;
@@ -199,33 +190,35 @@ void XMLReader::parse(QIODevice *input)
              readsuccess=true;
              doc=doclocal;
            }
-        } else if (remoteDate>localDate) {
+        } else if (remoteSaveTime>localDate) {
            if (remoteID==localID) {
              readsuccess=true;
              doc=docremote;
              logError(tr("using newer remote version."));
            } else {
-             logError(tr("two different clients have written a settings file with the same date. using newer remote version."));
+             logError(tr("two different clients have written a settings file with the same date."));
              emit conflictedWithLocal(abtList->getDatum(), global, doclocal, docremote);
              if (!autoContinueOnConflict&&!continueThisConflict) {
                return;
              } else {
+               logError(tr("Autocontinue: using newer remote version."));
                continueThisConflict =false;
                readsuccess=true;
                doc=docremote;
              }
            } 
-        } else if (remoteDate<localDate) {
+        } else if (remoteSaveTime<localDate) {
            if (remoteID==localID) {
              readsuccess=true;
              doc=doclocal;
              logError(tr("using newer local version."));
            } else {
-             logError(tr("two different clients have written a settings file with the same date. using newer local version."));
+             logError(tr("two different clients have written a settings file with the same date."));
              emit conflictedWithLocal(abtList->getDatum(), global, doclocal, docremote);
              if (!autoContinueOnConflict&&!continueThisConflict) {
                return;
              } else {
+               logError(tr("Autocontinue: using newer local version."));
                continueThisConflict =false;
                readsuccess=true;
                doc=doclocal;
@@ -238,6 +231,17 @@ void XMLReader::parse(QIODevice *input)
     } else if (readSuccessRemote) {
         readsuccess=true;
         doc=docremote;
+    }
+
+    // we do not have local data to compare to, but another client has written a file recently
+    if (readSuccessRemote && (machineID!=remoteID) && (remoteSaveTime.secsTo(QDateTime::currentDateTime())<150)) {
+        logError(tr("conflict detected. machineid is %1 remoteid is %2").arg(machineID).arg(remoteID));
+        emit conflictingClientRunning(abtList->getDatum(), global, docremote);
+        if (!autoContinueOnConflict&&!continueThisConflict) {
+           return;
+        } else {
+            continueThisConflict =false;
+        }
     }
     
     // QByteArray bytes=input->readAll();

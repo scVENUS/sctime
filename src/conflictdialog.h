@@ -22,6 +22,7 @@
 
 #include "ui_conflictdialogbase.h"
 #include <QDate>
+#include <QDomDocument>
 
 class SCTimeXMLSettings;
 class AbteilungsListe;
@@ -34,6 +35,7 @@ class ConflictDialog : public QDialog, private Ui::ConflictDialogBase
   Q_OBJECT
 public:
   ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw);
+  ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw, QDomDocument docLocal);
   virtual ~ConflictDialog() {};
 
 public slots:
@@ -52,6 +54,7 @@ private:
   PunchClockList * conflictedPunchClockList;
   QByteArray remoteBA;
   QDate targetdate;
+  QDomDocument docLocal;
   QNetworkAccessManager* networkAccessManager;
 };
 

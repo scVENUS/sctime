@@ -17,6 +17,12 @@
 #include <emscripten.h>
 #endif
 
+XMLWriter::XMLWriter(SCTimeXMLSettings* settings, QNetworkAccessManager *networkAccessManager, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout): settings(settings), conflicttimeout(conflicttimeout), abtList(abtList), pcl(pcl), networkAccessManager(networkAccessManager) {
+  connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
+  writeAll=false;
+  identifier=getMachineIdentifier();
+};
+
 void XMLWriter::checkReply(QNetworkReply* input) {
    auto errcode=input->error();
    if (errcode!=0) {
@@ -30,16 +36,16 @@ void XMLWriter::checkReply(QNetworkReply* input) {
         onErr(input);
       }
       if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
+         SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),false);
          auto conflictingclient=getRestHeader(input,"sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
          emit offlineSwitched(false);
-         SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),false);
          input->deleteLater();
-     } else {  
+     } else {
+       SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),false);
        emit settingsPartWritten(global, abtList, pcl);
        emit offlineSwitched(false);
-       SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),false);
        input->deleteLater();
      }
    }
@@ -88,14 +94,16 @@ void XMLWriter::writeAllSettings() {
 QDomDocument XMLWriter::settings2Doc(bool global) {
   QDomDocument doc("settings");
 
-  QDateTime savetime=QDateTime::currentDateTimeUtc();
+  if (savetime.isNull()) {
+    savetime=QDateTime::currentDateTimeUtc();
+  }
 
   QDomElement root = doc.createElement( "sctime" );
   // TODO: XML/HTML-Quoting
   root.setAttribute("version", qApp->applicationVersion());
   root.setAttribute("system", QSysInfo::productType());
   root.setAttribute("date", savetime.toString(Qt::ISODate));
-  root.setAttribute("identifier", clientId);
+  root.setAttribute("identifier", identifier);
   doc.appendChild( root );
   QDomElement generaltag = doc.createElement( "general" );
 
