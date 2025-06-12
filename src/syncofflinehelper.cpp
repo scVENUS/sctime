@@ -179,7 +179,9 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
         XMLReader* xmlReader= new XMLReader(settings, networkAccessManager, false, false, true, abtList, pcl);
         QDateTime* fileModified = new QDateTime(fileStatus.lastModified);
         trace("Syncing remote file " + *filename + " for date " + fileStatus.date.toString("yyyy-MM-dd") + " with last modified time " + fileStatus.lastModified.toString(Qt::ISODate) + " and client ID " + fileStatus.clientId);
-        uncleanDates.insert(fileStatus.date);
+        if (fileExists) {
+            uncleanDates.insert(fileStatus.date);
+        }
         partstodo++;
         connect(xmlReader, &XMLReader::settingsRead, [fileExists, filename, this, fileModified, abtList, pcl, xmlReader]() {
             QString targetFilename;
