@@ -71,7 +71,9 @@ void SyncOfflineHelper::syncAll()
     auto lastSyncTime = getLastSyncTime();
     auto dateFrom = QDate::currentDate().addDays(-90);
     auto dateTo = QDate::currentDate().addYears(1);
-    auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_LIST_SETTINGS_ENDPOINT + "?modifiedFrom=" + lastSyncTime.toString(Qt::ISODate) + "&dateFrom=" + dateFrom.toString("yyyy-MM-dd") + "&dateTo=" + dateTo.toString("yyyy-MM-dd")));
+    auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_LIST_SETTINGS_ENDPOINT +
+        "?modifiedFrom=" + QUrl::toPercentEncoding(lastSyncTime.toString(Qt::ISODate)) +
+        "&dateFrom=" + QUrl::toPercentEncoding(dateFrom.toString("yyyy-MM-dd")) + "&dateTo=" + QUrl::toPercentEncoding(dateTo.toString("yyyy-MM-dd"))));
     QNetworkReply *reply = networkAccessManager->get(request);
     networkAccessManager->get(QNetworkRequest());
     connect(reply, &QNetworkReply::finished, [=]()
