@@ -29,8 +29,8 @@
 #include <emscripten.h>
 #endif
 
-ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw): 
-    QDialog(tmw), tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager) {
+ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, QDomDocument docRemote, TimeMainWindow* tmw): 
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), networkAccessManager(networkAccessManager) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
@@ -39,8 +39,8 @@ ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManage
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
 }
 
-ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw, QDomDocument docLocal): 
-    QDialog(tmw), tmw(tmw), settings(settings), global(global), remoteBA(remoteBA), targetdate(targetdate), networkAccessManager(networkAccessManager), docLocal(docLocal) {
+ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, QDomDocument docRemote, TimeMainWindow* tmw, QDomDocument docLocal): 
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), docLocal(docLocal), networkAccessManager(networkAccessManager) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
@@ -50,9 +50,6 @@ ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManage
 }
 
 void ConflictDialog::performMerge() {
-    QString errMsg;
-    QString resname;
-    int errLine, errCol;
 
     AbteilungsListe* conflictedAbtList=NULL;
     PunchClockList * conflictedPunchClockList=NULL;
@@ -96,33 +93,16 @@ void ConflictDialog::performMerge() {
 
     XMLReader reader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
-    QDomDocument doc("settings");
-    bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);
-    if (success) {
-        reader.fillSettingsFromDocument(doc, settings);
-        if (istoday) {
-           mergeAbtList(tmw->abtListToday, conflictedAbtList);
-        } else {
-           mergeAbtList(tmw->abtList, conflictedAbtList);
-        }
-        emit finished(2);
+    reader.fillSettingsFromDocument(docRemote, settings);
+    if (istoday) {
+       mergeAbtList(tmw->abtListToday, conflictedAbtList);
     } else {
-        emit finished(2);
-        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
-                              QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
-        connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
-        msgbox->open();
-        msgbox->raise();
+       mergeAbtList(tmw->abtList, conflictedAbtList);
     }
-
+    emit finished(2);
 }
 
 void ConflictDialog::performReplace() {
-
-    QString errMsg;
-    QString resname;
-    int errLine, errCol;
 
     AbteilungsListe* conflictedAbtList=NULL;
     PunchClockList * conflictedPunchClockList=NULL;
@@ -140,36 +120,24 @@ void ConflictDialog::performReplace() {
       return;
     }
 
-    XMLReader *reader=new XMLReader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
+    XMLReader reader(settings, networkAccessManager, global, false, true, conflictedAbtList, conflictedPunchClockList);
     
-    QDomDocument doc("settings");
-    bool success = doc.setContent(qUncompress(remoteBA), &errMsg, &errLine, &errCol);
-    if (success) {
-        reader->fillSettingsFromDocument(doc, settings);
-        if (!istoday) {
-          if (tmw->abtList==tmw->abtListToday) {
-            delete tmw->abtList;
-            tmw->abtList=conflictedAbtList;
-            tmw->abtListToday=conflictedAbtList;
-          } else {
-            delete tmw->abtList;
-            tmw->abtList=conflictedAbtList;
-          }
-        } else {
-          delete tmw->abtListToday;
-          tmw->abtListToday=conflictedAbtList;
-        }
-        emit finished(1);
-    } else {
-        std::cout<< "error"<<std::endl;
-        emit finished(1);
-        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
-                              QObject::tr("sctime: reading configuration file"),
-                              QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
-        connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
-        msgbox->open();
-        msgbox->raise();
-    }
+    reader.fillSettingsFromDocument(docRemote, settings);
+    if (!istoday) {
+       if (tmw->abtList==tmw->abtListToday) {
+         delete tmw->abtList;
+         tmw->abtList=conflictedAbtList;
+         tmw->abtListToday=conflictedAbtList;
+       } else {
+         delete tmw->abtList;
+         tmw->abtList=conflictedAbtList;
+       }
+     } else {
+       delete tmw->abtListToday;
+       tmw->abtListToday=conflictedAbtList;
+     }
+     emit finished(1);
+
 }
 
 // this function terminates the application hard, without saving files, etc. This avoids additional conflicts with other sessions.

@@ -100,7 +100,7 @@ void DateChanger::resetLists()
         m_timeMainWindow->abtListToday->clearKonten();
         m_timeMainWindow->m_punchClockListToday->clear();
         expectedActions++;
-        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager,true, false, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager,true, false, false, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
         connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
         connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
         connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});

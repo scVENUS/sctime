@@ -313,6 +313,7 @@ public:
     DSM* m_dsm;
     QQueue<QueuedMethod*>* m_afterCommitMethodQueue;
     QNetworkAccessManager *networkAccessManager;
+    QSet<QDate> m_conflictDialogOpenForDates;
 };
 
 

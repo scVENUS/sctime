@@ -99,6 +99,7 @@ void XMLReader::parse(QIODevice *input)
     QDomDocument docremote("settings");
     QString errMsg;
     QString resname;
+    QString remoteclientid;
     int errLine, errCol;
     bool readSuccessLocal=false;
     bool readSuccessRemote=false;
@@ -106,6 +107,7 @@ void XMLReader::parse(QIODevice *input)
 
     if (netinput!=NULL) {
         auto clientinfo=getRestHeader(netinput,"sctime-client-info");
+        remoteclientid=getRestHeader(netinput,"sctime-clientid");
         auto modified=getRestHeader(netinput,"sctime-modified");
         bool isrestresponse=true;
         #ifdef ENSURE_REST_HEADER
@@ -233,9 +235,9 @@ void XMLReader::parse(QIODevice *input)
         doc=docremote;
     }
 
-    // we do not have local data to compare to, but another client has written a file recently
-    if (readSuccessRemote && (machineID!=remoteID) && (remoteSaveTime.secsTo(QDateTime::currentDateTime())<150)) {
-        logError(tr("conflict detected. machineid is %1 remoteid is %2").arg(machineID).arg(remoteID));
+    // another client has written a file recently
+    if (readSuccessRemote && (clientId!=remoteclientid) && (remoteSaveTime.secsTo(QDateTime::currentDateTime())<150)) {
+        logError(tr("conflict detected. localid is %1 remoteid is %2").arg(clientId).arg(remoteclientid));
         emit conflictingClientRunning(abtList->getDatum(), global, docremote);
         if (!autoContinueOnConflict&&!continueThisConflict) {
            return;
@@ -266,7 +268,7 @@ void XMLReader::parse(QIODevice *input)
     fillSettingsFromDocument(doc, settings);
 }
 
-void XMLReader::fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* settings) {
+void XMLReader::fillSettingsFromDocument(const QDomDocument& doc, SCTimeXMLSettings* settings) {
     QDomElement aktiveskontotag;
     QDomElement docElem = doc.documentElement();
     QString lastVersion = docElem.attribute("version");

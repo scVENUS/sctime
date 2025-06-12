@@ -37,7 +37,7 @@ class XMLReader: public QObject
 
     public slots:
       virtual void parse(QIODevice* input);
-      virtual void fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* settings);
+      virtual void fillSettingsFromDocument(const QDomDocument& doc, SCTimeXMLSettings* settings);
       virtual void gotReply();
       virtual void continueAfterReading(bool global, AbteilungsListe *abtList, PunchClockList *pcl);
       /*private signals:
