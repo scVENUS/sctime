@@ -2905,12 +2905,14 @@ void TimeMainWindow::syncAll() {
     }
 
     if (!attentionlist.isEmpty()) {
+      QString message=tr("There were some conflicts during sync. Please check and save the data for the following dates:\n\n  %1").arg(attentionlist.join("\n  "));
+      trace(message);
       static bool dialogopen = false;
       if (!dialogopen) {        
         dialogopen = true;
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
             tr("sctime: Conflicts during sync"),
-            tr("There were some conflicts during sync. Please check and save the data for the following dates:\n\n  %1").arg(attentionlist.join("\n  ")),
+            message,
             QMessageBox::Ok, this);
         connect(msgbox, &QMessageBox::finished, [=]() {
           msgbox->deleteLater();
