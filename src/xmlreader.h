@@ -28,14 +28,16 @@ class XMLReader: public QObject
       virtual QFile* openFile(bool handleerr);
       virtual void openREST();
       virtual void ignoreConflict() { continueThisConflict=true; };
+      virtual QString lastRemoteID() { return remoteID; };
+      virtual QDateTime lastRemoteSaveTime() { return remoteSaveTime; };
     
     signals:
-      void conflicted(QDate targetdate, bool global, QDomDocument remotesettings);
+      void conflictingClientRunning(QDate targetdate, bool global, QDomDocument remotesettings);
       void conflictedWithLocal(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
 
     public slots:
       virtual void parse(QIODevice* input);
-      virtual void fillSettingsFromDocument(QDomDocument& doc, SCTimeXMLSettings* settings);
+      virtual void fillSettingsFromDocument(const QDomDocument& doc, SCTimeXMLSettings* settings);
       virtual void gotReply();
       virtual void continueAfterReading(bool global, AbteilungsListe *abtList, PunchClockList *pcl);
       /*private signals:
@@ -45,6 +47,8 @@ class XMLReader: public QObject
       bool forceLocalRead;
       bool autoContinueOnConflict;
       bool continueThisConflict;
+      QString remoteID;
+      QDateTime remoteSaveTime;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager *networkAccessManager;

@@ -11,10 +11,17 @@
 #include "sctimexmlsettings.h"
 #include "globals.h"
 #include "resthelper.h"
+#include "syncofflinehelper.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
+
+XMLWriter::XMLWriter(SCTimeXMLSettings* settings, QNetworkAccessManager *networkAccessManager, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout): settings(settings), conflicttimeout(conflicttimeout), abtList(abtList), pcl(pcl), networkAccessManager(networkAccessManager) {
+  connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
+  writeAll=false;
+  identifier=getMachineIdentifier();
+};
 
 void XMLWriter::checkReply(QNetworkReply* input) {
    auto errcode=input->error();
@@ -29,12 +36,14 @@ void XMLWriter::checkReply(QNetworkReply* input) {
         onErr(input);
       }
       if (input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==202) {
+         SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),false);
          auto conflictingclient=getRestHeader(input,"sctime-client-info");
          emit conflicted(abtList->getDatum(), global, (input->readAll()));
          emit settingsPartWritten(global, abtList, pcl);
          emit offlineSwitched(false);
          input->deleteLater();
-     } else {  
+     } else {
+       SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),false);
        emit settingsPartWritten(global, abtList, pcl);
        emit offlineSwitched(false);
        input->deleteLater();
@@ -56,6 +65,7 @@ void XMLWriter::onErr(QNetworkReply* input) {
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
+    SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),true);
     bool isrestresponse=true;
     #ifdef ENSURE_REST_HEADER
     auto sctimerestresponse=getRestHeader(input, "sctime-rest-response");
@@ -81,25 +91,19 @@ void XMLWriter::writeAllSettings() {
   writeSettings(true);
 }
 
-void XMLWriter::writeSettings(bool global) {
-   this->global=global;
-   if ((abtList->checkInState())&&(!global)) {
-      trace(QObject::tr("zeit-DAY.sh not written because it has already been checked in"));
-      // nothing to do, so just emit success signal
-      emit settingsPartWritten(global, abtList, pcl);
-      return;
-  }
-  #ifndef NO_XML
+QDomDocument XMLWriter::settings2Doc(bool global) {
   QDomDocument doc("settings");
 
-  QDateTime savetime=QDateTime::currentDateTimeUtc();
+  if (savetime.isNull()) {
+    savetime=QDateTime::currentDateTimeUtc();
+  }
 
   QDomElement root = doc.createElement( "sctime" );
   // TODO: XML/HTML-Quoting
   root.setAttribute("version", qApp->applicationVersion());
   root.setAttribute("system", QSysInfo::productType());
   root.setAttribute("date", savetime.toString(Qt::ISODate));
-  root.setAttribute("identifier", clientId);
+  root.setAttribute("identifier", identifier);
   doc.appendChild( root );
   QDomElement generaltag = doc.createElement( "general" );
 
@@ -455,7 +459,20 @@ void XMLWriter::writeSettings(bool global) {
     root.appendChild(punchclocktag);
   }
 #endif
+  return doc;
+}
 
+void XMLWriter::writeSettings(bool global) {
+   this->global=global;
+   if ((abtList->checkInState())&&(!global)) {
+      trace(QObject::tr("zeit-DAY.sh not written because it has already been checked in"));
+      // nothing to do, so just emit success signal
+      emit settingsPartWritten(global, abtList, pcl);
+      return;
+  }
+#ifndef NO_XML
+  QDomDocument doc = settings2Doc(global);
+  
   QString filename(global ? "settings.xml" : "zeit-"+abtList->getDatum().toString("yyyy-MM-dd")+".xml");
   filename=configDir.filePath(filename);
   QFile fnew(filename + ".tmp");
@@ -539,6 +556,7 @@ void XMLWriter::writeSettings(bool global) {
   if (settings->restSaveOffline())
   {
     logError("skipping online writing");
+    SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),true);
     emit settingsPartWritten(global, abtList, pcl);
   } else {
     QByteArray ba;

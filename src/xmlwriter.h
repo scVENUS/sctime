@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <QDomDocument>
 #include <QByteArray>
 
 #include "sctimexmlsettings.h"
@@ -15,15 +16,15 @@ class XMLWriter: public QObject
 {
      Q_OBJECT;
      public:
-       XMLWriter(SCTimeXMLSettings* settings, QNetworkAccessManager *networkAccessManager, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout=150): settings(settings), conflicttimeout(conflicttimeout), abtList(abtList), pcl(pcl), networkAccessManager(networkAccessManager) {
-               connect(this, &XMLWriter::settingsPartWritten, this, &XMLWriter::continueAfterWriting);
-               writeAll=false;
-       };
+       XMLWriter(SCTimeXMLSettings* settings, QNetworkAccessManager *networkAccessManager, AbteilungsListe* abtList, PunchClockList* pcl, int conflicttimeout=150);
     public:
       virtual void writeAllSettings();
       virtual void writeSettings(bool global);
+      virtual QDomDocument settings2Doc(bool global);
       virtual void onErr(QNetworkReply* input);
       virtual void writeBytes(QUrl url, QByteArray bytes);
+      virtual void setIdentifier(QString identifier) { this->identifier = identifier; };
+      virtual void setSavetime(QDateTime savetime) { this->savetime = savetime; };
 
   public slots:
       virtual void checkReply(QNetworkReply* input);
@@ -40,6 +41,8 @@ class XMLWriter: public QObject
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager *networkAccessManager;
+      QString identifier;
+      QDateTime savetime;
     signals:
         void settingsWritten();
         void unauthorized();

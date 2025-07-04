@@ -1,6 +1,7 @@
 #include "datechanger.h"
 
 #include <QDate>
+#include <QMessageBox>
 #include "abteilungsliste.h"
 #include "sctimexmlsettings.h"
 #include "xmlwriter.h"
@@ -99,7 +100,7 @@ void DateChanger::resetLists()
         m_timeMainWindow->abtListToday->clearKonten();
         m_timeMainWindow->m_punchClockListToday->clear();
         expectedActions++;
-        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager,true, false, true, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
+        XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager,true, false, false, m_timeMainWindow->abtListToday, m_timeMainWindow->m_punchClockListToday);
         connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
         connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
         connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
@@ -108,9 +109,23 @@ void DateChanger::resetLists()
 
     m_timeMainWindow->abtList->clearKonten();
     m_timeMainWindow->m_punchClockList->clear();
-    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager, true, false, true, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
+    XMLReader *reader=new XMLReader(m_timeMainWindow->settings, networkAccessManager, true, false, false, m_timeMainWindow->abtList, m_timeMainWindow->m_punchClockList);
     connect(reader, &XMLReader::settingsRead, this, &DateChanger::updatePunchClock);
     connect(reader, &XMLReader::settingsRead, reader, &XMLWriter::deleteLater);
+    connect(reader, &XMLReader::conflictedWithLocal, m_timeMainWindow, &TimeMainWindow::readConflictWithLocalDialog);
+    connect(reader, &XMLReader::conflictingClientRunning, [=](QDate targetdate, bool global, QDomDocument doc) {
+      // we get this signal, if there is no local data, so we can safely fill the settings, but warn the user
+      reader->fillSettingsFromDocument(doc, m_timeMainWindow->settings);
+      emit reader->settingsRead();
+      QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+            tr("sctime: conflicting client detected"),
+            tr("There seems to be another client which is currently writing data."),
+            QMessageBox::Ok, m_timeMainWindow);
+      connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+      msgbox->open();
+      msgbox->raise();
+      reader->deleteLater();
+    });
     connect(reader, &XMLReader::offlineSwitched, [this](bool offline){emit offlineSwitched(offline);});
     reader->open();
 }

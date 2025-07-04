@@ -22,6 +22,8 @@
 
 #include "ui_conflictdialogbase.h"
 #include <QDate>
+#include <QDomDocument>
+#include <QMessageBox>
 
 class SCTimeXMLSettings;
 class AbteilungsListe;
@@ -33,7 +35,8 @@ class ConflictDialog : public QDialog, private Ui::ConflictDialogBase
 {
   Q_OBJECT
 public:
-  ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QByteArray remoteBA, TimeMainWindow* tmw);
+  ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QDomDocument docRemote, TimeMainWindow* tmw);
+  ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QDomDocument docRemote, TimeMainWindow* tmw, QDomDocument docLocal);
   virtual ~ConflictDialog() {};
 
 public slots:
@@ -50,9 +53,20 @@ private:
   bool global;
   AbteilungsListe* conflictedAbtList;
   PunchClockList * conflictedPunchClockList;
-  QByteArray remoteBA;
+  QDomDocument docRemote;
   QDate targetdate;
+  QDomDocument docLocal;
   QNetworkAccessManager* networkAccessManager;
 };
 
+class ConflictDialogSameBrowser: public QMessageBox
+{
+  Q_OBJECT
+public:
+  ConflictDialogSameBrowser(QWidget* parent):QMessageBox(QMessageBox::Warning,
+            tr("sctime: conflict with session in same browser"),
+            tr("There seems to be a conflict with another session in the same browser. Please use only one session at a time.\nHint: you may also get this message, if you have just restarted a running sctime in this browser."),
+            QMessageBox::Ok, parent) {};
+  virtual ~ConflictDialogSameBrowser() {};
+};
 #endif
