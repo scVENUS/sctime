@@ -31,6 +31,7 @@ class DescData
         QString type();
         QString pspElem();
         bool supportsSpecialRemuneration();
+        bool supportsOnCallTimes();
         void setDescription(const QString& description);
         void setResponsible(const QString&);
         void setType(const QString&);

@@ -270,6 +270,7 @@ public:
     QAction* publicHolidayModeAction;
     QAction* copyAction;
     QAction* copyLinkAction;
+    QAction* onCallAction;
     QDateTime startTime;
     QDateTime lastMinuteTick;
     QFont qtDefaultFont;

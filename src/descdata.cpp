@@ -83,5 +83,10 @@ void DescData::setPSPElem(const QString& pspelem)
 
 bool DescData::supportsSpecialRemuneration()
 {
-    return !m_type.endsWith("(x)")&&!m_type.endsWith("(o)");
+    return !m_type.endsWith("(x)")&&!m_type.endsWith("(o)")&&!m_type.endsWith("(xe)");
+}
+
+bool DescData::supportsOnCallTimes()
+{
+    return !m_type.endsWith("(x)")&&!m_type.endsWith("(o)")&&!m_type.endsWith("(xe)");
 }

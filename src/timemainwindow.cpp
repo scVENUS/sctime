@@ -283,10 +283,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   eintragRemoveAction->setShortcut(Qt::Key_Delete);
   connect(eintragRemoveAction, SIGNAL(triggered()), this, SLOT(eintragEntfernen()));
 
-  QAction* bereitschaftsAction = new QAction(QIcon(":/hi16_action_stamp" ),
+  onCallAction = new QAction(QIcon(":/hi16_action_stamp" ),
                                             tr("Set &on-call times..."), this);
-  bereitschaftsAction->setShortcut(Qt::CTRL|Qt::Key_B);
-  connect(bereitschaftsAction, SIGNAL(triggered()), this, SLOT(editBereitschaftPressed()));
+  onCallAction->setShortcut(Qt::CTRL|Qt::Key_B);
+  connect(onCallAction, SIGNAL(triggered()), this, SLOT(editBereitschaftPressed()));
   
   specialRemunAction = new QAction(QIcon(":/hi16_moon" ),
                                             tr("Set special remuneration &times..."), this);
@@ -371,7 +371,6 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   connect(this,SIGNAL(eintragSelected(bool)), fastPlusAction, SLOT(setEnabled(bool)));
   connect(this,SIGNAL(eintragSelected(bool)), fastMinusAction, SLOT(setEnabled(bool)));
   connect(this,SIGNAL(augmentableItemSelected(bool)), eintragAddAction, SLOT(setEnabled(bool)));
-  connect(this,SIGNAL(unterkontoSelected(bool)), bereitschaftsAction, SLOT(setEnabled(bool)));
 
   connect(this,SIGNAL(aktivierbarerEintragSelected(bool)), eintragActivateAction, SLOT(setEnabled(bool)));
 
@@ -379,7 +378,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   toolBar->addAction(saveAction);
   toolBar->addAction(inPersKontAction);
   toolBar->addAction(eintragAddAction);
-  toolBar->addAction(bereitschaftsAction);
+  toolBar->addAction(onCallAction);
   toolBar->addAction(specialRemunAction);
   toolBar->addAction(pauseAction);
   toolBar->addAction(min5PlusAction);
@@ -416,7 +415,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   kontomenu->addAction(bgColorChooseAction);
   kontomenu->addAction(bgColorRemoveAction);
   remunmenu->addSeparator();
-  remunmenu->addAction(bereitschaftsAction);
+  remunmenu->addAction(onCallAction);
   kontomenu->addSeparator();
   kontomenu->addAction(quitAction);
   zeitmenu->addAction(changeDateAction);
@@ -1618,6 +1617,8 @@ void TimeMainWindow::changeShortCutSettings(QTreeWidgetItem * item)
   if (item)
     depth=kontoTree->getItemDepth(item);
 
+  onCallAction->setEnabled(isUnterkontoItem && !abtList->checkInState() && abtList->getDescription(abt,ko,uko).supportsOnCallTimes());
+
   if (iseintragsitem) {
 
     if ((depth<=3)||(item->parent()->childCount()<=1))
@@ -1629,6 +1630,7 @@ void TimeMainWindow::changeShortCutSettings(QTreeWidgetItem * item)
     flagsChanged(abt,ko,uko,idx);
     inPersKontAction->setEnabled(!abtList->checkInState());
     editUnterKontoAction->setEnabled(!abtList->checkInState());
+
     specialRemunAction->setEnabled(!abtList->checkInState() && abtList->getDescription(abt,ko,uko).supportsSpecialRemuneration());
     /* Eigentlich sollte das Signal in editierbarerEintragSelected umbenannt werden... */
     emit eintragSelected(!abtList->checkInState());
