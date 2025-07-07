@@ -41,6 +41,7 @@ public slots:
 
 signals:
   void pauseHasEnded(int drift, int secSinceTick);
+  void updateEvent();
 
 private:
   QDateTime starttime;

@@ -28,7 +28,11 @@ StatusBar::StatusBar(QWidget *parent) : QStatusBar(parent)
     onlineStatusLabel->setStyleSheet("font-style: italic");
     addPermanentWidget(onlineStatusLabel);
 #endif
+    breakTimeLabel = new QLabel(tr("Break time: ") + "0", this);
+    breakTimeLabel->setToolTip(tr("Legally relevant break time for the current working day"));
+    addPermanentWidget(breakTimeLabel);
     zeitLabel = new QLabel(tr("Overall time: ") + "0", this);
+    zeitLabel->setToolTip(tr("Overall work time on this calendar day"));
     addPermanentWidget(zeitLabel);
     connect(parent, SIGNAL(gesamtZeitChanged(int)), this, SLOT(setSekunden(int)));
     secDiff = 0;
@@ -62,6 +66,22 @@ void StatusBar::setDiff(int sec)
 {
     secDiff = sec;
     repaintZeitFeld();
+}
+
+void StatusBar::setBreakTime(int sec)
+{
+    secBreakTime = sec;
+    if (secBreakTime < 0)
+    {
+        breakTimeLabel->setVisible(false);
+    }
+    else
+    {
+        TimeCounter tc(secBreakTime);
+        QString text = tc.toString();
+        breakTimeLabel->setText(tr("Break time: ") + text);
+        breakTimeLabel->setVisible(true);
+    }
 }
 
 void StatusBar::dateWarning(bool on, QDate datum)

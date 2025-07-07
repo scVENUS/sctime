@@ -43,15 +43,18 @@ class StatusBar:public QStatusBar
     void appendWarning(bool on, QString str);
     void setMode(QString modedesc, bool on);
     void setOnlineStatus(QString desc);
+    void setBreakTime(int sec);
 
   private:
     QLabel* zeitLabel;
+    QLabel* breakTimeLabel;
     QLabel* datumsWarnung;
     QLabel* modeList;
     QLabel* onlineStatusLabel;
     QSet<QString> modes;
     int secDiff;
     int sekunden;
+    int secBreakTime;
 };
 
 #endif

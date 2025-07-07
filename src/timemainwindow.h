@@ -233,6 +233,7 @@ public:
     void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
     void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
     void syncAll();
+    void updateBreakTime();
     
   protected:
     virtual void moveEvent( QMoveEvent *event);

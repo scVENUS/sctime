@@ -18,6 +18,7 @@ PauseDialog::PauseDialog(QDateTime starttime, int drift, int secSinceTick, QWidg
 void PauseDialog::updateTime() {
   QDateTime now=QDateTime::currentDateTime();
   this->label->setText(text.arg(starttime.toString("H:mm")).arg(QTime(0,0).addSecs(starttime.secsTo(now)).toString("H:mm")));
+  emit updateEvent();
 }
 
 void PauseDialog::resumeAfterPause() {

@@ -35,8 +35,12 @@ public:
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState)=0;
     virtual QString getConsolidatedIntervalString(PunchClockList * pcl)=0;
     virtual void copyFrom(const PunchClockStateBase* source) { warnId=source->warnId; currentWarning=source->currentWarning; date=source->date;};
+    virtual int getBreaktimeThisWorkday(){return -1;};
+    virtual const QDate& getDate() const { return date; };
+    virtual void setDate(const QDate& d) { date = d; };
     PUNCHWARN warnId;
     QString currentWarning;
+protected:
     QDate date;
 };
 
@@ -60,6 +64,7 @@ public:
     virtual QString getConsolidatedIntervalString(PunchClockList * pcl);
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState);
     virtual void copyFrom(const PunchClockStateBase* source);
+    virtual int getBreaktimeThisWorkday(){return breakTimeThisWorkday;};
 private:
     int workEnd;
     int breakTimeThisWorkday;
@@ -68,5 +73,7 @@ private:
     friend class TestPunchClockChecker;
 };
 #endif
+
+PunchClockStateBase* newPunchClockState();
 
 #endif

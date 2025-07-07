@@ -17,7 +17,7 @@ void DateChanger::start()
 
     if (m_timeMainWindow->abtListToday->getDatum().addDays(1) == currentDate)
     {
-        m_timeMainWindow->m_PCSToday->date = m_timeMainWindow->abtListToday->getDatum();
+        m_timeMainWindow->m_PCSToday->setDate(m_timeMainWindow->abtListToday->getDatum());
         m_timeMainWindow->settings->setPreviousPCCData(m_timeMainWindow->m_PCSToday->serialize());
     }
 

@@ -216,4 +216,13 @@ QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl)
   }
   return result;
 }
+
+PunchClockStateBase* newPunchClockState() {
+#if PUNCHCLOCKDE23
+  return new PunchClockStateDE23();
+#else
+  return new PunchClockStateNoop();
+#endif
+}
+
 #endif

@@ -146,13 +146,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   abtList=abtListToday;
   m_punchClockListToday=new PunchClockList();
   m_punchClockList=m_punchClockListToday;
-#if PUNCHCLOCKDE23
-  m_PCSToday=new PunchClockStateDE23();
-  m_PCSYesterday=new PunchClockStateDE23();
-#else
-  m_PCSToday=new PunchClockStateNoop();
-  m_PCSYesterday=new PunchClockStateNoop();
-#endif
+  m_PCSToday=newPunchClockState();
+  m_PCSYesterday=newPunchClockState();
+  m_PCSToday->setDate(heute.currentDate());
+  m_PCSYesterday->setDate(heute.currentDate().addDays(-1));
   pausedAbzur=false;
   inPersoenlicheKontenAllowed=true;
   powerToolBar = NULL;
@@ -955,6 +952,14 @@ void TimeMainWindow::addDeltaToZeit(int delta, bool abzurOnly)
   zeitChanged();
 }
 
+void TimeMainWindow::updateBreakTime()
+{
+  if (m_PCSToday->getDate()==abtList->getDatum()) {
+     statusBar->setBreakTime(m_PCSToday->getBreaktimeThisWorkday());
+  } else {
+     statusBar->setBreakTime(-1);
+  }
+}
 
 /**
  *  Bestimmt die veraenderte Gesamtzeit und loest die Signale gesamtZeitChanged und
@@ -978,7 +983,8 @@ void TimeMainWindow::zeitChanged()
   PUNCHWARN oldlastwarn=lastwarn;
   m_PCSToday->check(m_punchClockListToday, clocktime.msecsSinceStartOfDay()/1000, m_PCSYesterday);
   lastwarn=m_PCSToday->warnId;
-  m_PCSToday->date=abtListToday->getDatum();
+  m_PCSToday->setDate(abtListToday->getDatum());
+  updateBreakTime();
 
   settings->setCurrentPCCData(m_PCSToday->serialize());
   settings->setPreviousPCCData(m_PCSYesterday->serialize());
@@ -1079,6 +1085,7 @@ void TimeMainWindow::pause() {
     PauseDialog* pd = new PauseDialog(now, drift, secSinceTick, this);
     
     connect(pd,&PauseDialog::pauseHasEnded, this, &TimeMainWindow::continueAfterPause);
+    connect(pd, &PauseDialog::updateEvent,this, &TimeMainWindow::updateBreakTime);
     saveLater();
     pd->startPause();
 }
@@ -1129,7 +1136,7 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
   }
   settings->setLastRecordedTimestamp(lastMinuteTick);
   m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay()/1000, m_PCSYesterday);
-  m_PCSToday->date=abtListToday->getDatum();
+  m_PCSToday->setDate(abtListToday->getDatum());
   settings->setCurrentPCCData(m_PCSToday->serialize());
   settings->setPreviousPCCData(m_PCSYesterday->serialize());
   settings->setMainWindowGeometry(pos(),size());
@@ -1414,9 +1421,9 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
    PunchClockStateNoop pcs;
 #endif
    pcs.deserialize(pccdata);
-   if (pcs.date==abtListToday->getDatum()) {
+   if (pcs.getDate()==abtListToday->getDatum()) {
       m_PCSToday->copyFrom(&pcs);
-   } else if (pcs.date==abtListToday->getDatum().addDays(-1)) {
+   } else if (pcs.getDate()==abtListToday->getDatum().addDays(-1)) {
       m_PCSYesterday->copyFrom(&pcs);
    }
 
@@ -1457,7 +1464,7 @@ void TimeMainWindow::changeDateFinished(const QDate &date, bool changeVisible, b
     loadPCCData(settings->previousPCCData());
     loadPCCData(settings->currentPCCData());
     m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay() / 1000, m_PCSYesterday);
-    m_PCSToday->date = abtListToday->getDatum();
+    m_PCSToday->setDate(abtListToday->getDatum());
     updateSpecialModes(false);
   }
   zeitChanged();
@@ -2586,10 +2593,16 @@ void TimeMainWindow::finishPunchClockDialog() {
       if (pce!=m_punchClockListToday->end()) {
         pce->second=now.time().msecsSinceStartOfDay()/1000;
       } 
+      m_PCSToday->check(m_punchClockList,0, m_PCSYesterday);
+    } else if (abtList->getDatum()==QDate::currentDate().addDays(-1)) {
+      m_PCSYesterday->setDate(abtList->getDatum());
+      m_PCSYesterday->check(m_punchClockList,0,NULL);
+      settings->setPreviousPCCData(m_PCSYesterday->serialize());
     }
     saveLater();
   }
   pcDialog->deleteLater();
+  updateBreakTime();
 #endif
 }
 
