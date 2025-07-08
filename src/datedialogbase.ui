@@ -19,56 +19,13 @@
   <property name="windowTitle">
    <string>Select date</string>
   </property>
-  <layout class="QGridLayout">
-   <property name="leftMargin">
-    <number>11</number>
-   </property>
-   <property name="topMargin">
-    <number>11</number>
-   </property>
-   <property name="rightMargin">
-    <number>11</number>
-   </property>
-   <property name="bottomMargin">
-    <number>11</number>
-   </property>
+  <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <widget class="QLabel" name="textLabel1">
      <property name="text">
       <string>Date to edit:</string>
      </property>
     </widget>
-   </item>
-   <item row="5" column="0">
-    <layout class="QHBoxLayout">
-     <item>
-      <widget class="QPushButton" name="okbutton">
-       <property name="text">
-        <string>&amp;OK</string>
-       </property>
-       <property name="shortcut">
-        <number>8388687</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="applyButton">
-       <property name="text">
-        <string>&amp;Apply</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="cancelbutton">
-       <property name="text">
-        <string>&amp;Cancel</string>
-       </property>
-       <property name="shortcut">
-        <number>8388675</number>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
    <item row="1" column="0">
     <widget class="QCalendarWidget" name="datePicker"/>
@@ -94,6 +51,49 @@
      </item>
     </layout>
    </item>
+   <item row="3" column="0">
+    <layout class="QHBoxLayout" name="buttons">
+     <item>
+      <widget class="QPushButton" name="okbutton">
+       <property name="focusPolicy">
+        <enum>Qt::StrongFocus</enum>
+       </property>
+       <property name="text">
+        <string>&amp;OK</string>
+       </property>
+       <property name="shortcut">
+        <number>8388687</number>
+       </property>
+       <property name="autoDefault">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="applyButton">
+       <property name="text">
+        <string>&amp;Apply</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="cancelbutton">
+       <property name="text">
+        <string>&amp;Cancel</string>
+       </property>
+       <property name="shortcut">
+        <number>8388675</number>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
@@ -102,9 +102,6 @@
   <tabstop>todayButton</tabstop>
   <tabstop>dateEdit</tabstop>
   <tabstop>weekSelector</tabstop>
-  <tabstop>okbutton</tabstop>
-  <tabstop>applyButton</tabstop>
-  <tabstop>cancelbutton</tabstop>
  </tabstops>
  <resources/>
  <connections/>
