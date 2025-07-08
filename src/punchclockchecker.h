@@ -38,6 +38,7 @@ public:
     virtual int getBreaktimeThisWorkday(){return -1;};
     virtual const QDate& getDate() const { return date; };
     virtual void setDate(const QDate& d) { date = d; };
+    virtual void reset()=0;
     PUNCHWARN warnId;
     QString currentWarning;
 protected:
@@ -52,6 +53,7 @@ public:
     virtual void deserialize(const QString& s) {};
     virtual QString getConsolidatedIntervalString(PunchClockList * pcl) { return "";};
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState) {};
+    virtual void reset() {};
 };
 
 #ifndef DISABLE_PUNCHCLOCK
@@ -65,6 +67,7 @@ public:
     virtual void check(PunchClockList * pcl, int currentTime, const PunchClockStateBase* yesterdayState);
     virtual void copyFrom(const PunchClockStateBase* source);
     virtual int getBreaktimeThisWorkday(){return breakTimeThisWorkday;};
+    virtual void reset();
 private:
     int workEnd;
     int breakTimeThisWorkday;

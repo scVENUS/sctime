@@ -1426,7 +1426,6 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
    } else if (pcs.getDate()==abtListToday->getDatum().addDays(-1)) {
       m_PCSYesterday->copyFrom(&pcs);
    }
-
 }
 
 /**
@@ -1461,10 +1460,15 @@ void TimeMainWindow::changeDateFinished(const QDate &date, bool changeVisible, b
   kontoTree->showAktivesProjekt();
   if (changeToday)
   {
+    // reset data for yesterday - this ensures that we do not use old data even if we cannot load PCDAta for this day
+    m_PCSYesterday->reset();
+    // load all existing pcc data. This may or may not contain today or yesterday's data.
     loadPCCData(settings->previousPCCData());
     loadPCCData(settings->currentPCCData());
+    // update today's PCC data
     m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay() / 1000, m_PCSYesterday);
     m_PCSToday->setDate(abtListToday->getDatum());
+    
     updateSpecialModes(false);
   }
   zeitChanged();

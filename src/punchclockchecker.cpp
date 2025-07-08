@@ -142,10 +142,7 @@ void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const Pun
 }
 
 PunchClockStateDE23::PunchClockStateDE23() {
-    workEnd=0;
-    breakTimeThisWorkday=0;
-    lastLegalBreakEnd=0;
-    workTimeThisWorkday=0;
+    reset();
 }
 
 QString PunchClockStateDE23::serialize() {
@@ -178,6 +175,15 @@ void PunchClockStateDE23::copyFrom(const PunchClockStateBase* source) {
     breakTimeThisWorkday=s->breakTimeThisWorkday;
     lastLegalBreakEnd=s->lastLegalBreakEnd;
     workTimeThisWorkday=s->workTimeThisWorkday;
+}
+
+void PunchClockStateDE23::reset() {
+    workEnd=0;
+    breakTimeThisWorkday=0;
+    lastLegalBreakEnd=0;
+    workTimeThisWorkday=0;
+    currentWarning="";
+    warnId=PUNCHWARN::PW_NONE;
 }
 
 QString PunchClockStateDE23::getConsolidatedIntervalString(PunchClockList * pcl) {
