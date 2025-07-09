@@ -543,6 +543,13 @@ void TimeMainWindow::initialSettingsRead() {
   autosavetimer->setInterval(300000); //save every 5 minutes
   
   zeitChanged();
+
+  auto now=QDateTime::currentDateTime();
+  if (now.date()==abtListToday->getDatum()) {
+      m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+      m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+  }
+
   changeShortCutSettings(NULL); // Unterkontenmenues deaktivieren...
 
   updateCaption();
@@ -1468,7 +1475,7 @@ void TimeMainWindow::changeDateFinished(const QDate &date, bool changeVisible, b
     // update today's PCC data
     m_PCSToday->check(m_punchClockListToday, QTime::currentTime().msecsSinceStartOfDay() / 1000, m_PCSYesterday);
     m_PCSToday->setDate(abtListToday->getDatum());
-    
+
     updateSpecialModes(false);
   }
   zeitChanged();
@@ -1679,8 +1686,8 @@ void TimeMainWindow::resetDiff()
 {
 #ifndef DISABLE_PUNCHCLOCK
   int diff = abtList->getZeitDifferenz();
-  if ((diff == 0) || (abtListToday != abtList))
-  {
+  int currentintlen = m_punchClockListToday->currentEntry()->second - m_punchClockListToday->currentEntry()->first;
+  if ((diff == 0) || (abtListToday != abtList) || (-diff > currentintlen)) {
 #endif
     abtList->setZeitDifferenz(0);
     zeitChanged();
@@ -1705,27 +1712,27 @@ void TimeMainWindow::resetDiff()
               auto reply = msgbox->result();
               if (reply == QMessageBox::Yes)
               {
-                auto lastentry = std::prev(m_punchClockListToday->end());
+                auto currententry = m_punchClockListToday->currentEntry();
                 if (diff > 0)
                 {
-                  int newbegin = lastentry->first - diff;
+                  int newbegin = currententry->first - diff;
                   if (newbegin < 0)
                   {
                     newbegin = 0;
                   }
-                  lastentry->first = newbegin;
+                  currententry->first = newbegin;
                 }
                 else
                 {
-                  int newend = lastentry->second + diff;
-                  if (newend < lastentry->first)
+                  int newend = currententry->second + diff;
+                  if (newend < currententry->first)
                   {
-                    newend = lastentry->first;
+                    newend = currententry->first;
                   }
                   auto now = QTime::currentTime();
-                  m_punchClockListToday->push_back(PunchClockEntry(lastentry->second, std::max(now.msecsSinceStartOfDay() / 1000, lastentry->second)));
+                  m_punchClockListToday->push_back(PunchClockEntry(currententry->second, std::max(now.msecsSinceStartOfDay() / 1000, currententry->second)));
                   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
-                  lastentry->second = newend;
+                  currententry->second = newend;
                 }
               }
               abtList->setZeitDifferenz(0);
