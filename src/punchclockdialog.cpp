@@ -60,9 +60,11 @@ void PunchClockDialog::fillFromList(PunchClockList *pcl) {
   int row=0;
   for (auto entry = pcl->begin(); entry != pcl->end(); ++entry) {
     insertEntry(row, QTime::fromMSecsSinceStartOfDay(entry->first*1000), QTime::fromMSecsSinceStartOfDay(entry->second*1000));
+    auto label=(QLabel*)punchClockTable->cellWidget(row,2);
     if (entry==pcl->currentEntry()) {
       punchClockTable->cellWidget(row,1)->setEnabled(false);
-    }
+      label->setText(QObject::tr("Current"));
+    } 
     row++;
   }
 }
@@ -120,6 +122,8 @@ void PunchClockDialog::insertEntry(int row, QTime begin, QTime end)
   dateTime->setTime(end);
   punchClockTable->setCellWidget(row, 1, dateTime);
   connect(dateTime, SIGNAL(timeChanged(const QTime&)), this, SLOT(updatePreview()));
+  auto label =new QLabel(this);
+  punchClockTable->setCellWidget(row, 2, label);
 }
 
 void PunchClockDialog::accept()
