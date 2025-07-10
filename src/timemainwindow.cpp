@@ -1093,8 +1093,22 @@ void TimeMainWindow::pause() {
     
     connect(pd,&PauseDialog::pauseHasEnded, this, &TimeMainWindow::continueAfterPause);
     connect(pd, &PauseDialog::updateEvent,this, &TimeMainWindow::updateBreakTime);
+    connect(pd, &PauseDialog::updateEvent,this, &TimeMainWindow::keepAlive);
     saveLater();
     pd->startPause();
+}
+
+void TimeMainWindow::keepAlive() {
+#ifdef __EMSCRIPTEN__
+    static int counter=0;
+    counter++;
+    if (counter > 60) {
+        counter = 0;
+        // send a get request to the server to keep the session alive
+        QNetworkRequest request(QUrl(getStaticUrl() + "/"+KEEPALIVE_URL_PART));
+        networkAccessManager->get(request);
+    }
+#endif
 }
 
 void TimeMainWindow::continueAfterPause(int drift, int secSinceTick) {

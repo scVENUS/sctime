@@ -39,5 +39,6 @@ QString getMachineIdentifier();
 #define REST_ACCOUNTINGMETA_ENDPOINT "sctimegui/v1/accountingmetadata"
 #define STATIC_URL "static/"
 #define REFRESH_URL_PART "refresh.html"
+#define KEEPALIVE_URL_PART "keepalive.html"
 
 #endif
