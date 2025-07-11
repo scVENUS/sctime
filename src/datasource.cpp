@@ -47,6 +47,7 @@ DatasourceManager::DatasourceManager(const QString& name, QList<Datasource*>* so
       QObject::connect((*sources)[i], &Datasource::finished, this, &DatasourceManager::dsfinished);
       QObject::connect((*sources)[i-1], &Datasource::failed, (*sources)[i], &Datasource::start);
    }
+   QObject::connect((*sources)[sources->length()-1], &Datasource::failed, this, &DatasourceManager::lastdsnoresult);
 }
 
 DatasourceManager::~DatasourceManager() {
