@@ -2807,7 +2807,6 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
         }
       }
       
-      refreshKontoListe();
       saveWithTimeout(0);
     });
     msgbox->open();
@@ -2886,7 +2885,6 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
         }
       }
       
-      refreshKontoListe();
       saveWithTimeout(0);
     });
     msgbox->open();
