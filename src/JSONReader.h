@@ -34,12 +34,15 @@ public:
   virtual void requestData()=0;
   virtual QJsonDocument& getData();
   virtual void processByteArray(QByteArray byteData);
+  virtual void setCacheTarget(const QString& target);
+  virtual QString getCacheTarget() const;
 signals:
   void aborted();
   void finished();
 private:
   QJsonDocument data;
   int currentversion;
+  QString cacheTarget;
 protected:
   JSONReaderBase();
 };

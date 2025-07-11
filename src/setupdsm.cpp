@@ -230,12 +230,24 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
 #endif // RESTONLY
     QString baseurl=getRestBaseUrl();
     jsonreader=new JSONReaderUrl(networkAccessManager, baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
+#ifdef RESTONLY
+    jsonreader->setCacheTarget(configDir.filePath("sctime-offline.json"));
+    kontensources->append(new JSONAccountSource(jsonreader));
+    // fallback in case network was not working
+    QUrl jsonUrl=QUrl::fromLocalFile(configDir.filePath("sctime-offline.json"));
+    jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
+    kontensources->append(new JSONAccountSource(jsonreader));
+    // use cached file for the other sources
+    jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
+    bereitsources->append(new JSONOnCallSource(jsonreader));
+    jsonreader=new JSONReaderUrl(networkAccessManager, jsonUrl);
+    specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
+#else // RESTONLY
     kontensources->append(new JSONAccountSource(jsonreader));
     jsonreader=new JSONReaderUrl(networkAccessManager, baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
     bereitsources->append(new JSONOnCallSource(jsonreader));
     jsonreader=new JSONReaderUrl(networkAccessManager, baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
     specialremunsources->append(new JSONSpecialRemunSource(jsonreader));
-#ifndef RESTONLY
   }
 #endif
   kontenDSM = new DatasourceManager(QObject::tr("Accounts"), kontensources);

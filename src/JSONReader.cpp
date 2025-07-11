@@ -60,6 +60,15 @@ void JSONSource::start() {
 void JSONSource::jsonreceived() {
    DSResult result;
    if (convertData(&result)) {
+      // if we are in RESTONLY mode, we cache the data in a file if we have in from a http(s) uri
+      if (!jsonreader->getCacheTarget().isEmpty()) {
+        QJsonDocument doc=jsonreader->getData();
+        QFile file(jsonreader->getCacheTarget());
+        if (file.open(QIODevice::WriteOnly)) {
+          file.write(doc.toJson());
+          file.close();
+        }
+      }
       emit finished(result);
    } else {
       emit failed();
@@ -191,8 +200,18 @@ bool JSONAccountSource::convertData(DSResult* const result) {
 }
 
 JSONReaderBase::JSONReaderBase()
-  : currentversion(INVALIDDATA) {
-  }
+  : currentversion(INVALIDDATA), cacheTarget("") {
+}
+
+QString JSONReaderBase::getCacheTarget() const
+{
+  return cacheTarget;
+}
+
+void JSONReaderBase::setCacheTarget(const QString& target)
+{
+  cacheTarget=target;
+}
   
 QJsonDocument &JSONReaderBase::getData()
 {
