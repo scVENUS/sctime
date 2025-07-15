@@ -129,7 +129,7 @@
              <bool>false</bool>
             </property>
             <property name="statusTip">
-             <string>Do not write consolidated intervals in sh file (check your companies regulations if you change this.</string>
+             <string>Do not write consolidated intervals in sh file (check your companies regulations if you change this).</string>
             </property>
             <property name="text">
              <string>Do not write consolidated intervals in sh file</string>

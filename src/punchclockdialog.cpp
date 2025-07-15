@@ -63,7 +63,7 @@ void PunchClockDialog::fillFromList(PunchClockList *pcl) {
     auto label=(QLabel*)punchClockTable->cellWidget(row,2);
     if (entry==pcl->currentEntry()) {
       punchClockTable->cellWidget(row,1)->setEnabled(false);
-      label->setText(QObject::tr("Current"));
+      label->setText(tr("Current"));
     } 
     row++;
   }
