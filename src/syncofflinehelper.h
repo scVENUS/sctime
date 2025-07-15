@@ -41,7 +41,8 @@ public:
        };
        static void setNeedSyncMark(QDate date, bool needsync);
        static void removeUnmergedData(QDate date);
-       QSet<QDate> getUncleanDates();
+       QSet<QDate> getLastUncleanDates();
+       static QSet<QDate> findAllUnmergedDates();
 public slots:
        void syncAll();
 private slots:

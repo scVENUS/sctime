@@ -325,7 +325,23 @@ void SyncOfflineHelper::removeUnmergedData(QDate date) {
     }
 }
 
-QSet<QDate> SyncOfflineHelper::getUncleanDates()
+QSet<QDate> SyncOfflineHelper::getLastUncleanDates()
 {
     return uncleanDates;
+}
+
+QSet<QDate> SyncOfflineHelper::findAllUnmergedDates()
+{
+    QSet<QDate> unmergedDates;
+    QDir dir(configDir);
+    QStringList unmergedFiles = dir.entryList(QStringList() << "*.xml.unmerged", QDir::Files);
+    for (QString fileName : unmergedFiles) {
+        QDate date = QDate::fromString(fileName.replace("zeit-", "").replace(".xml.unmerged", ""), "yyyy-MM-dd");
+        if (date.isValid()) {
+            unmergedDates.insert(date);
+        } else {
+            logError("Invalid date in unmerged file name: " + fileName);
+        }
+    }
+    return unmergedDates;
 }

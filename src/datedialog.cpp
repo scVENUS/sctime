@@ -23,7 +23,7 @@
 #include <QTextCharFormat>
 #include "globals.h"
 
-DateDialog::DateDialog(const QDate& date, QWidget *parent)
+DateDialog::DateDialog(const QDate& date, QWidget *parent, QSet<QDate> conflictDates)
 : QDialog(parent)
 {
   setupUi(this);
@@ -39,6 +39,7 @@ DateDialog::DateDialog(const QDate& date, QWidget *parent)
   weekSelector->setEditable(false);
   setSelectedDate(date);
   connect(weekSelector,SIGNAL(currentIndexChanged(int)), this, SLOT(weekSelected(int)));
+  datePicker->setConflictDates(conflictDates);
 }
 
 DateDialog::~DateDialog()

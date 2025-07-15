@@ -33,7 +33,7 @@ class DateDialog : public QDialog, private Ui::DateDialogBase
   Q_OBJECT
 
 public:
-  DateDialog(const QDate& datum, QWidget* parent = 0);
+  DateDialog(const QDate& datum, QWidget* parent = 0, QSet<QDate> conflictDates= QSet<QDate>());
   ~DateDialog();
   /*$PUBLIC_FUNCTIONS$*/
 

@@ -317,6 +317,7 @@ public:
     QQueue<QueuedMethod*>* m_afterCommitMethodQueue;
     QNetworkAccessManager *networkAccessManager;
     QSet<QDate> m_conflictDialogOpenForDates;
+    QSet<QDate> m_lastUncleanDates;
 };
 
 

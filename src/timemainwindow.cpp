@@ -2087,12 +2087,14 @@ void TimeMainWindow::callDateDialog()
     QApplication::setFont(QFont(custFont,custFontSize));
   }
   QWidget* ddparent=NULL;
+  QSet<QDate> unclean;
   #ifdef __EMSCRIPTEN__
   // in WASM we need to set the dialog modal as a workaround because we have no full window management. In all other cases we want
   // to have the dialog non-modal, so that we can interact with the main window.
   ddparent=this;
+  unclean=SyncOfflineHelper::findAllUnmergedDates();
   #endif
-  DateDialog * dateDialog=new DateDialog(abtList->getDatum(), ddparent);
+  DateDialog * dateDialog=new DateDialog(abtList->getDatum(), ddparent, unclean);
   connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeVisibleDate(const QDate&)));
   dateDialog->setAttribute(Qt::WA_DeleteOnClose);
   dateDialog->open();
@@ -2931,7 +2933,8 @@ void TimeMainWindow::syncAll() {
   SyncOfflineHelper *helper=new SyncOfflineHelper(settings, networkAccessManager, this);
   connect(helper, &SyncOfflineHelper::finished, [=](){
     QList<QDate> uncleanlist;
-    QSet unclean=helper->getUncleanDates();
+    QSet unclean=helper->getLastUncleanDates();
+    m_lastUncleanDates=unclean; // store the unclean dates for later use
     //build a sorted unclean list
     if (!unclean.isEmpty()) {
       uncleanlist=unclean.values();
