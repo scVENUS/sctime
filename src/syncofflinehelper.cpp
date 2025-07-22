@@ -215,6 +215,17 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
             if (remoteDate==localDate && remoteID==localID) {
                 trace("Remote file " + *filename + " is already up to date, skipping.");
             } else {
+              if (remoteDate.isValid()) {
+                trace("Remote file " + *filename + " has last modified time " + remoteDate.toString(Qt::ISODate) + " and client ID " + remoteID);
+              } else {
+                trace("Remote file " + *filename + " has no valid last modified time");
+              }
+              if (localDate.isValid()) {
+                trace("Local file " + *filename + " has last modified time " + localDate.toString(Qt::ISODate) + " and client ID " + localID);
+              } else {
+                trace("Local file " + *filename + " has no valid last modified time");
+              }
+              trace("RemoteID is " + remoteID + " and localID is " + localID);
               if (fileExists) {
                 uncleanDates.insert(*date);
               }
