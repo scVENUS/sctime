@@ -207,6 +207,10 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
                   PunchClockList *pcl=new PunchClockList();
                   XMLReader localXmlReader(settings, networkAccessManager, false, true, true, abtList, pcl);
                   localXmlReader.fillSettingsFromDocument(localDoc, settings);
+                  localID= localXmlReader.lastRemoteID();
+                  localDate = localXmlReader.lastRemoteSaveTime();
+                  delete abtList;
+                  delete pcl;
                 }
             } else {
                 targetFilename = configDir.absoluteFilePath(*filename);
