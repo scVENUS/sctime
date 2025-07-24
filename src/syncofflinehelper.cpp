@@ -203,14 +203,10 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
                   err=true;
                 }
                 if (!err) {
-                  AbteilungsListe *abtList=tmw->getEmptyAbtList(*date);
-                  PunchClockList *pcl=new PunchClockList();
-                  XMLReader localXmlReader(settings, networkAccessManager, false, true, true, abtList, pcl);
-                  localXmlReader.fillSettingsFromDocument(localDoc, settings);
-                  localID= localXmlReader.lastRemoteID();
-                  localDate = localXmlReader.lastRemoteSaveTime();
-                  delete abtList;
-                  delete pcl;
+                  auto rootElemLocal=localDoc.documentElement();
+                  localID=rootElemLocal.attribute("identifier");
+                  QString localDateStr=rootElemLocal.attribute("date");
+                  localDate=QDateTime::fromString(localDateStr, Qt::ISODate);
                 }
             } else {
                 targetFilename = configDir.absoluteFilePath(*filename);
@@ -219,16 +215,6 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
             if (remoteDate==localDate && remoteID==localID) {
                 trace("Remote file " + *filename + " is already up to date, skipping.");
             } else {
-              if (remoteDate.isValid()) {
-                trace("Remote file " + *filename + " has last modified time " + remoteDate.toString(Qt::ISODate) + " and client ID " + remoteID);
-              } else {
-                trace("Remote file " + *filename + " has no valid last modified time");
-              }
-              if (localDate.isValid()) {
-                trace("Local file " + *filename + " has last modified time " + localDate.toString(Qt::ISODate) + " and client ID " + localID);
-              } else {
-                trace("Local file " + *filename + " has no valid last modified time");
-              }
               trace("RemoteID is " + remoteID + " and localID is " + localID);
               if (fileExists) {
                 uncleanDates.insert(*date);
