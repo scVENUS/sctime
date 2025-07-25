@@ -57,6 +57,7 @@ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
         }
 
         async function loadFromParts(url, statusElement) {
+            let NUM_PARTS=99
             let idx=0
             let arr=[]
             do {
@@ -68,7 +69,7 @@ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
                   arr.push(partab)
               }
               statusElement.innerHTML+="."
-            } while (ok)
+            } while (ok && idx < NUM_PARTS)
             return concatBuf(arr)
         }
 
