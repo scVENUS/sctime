@@ -178,40 +178,76 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
         PunchClockList *pcl=new PunchClockList();
         XMLReader* xmlReader= new XMLReader(settings, networkAccessManager, false, false, true, abtList, pcl);
         QDateTime* fileModified = new QDateTime(fileStatus.lastModified);
+        QDate* date = new QDate(fileStatus.date);
         trace("Syncing remote file " + *filename + " for date " + fileStatus.date.toString("yyyy-MM-dd") + " with last modified time " + fileStatus.lastModified.toString(Qt::ISODate) + " and client ID " + fileStatus.clientId);
-        if (fileExists) {
-            uncleanDates.insert(fileStatus.date);
-        }
         partstodo++;
-        connect(xmlReader, &XMLReader::settingsRead, [fileExists, filename, this, fileModified, abtList, pcl, xmlReader]() {
+        connect(xmlReader, &XMLReader::settingsRead, [fileExists, filename, this, fileModified, abtList, pcl, xmlReader, date]() {
             QString targetFilename;
+            QDateTime remoteDate=xmlReader->lastRemoteSaveTime();
+            QString remoteID=xmlReader->lastRemoteID();
+            QDateTime localDate;
+            QString localID;
             if (fileExists) {
                 targetFilename = configDir.absoluteFilePath(*filename)+".unmerged";
+                QFile localFile(configDir.absoluteFilePath(*filename));
+                QDomDocument localDoc;
+                bool err = false;
+                if (localFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+                  if (!localDoc.setContent(&localFile)) {
+                    logError("Failed to parse XML content in " + localFile.fileName());
+                    err=true;
+                  }
+                  localFile.close();
+                } else {
+                  logError("Failed to open file " + localFile.fileName() + ": " + localFile.errorString());
+                  err=true;
+                }
+                if (!err) {
+                  auto rootElemLocal=localDoc.documentElement();
+                  localID=rootElemLocal.attribute("identifier");
+                  QString localDateStr=rootElemLocal.attribute("date");
+                  localDate=QDateTime::fromString(localDateStr, Qt::ISODate);
+                }
             } else {
                 targetFilename = configDir.absoluteFilePath(*filename);
             }
-            XMLWriter xmlWriter(settings, networkAccessManager, abtList,pcl);
-            // ensure the XMLWriter has the correct metadata
-            xmlWriter.setSavetime(xmlReader->lastRemoteSaveTime());
-            xmlWriter.setIdentifier(xmlReader->lastRemoteID());
 
-            QDomDocument doc = xmlWriter.settings2Doc(false);
-            QFile file(targetFilename);
-            if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            if (remoteDate==localDate && remoteID==localID) {
+                trace("Remote file " + *filename + " is already up to date, skipping.");
+            }
+            else if (remoteID==localID && localDate>remoteDate) {
+              trace("Remote file " + *filename + " is older than local file, skipping.");
+            } else {
+              trace("RemoteID is " + remoteID + " and localID is " + localID);
+              if (fileExists) {
+                uncleanDates.insert(*date);
+              }
+
+              XMLWriter xmlWriter(settings, networkAccessManager, abtList,pcl);
+              // ensure the XMLWriter has the correct metadata
+              xmlWriter.setSavetime(remoteDate);
+              xmlWriter.setIdentifier(remoteID);
+
+
+              QDomDocument doc = xmlWriter.settings2Doc(false);
+              QFile file(targetFilename);
+              if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 QTextStream out(&file);
                 out.setEncoding(QStringConverter::Utf8);
                 out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
                 out << doc.toString();
                 file.setFileTime(*fileModified, QFileDevice::FileModificationTime);
                 file.close();
-            } else {
-                logError("Failed to write settings to " + targetFilename + ": " + file.errorString());
+              } else {
+                  logError("Failed to write settings to " + targetFilename + ": " + file.errorString());
+              }
             }
             xmlReader->deleteLater();
             delete abtList;
             delete filename;
             delete fileModified;
             delete pcl;
+            delete date;
             nextStepRemoteToLocal();
         });
         xmlReader->open();
