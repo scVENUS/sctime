@@ -214,6 +214,9 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
 
             if (remoteDate==localDate && remoteID==localID) {
                 trace("Remote file " + *filename + " is already up to date, skipping.");
+            }
+            else if (remoteID==localID && localDate>remoteDate) {
+              trace("Remote file " + *filename + " is older than local file, skipping.");
             } else {
               trace("RemoteID is " + remoteID + " and localID is " + localID);
               if (fileExists) {
