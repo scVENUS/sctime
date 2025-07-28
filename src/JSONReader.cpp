@@ -244,7 +244,14 @@ JSONOnCallSource::JSONOnCallSource(JSONReaderBase *jsonreader)
   
 bool JSONOnCallSource::convertData(DSResult* const result) {
   QJsonDocument doc=jsonreader->getData();
-  QJsonArray oncalltimes=doc.object()["OnCallTimes"].toArray();
+  auto oncalltimesval=doc.object()["OnCallTimes"];
+  if (oncalltimesval.isNull()||oncalltimesval.isUndefined()) {
+      return true;
+  }
+  if (oncalltimesval.type()!=QJsonValue::Object) {
+      return false;
+  }
+  auto oncalltimes=oncalltimesval.toArray();
   for (const auto &oncalltimeVal: oncalltimes) {
     QJsonObject oncalltime=oncalltimeVal.toObject();
     QStringList row;
@@ -260,7 +267,14 @@ JSONSpecialRemunSource::JSONSpecialRemunSource(JSONReaderBase *jsonreader)
   
 bool JSONSpecialRemunSource::convertData(DSResult* const result) {
   QJsonDocument doc=jsonreader->getData();
-  QJsonArray specialremuns=doc.object()["SpecialRemunerations"].toArray();
+  auto specialremunsval=doc.object()["SpecialRemunerations"];
+  if (specialremunsval.isNull()||specialremunsval.isUndefined()) {
+      return true;
+  }
+  if (specialremunsval.type()!=QJsonValue::Array) {
+      return false;
+  }
+  QJsonArray specialremuns=specialremunsval.toArray();
   for (const auto &specialremunVal: specialremuns) {
     QJsonObject specialremun=specialremunVal.toObject();
     QStringList row;
@@ -297,11 +311,14 @@ void JSONReaderUrl::receiveData(QNetworkReply *reply)
         return;
   }
 #ifdef ENSURE_REST_HEADER
-  auto sctimerestresponse=getRestHeader(reply, "sctime-rest-response");
-  if (QString(sctimerestresponse)!="true") {
-    trace(tr("Couldn't open json from uri %1 because sctime-rest-response header is missing").arg(uri.toString()));
-    emit aborted();
-    return;
+  auto scheme = reply->url().scheme();
+  if (scheme=="https" || scheme=="http") {
+    auto sctimerestresponse=getRestHeader(reply, "sctime-rest-response");
+    if (QString(sctimerestresponse)!="true") {
+      trace(tr("Couldn't open json from uri %1 because sctime-rest-response header is missing").arg(uri.toString()));
+      emit aborted();
+      return;
+    }
   }
 #endif
   QByteArray byteData = reply->readAll();
