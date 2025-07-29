@@ -75,7 +75,9 @@ void ConflictDialog::performMerge() {
         reader.fillSettingsFromDocument(docLocal, settings);
       } 
       conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtList);
-      conflictedPunchClockList=new PunchClockList();
+      if (tmw->m_punchClockList){
+        conflictedPunchClockList=new PunchClockList(*tmw->m_punchClockList);
+      }
     } else if (tmw->abtListToday->getDatum()==targetdate) {
       istoday=true;
       if (!docLocal.isNull()) {
@@ -84,7 +86,9 @@ void ConflictDialog::performMerge() {
         reader.fillSettingsFromDocument(docLocal, settings);
       } 
       conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtListToday);
-      conflictedPunchClockList=new PunchClockList();
+      if (tmw->m_punchClockListToday){
+        conflictedPunchClockList=new PunchClockList(*tmw->m_punchClockListToday);
+      }
     } else {
       // this should not happen, but handle anyways, just in case...
       errorDialog();
@@ -96,8 +100,10 @@ void ConflictDialog::performMerge() {
     reader.fillSettingsFromDocument(docRemote, settings);
     if (istoday) {
        mergeAbtList(tmw->abtListToday, conflictedAbtList);
+       mergePCL(tmw->m_punchClockListToday, conflictedPunchClockList);
     } else {
        mergeAbtList(tmw->abtList, conflictedAbtList);
+       mergePCL(tmw->m_punchClockList, conflictedPunchClockList);
     }
     emit finished(2);
 }
@@ -109,11 +115,15 @@ void ConflictDialog::performReplace() {
     bool istoday=false;
     if (tmw->abtList->getDatum()==targetdate) {
       conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtList);
-      conflictedPunchClockList=new PunchClockList();
+      if (tmw->m_punchClockList){
+        conflictedPunchClockList=new PunchClockList(*tmw->m_punchClockList);
+      }
     } else if (tmw->abtListToday->getDatum()==targetdate) {
       istoday=true;
       conflictedAbtList=new AbteilungsListe(targetdate, tmw->abtListToday);
-      conflictedPunchClockList=new PunchClockList();
+      if (tmw->m_punchClockListToday){
+        conflictedPunchClockList=new PunchClockList(*tmw->m_punchClockListToday);
+      }
     } else {
       // this should not happen, but handle anyways, just in case...
       errorDialog();
@@ -128,13 +138,17 @@ void ConflictDialog::performReplace() {
          delete tmw->abtList;
          tmw->abtList=conflictedAbtList;
          tmw->abtListToday=conflictedAbtList;
+         tmw->m_punchClockList=conflictedPunchClockList;
+         tmw->m_punchClockListToday=conflictedPunchClockList;
        } else {
          delete tmw->abtList;
          tmw->abtList=conflictedAbtList;
+         tmw->m_punchClockList=conflictedPunchClockList;
        }
      } else {
        delete tmw->abtListToday;
        tmw->abtListToday=conflictedAbtList;
+       tmw->m_punchClockListToday=conflictedPunchClockList;
      }
      emit finished(1);
 
@@ -213,5 +227,13 @@ void ConflictDialog::mergeAbtList(AbteilungsListe* target, AbteilungsListe* othe
         }
       }
     }
+  }
+}
+
+void ConflictDialog::mergePCL(PunchClockList* target, PunchClockList* other) {
+  for (PunchClockList::iterator pclPos=other->begin(); pclPos!=other->end(); ++pclPos) {
+    PunchClockList::iterator itTarget;
+      itTarget = target->insert(target->end(), *pclPos);
+      *itTarget = *pclPos;
   }
 }
