@@ -48,6 +48,7 @@ public slots:
 
 private:
   void mergeAbtList(AbteilungsListe* target, AbteilungsListe* other);
+  void mergePCL(PunchClockList* target, PunchClockList* other);
   TimeMainWindow* tmw;
   SCTimeXMLSettings* settings;
   bool global;

@@ -232,8 +232,6 @@ void ConflictDialog::mergeAbtList(AbteilungsListe* target, AbteilungsListe* othe
 
 void ConflictDialog::mergePCL(PunchClockList* target, PunchClockList* other) {
   for (PunchClockList::iterator pclPos=other->begin(); pclPos!=other->end(); ++pclPos) {
-    PunchClockList::iterator itTarget;
-      itTarget = target->insert(target->end(), *pclPos);
-      *itTarget = *pclPos;
+      target->push_back(*pclPos);
   }
 }

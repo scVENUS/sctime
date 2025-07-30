@@ -35,12 +35,19 @@ class PunchClockList: public std::list<PunchClockEntry> {
      PunchClockList(): std::list<PunchClockEntry>() {
       m_currentEntry=this->end();
      }
+
+     PunchClockList(const PunchClockList& src): std::list<PunchClockEntry>(src) {
+      m_currentEntry=src.currentEntry();
+     }
+
      void setCurrentEntry(PunchClockList::iterator entry) {
       m_currentEntry=entry;
      }
-     PunchClockList::iterator currentEntry() {
+
+     PunchClockList::iterator currentEntry() const {
       return m_currentEntry;
      }
+
      void clear() {
        std::list<PunchClockEntry>::clear();
        m_currentEntry=this->end();
