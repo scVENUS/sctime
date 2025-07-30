@@ -48,6 +48,15 @@ class PunchClockList: public std::list<PunchClockEntry> {
       return m_currentEntry;
      }
 
+     PunchClockList::iterator findEntryWithEnding(int rangeStart, int rangeEnd) {
+      for (PunchClockList::iterator it = this->begin(); it != this->end(); ++it) {
+        if ((it->second > rangeStart) && (it->second <= rangeEnd)) {
+          return it;
+        }
+      }
+      return this->end();
+     }
+
      void clear() {
        std::list<PunchClockEntry>::clear();
        m_currentEntry=this->end();

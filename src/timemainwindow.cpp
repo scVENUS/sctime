@@ -546,8 +546,14 @@ void TimeMainWindow::initialSettingsRead() {
 
   auto now=QDateTime::currentDateTime();
   if (now.date()==abtListToday->getDatum()) {
-      m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
-      m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+      auto currentEntry = m_punchClockListToday->currentEntry();
+      if ((currentEntry!=m_punchClockListToday->end())&&(abs(currentEntry->second-now.time().msecsSinceStartOfDay()/1000)<120)) {
+        // if we already have a matching entry, we do not add a new one
+        currentEntry->second=now.time().msecsSinceStartOfDay()/1000;
+      } else {
+        m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay()/1000,now.time().msecsSinceStartOfDay()/1000));
+        m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
+      }
   }
 
   changeShortCutSettings(NULL); // Unterkontenmenues deaktivieren...
@@ -844,6 +850,9 @@ void TimeMainWindow::minuteHochzaehlen() {
   kontoTree->refreshItem(abt,ko,uko,idx);
   auto pce=m_punchClockListToday->currentEntry();
   if (abtListToday->getDatum()==now.date()) {
+     if (pce==m_punchClockListToday->end()) {
+        pce=m_punchClockListToday->findEntryWithEnding(now.time().msecsSinceStartOfDay()/1000-120,now.time().msecsSinceStartOfDay()/1000);
+     }
      if (pce!=m_punchClockListToday->end()) {
         pce->second=now.time().msecsSinceStartOfDay()/1000;
      } else {

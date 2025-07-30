@@ -136,17 +136,15 @@ void DateChanger::updatePunchClock()
     if (expectedActions > 0)
         return;
     disconnect(lastconn);
-    auto lastentry = std::prev(m_timeMainWindow->m_punchClockListToday->end());
     auto now = QDateTime::currentDateTime();
-    int diff = now.time().msecsSinceStartOfDay() / 1000 - (lastentry->second);
-    if ((diff <= 90) && (diff >= -90))
+    auto matchingentry = m_timeMainWindow->m_punchClockListToday->findEntryWithEnding(now.time().msecsSinceStartOfDay() / 1000 - 120, now.time().msecsSinceStartOfDay() / 1000+60);
+
+    if (matchingentry != m_timeMainWindow->m_punchClockListToday->end())
     {
-        logError("change date in range");
-        m_timeMainWindow->m_punchClockListToday->setCurrentEntry(lastentry);
+        m_timeMainWindow->m_punchClockListToday->setCurrentEntry(matchingentry);
     }
     else
     {
-        logError("change date out of range");
         m_timeMainWindow->m_punchClockListToday->push_back(PunchClockEntry(now.time().msecsSinceStartOfDay() / 1000, now.time().msecsSinceStartOfDay() / 1000));
         m_timeMainWindow->m_punchClockListToday->setCurrentEntry(std::prev(m_timeMainWindow->m_punchClockListToday->end()));
     }
