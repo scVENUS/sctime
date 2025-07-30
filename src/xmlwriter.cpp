@@ -555,7 +555,7 @@ void XMLWriter::writeSettings(bool global) {
   // write files by rest api
   if (settings->restSaveOffline())
   {
-    logError("skipping online writing");
+    // logError("skipping online writing");
     SyncOfflineHelper::setNeedSyncMark(abtList->getDatum(),true);
     emit settingsPartWritten(global, abtList, pcl);
   } else {
