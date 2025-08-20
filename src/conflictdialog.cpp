@@ -74,6 +74,7 @@ void ConflictDialog::extractDocInfos() {
         XMLReader reader(settings, networkAccessManager, global, false, true, localAbtList, &localPunchClockList);
         reader.fillSettingsFromDocument(docLocal, settings);
         localAbtList->getGesamtZeit(workedtimeLocal, billabletimeLocal);
+        localDataTab->loadDate(localAbtList, &localPunchClockList, localSettings);
         delete localAbtList;
         delete localSettings;
   } else if (tmw->abtList->getDatum()==targetdate) // use current data
@@ -89,6 +90,7 @@ void ConflictDialog::extractDocInfos() {
         reader.fillSettingsFromDocument(docRemote, settings);
         int billabletimeRemote;
         remoteAbtList->getGesamtZeit(workedtimeRemote, billabletimeRemote);
+        otherDataTab->loadDate(remoteAbtList, &remotePunchClockList, remoteSettings);
         delete remoteAbtList;
         delete remoteSettings;
   } else {
