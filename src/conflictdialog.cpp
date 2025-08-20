@@ -29,24 +29,71 @@
 #include <emscripten.h>
 #endif
 
+/*
+  This class handles conflicts with remote documents. Please note that there are different cases that must be handled:
+  * we could have a conflict with current changes in memory
+    * we could have a conflict with the currently visible document (abtlist)
+    * we could have a conflicht with todays document, but it is not visible because another date is shown (abtlisttoday)
+  * we could have a conflict with an unloaded local document
+*/
+
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, QDomDocument docRemote, TimeMainWindow* tmw): 
-    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), networkAccessManager(networkAccessManager) {
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), networkAccessManager(networkAccessManager), workedtimeLocal(0), workedtimeRemote(0) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
+    extractDocInfos();
+    buttonReplace->setText(tr("Replace data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeRemote*1000).toString("HH:mm")));
+    buttonKeep->setText(tr("Keep data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeLocal*1000).toString("HH:mm")));
 }
 
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, QDomDocument docRemote, TimeMainWindow* tmw, QDomDocument docLocal): 
-    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), docLocal(docLocal), networkAccessManager(networkAccessManager) {
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), docLocal(docLocal), networkAccessManager(networkAccessManager), workedtimeLocal(0), workedtimeRemote(0) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
+    extractDocInfos();
+    buttonReplace->setText(tr("Replace data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeRemote*1000).toString("HH:mm")));
+    buttonKeep->setText(tr("Keep data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeLocal*1000).toString("HH:mm")));
+}
+
+void ConflictDialog::extractDocInfos() {
+  int billabletimeLocal;
+
+  if (!docLocal.isNull()) {
+        // load new local document into temporary space and inspect it
+        auto localAbtList=new AbteilungsListe(targetdate, tmw->abtList);
+        auto localSettings=new SCTimeXMLSettings(*settings);
+        PunchClockList localPunchClockList;
+        XMLReader reader(settings, networkAccessManager, global, false, true, localAbtList, &localPunchClockList);
+        reader.fillSettingsFromDocument(docLocal, settings);
+        localAbtList->getGesamtZeit(workedtimeLocal, billabletimeLocal);
+        delete localAbtList;
+        delete localSettings;
+  } else if (tmw->abtList->getDatum()==targetdate) // use current data
+        tmw->abtList->getGesamtZeit(workedtimeLocal, billabletimeLocal);
+  else if (tmw->abtListToday->getDatum()==targetdate) 
+        tmw->abtListToday->getGesamtZeit(workedtimeLocal, billabletimeLocal);
+  if (!docRemote.isNull()) {
+        // load local document
+        auto remoteAbtList=new AbteilungsListe(targetdate, tmw->abtList);
+        auto remoteSettings=new SCTimeXMLSettings(*settings);
+        PunchClockList remotePunchClockList;
+        XMLReader reader(settings, networkAccessManager, global, false, true, remoteAbtList, &remotePunchClockList);
+        reader.fillSettingsFromDocument(docRemote, settings);
+        int billabletimeRemote;
+        remoteAbtList->getGesamtZeit(workedtimeRemote, billabletimeRemote);
+        delete remoteAbtList;
+        delete remoteSettings;
+  } else {
+
+  }
 }
 
 void ConflictDialog::performMerge() {
@@ -167,8 +214,13 @@ void ConflictDialog::performClose() {
 void ConflictDialog::performKeep() {
   if (!docLocal.isNull()) {
      // load local document
-     XMLReader reader(settings, networkAccessManager, global, false, true, tmw->abtList, tmw->m_punchClockList);
-     reader.fillSettingsFromDocument(docLocal, settings);
+     if (tmw->abtList->getDatum()==targetdate) {
+       XMLReader reader(settings, networkAccessManager, global, false, true, tmw->abtList, tmw->m_punchClockList);
+       reader.fillSettingsFromDocument(docLocal, settings);
+     } else if (tmw->abtListToday->getDatum()==targetdate) {
+       XMLReader reader(settings, networkAccessManager, global, false, true, tmw->abtListToday, tmw->m_punchClockListToday);
+       reader.fillSettingsFromDocument(docLocal, settings);
+     }
  } 
   emit finished(1);
 }

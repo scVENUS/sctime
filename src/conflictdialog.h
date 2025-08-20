@@ -49,6 +49,7 @@ public slots:
 private:
   void mergeAbtList(AbteilungsListe* target, AbteilungsListe* other);
   void mergePCL(PunchClockList* target, PunchClockList* other);
+  void extractDocInfos();
   TimeMainWindow* tmw;
   SCTimeXMLSettings* settings;
   bool global;
@@ -58,6 +59,8 @@ private:
   QDate targetdate;
   QDomDocument docLocal;
   QNetworkAccessManager* networkAccessManager;
+  int workedtimeLocal;
+  int workedtimeRemote;
 };
 
 class ConflictDialogSameBrowser: public QMessageBox

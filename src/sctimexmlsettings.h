@@ -113,6 +113,59 @@ public:
      
     }
 
+    SCTimeXMLSettings(const SCTimeXMLSettings& o):
+        backends(o.backends),
+        databaseserver(o.databaseserver),
+        database(o.database),
+        databasepassword(o.databasepassword),
+        zeitKommando(o.zeitKommando),
+        m_zeitKontenKommando(o.m_zeitKontenKommando),
+        timeInc(o.timeInc),
+        fastTimeInc(o.fastTimeInc),
+        mainwindowPosition(o.mainwindowPosition),
+        mainwindowSize(o.mainwindowSize),
+        defaultcommentfiles(o.defaultcommentfiles),
+        columnwidth(o.columnwidth),
+        m_lastRecordedTimestamp(o.m_lastRecordedTimestamp),
+        alwaysSaveEintrag(o.alwaysSaveEintrag),
+        m_powerUserView(o.m_powerUserView),
+        m_singleClickActivation(o.m_singleClickActivation),
+        m_dragNDrop(o.m_dragNDrop),
+        m_showTypeColumn(o.m_showTypeColumn),
+        m_showPSPColumn(o.m_showPSPColumn),
+        m_useDefaultCommentIfUnique(o.m_useDefaultCommentIfUnique),
+        m_persoenlicheKontensumme(o.m_persoenlicheKontensumme),
+        m_showSpecialRemunSelector(o.m_showSpecialRemunSelector),
+        m_warnISO8859(o.m_warnISO8859),
+        m_workingTimeWarnings(o.m_workingTimeWarnings),
+        m_useCustomFont(o.m_useCustomFont),
+        m_customFont(o.m_customFont),
+        m_customFontSize(o.m_customFontSize),
+        backupSettingsXml(o.backupSettingsXml),
+        m_sortByCommentText(o.m_sortByCommentText),
+        m_restCurrentlyOffline(o.m_restCurrentlyOffline), 
+        m_restSaveOffline(o.m_restSaveOffline), 
+        m_defCommentDisplayMode(o.m_defCommentDisplayMode),
+        unterKontoWindowPosition(o.unterKontoWindowPosition),
+        unterKontoWindowSize(o.unterKontoWindowSize),
+        defaultbackends(o.defaultbackends),
+        m_overtimeRegulatedSR(o.m_overtimeRegulatedSR),
+        m_overtimeOtherSR(o.m_overtimeOtherSR),
+        m_publicHolidaySR(o.m_publicHolidaySR),
+        m_nightSR(o.m_nightSR),
+        m_nightModeBegin(o.m_nightModeBegin),
+        m_nightModeAdditionalDialogTimes(o.m_nightModeAdditionalDialogTimes),
+        m_nightModeEnd(o.m_nightModeEnd),
+        m_lastSave(o.m_lastSave),
+        m_nightModeActive(o.m_nightModeActive),
+        m_overtimeRegulatedModeActive(o.m_overtimeRegulatedModeActive),
+        m_overtimeOtherModeActive(o.m_overtimeOtherModeActive),
+        m_publicHolidayModeActive(o.m_publicHolidayModeActive),
+        m_writeConsolidatedIntervals(o.m_writeConsolidatedIntervals),
+        defaultdatabaseserver(o.defaultdatabaseserver),
+        defaultdatabase(o.defaultdatabase)
+    {}
+
     /*void readSettings();
 
     void readSettings(AbteilungsListe* abtList, PunchClockList* pcl);*/
@@ -505,7 +558,6 @@ public:
     bool m_powerUserView;
     bool m_singleClickActivation;
     bool m_dragNDrop;
-    bool m_useCustomFont;
     bool m_showTypeColumn;
     bool m_showPSPColumn;
     bool m_useDefaultCommentIfUnique;
@@ -513,6 +565,7 @@ public:
     bool m_showSpecialRemunSelector;
     bool m_warnISO8859;
     bool m_workingTimeWarnings;
+    bool m_useCustomFont;
     QString m_customFont;
     int m_customFontSize;
     bool backupSettingsXml; // nur beim ersten Speichern ein  Backup von settings.xml erstellen
