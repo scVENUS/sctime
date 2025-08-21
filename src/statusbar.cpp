@@ -16,6 +16,7 @@
 */
 
 #include "statusbar.h"
+#include <QPushButton>
 
 StatusBar::StatusBar(QWidget *parent) : QStatusBar(parent)
 {
@@ -24,9 +25,11 @@ StatusBar::StatusBar(QWidget *parent) : QStatusBar(parent)
     addWidget(datumsWarnung);
     addWidget(modeList);
 #ifdef RESTCONFIG
-    onlineStatusLabel = new QLabel("", this);
+    onlineStatusLabel = new QPushButton("", this);
+    onlineStatusLabel->setFlat(true);
     onlineStatusLabel->setStyleSheet("font-style: italic");
     addPermanentWidget(onlineStatusLabel);
+    connect(onlineStatusLabel, &QPushButton::clicked, [=](){emit onlineStatusClicked();});
 #endif
     breakTimeLabel = new QLabel(tr("Break time: ") + "0", this);
     breakTimeLabel->setToolTip(tr("Legally relevant break time for the current working day"));
@@ -135,6 +138,6 @@ void StatusBar::setMode(QString modedesc, bool on)
 void StatusBar::setOnlineStatus(QString desc)
 {
 #ifdef RESTCONFIG
-    onlineStatusLabel->setText(desc+"  ");
+    onlineStatusLabel->setText(desc);
 #endif
 }

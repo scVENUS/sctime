@@ -26,6 +26,8 @@
 #include <QSet>
 #include "timecounter.h"
 
+class QPushButton;
+
 /** The status bar of the main window */
 class StatusBar:public QStatusBar
 {
@@ -34,6 +36,8 @@ class StatusBar:public QStatusBar
   public:
     StatusBar(QWidget * parent = 0);
     virtual ~StatusBar() {};
+  signals:
+    void onlineStatusClicked();
 
   public slots:
     void setSekunden(int sec);
@@ -50,7 +54,7 @@ class StatusBar:public QStatusBar
     QLabel* breakTimeLabel;
     QLabel* datumsWarnung;
     QLabel* modeList;
-    QLabel* onlineStatusLabel;
+    QPushButton* onlineStatusLabel;
     QSet<QString> modes;
     int secDiff;
     int sekunden;

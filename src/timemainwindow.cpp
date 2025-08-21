@@ -158,6 +158,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
 
   statusBar = new StatusBar(this);
   setStatusBar(statusBar);
+  connect(statusBar, &StatusBar::onlineStatusClicked, this, &TimeMainWindow::toggleOnlineStatus);
   std::vector<int> columnwidthlist;
 
 #ifndef Q_OS_MAC
@@ -2987,4 +2988,27 @@ QDate TimeMainWindow::getOpenCurrentDate()
 QDate TimeMainWindow::getOpenDate()
 {
   return abtList->getDatum();
+}
+
+void TimeMainWindow::toggleOnlineStatus() {
+    bool offline=settings->restSaveOffline();
+    if (offline==false) {
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+                QObject::tr("sctime: going permantly offline"),
+                QObject::tr("Do you really want to go permanently offline? Your data will not be synced to the cloud while you are permanently offline."), QMessageBox::Ok|QMessageBox::Cancel, this);
+        connect(msgbox, &QMessageBox::finished,
+        [=](){
+          if (msgbox->result() == QMessageBox::Ok) {
+              settings->setRestSaveOffline(true);
+              switchRestCurrentlyOffline(true);
+          }
+          msgbox->deleteLater();
+        });
+        msgbox->open();
+        msgbox->raise();
+        return;
+    } else {
+       settings->setRestSaveOffline(false);
+       switchRestCurrentlyOffline(false);
+    }
 }

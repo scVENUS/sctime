@@ -252,6 +252,7 @@ public:
     void cantMoveTimeDialog(int delta);
     void changeDate(QDate datum, bool changeVisible, bool changeToday);
     void loadPCCData(const QString& pccdata);
+    void toggleOnlineStatus();
     KontoTreeView* kontoTree;
     Lock *m_lock;
     QAction* editUnterKontoAction;
