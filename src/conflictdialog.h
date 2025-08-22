@@ -38,6 +38,7 @@ public:
   ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QDomDocument docRemote, TimeMainWindow* tmw);
   ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, const QDomDocument docRemote, TimeMainWindow* tmw, QDomDocument docLocal);
   virtual ~ConflictDialog() {};
+  virtual void closeEvent(QCloseEvent* event) override;
 
 public slots:
   void performMerge();

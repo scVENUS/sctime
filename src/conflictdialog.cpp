@@ -289,3 +289,8 @@ void ConflictDialog::mergePCL(PunchClockList* target, PunchClockList* other) {
       target->push_back(*pclPos);
   }
 }
+
+void ConflictDialog::closeEvent(QCloseEvent* event) {
+    // window cannot be closed manually
+    event->ignore();
+}
