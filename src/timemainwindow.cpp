@@ -2994,7 +2994,7 @@ void TimeMainWindow::toggleOnlineStatus() {
     bool offline=settings->restSaveOffline();
     if (offline==false) {
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
-                QObject::tr("sctime: going permantly offline"),
+                QObject::tr("sctime: going permanently offline"),
                 QObject::tr("Do you really want to go permanently offline? Your data will not be synced to the cloud while you are permanently offline."), QMessageBox::Ok|QMessageBox::Cancel, this);
         connect(msgbox, &QMessageBox::finished,
         [=](){
