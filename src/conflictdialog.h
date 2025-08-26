@@ -58,6 +58,7 @@ private:
   AbteilungsListe* conflictedAbtList;
   PunchClockList * conflictedPunchClockList;
   QDomDocument docRemote;
+  QString explanationTemplate;
   QDate targetdate;
   QDomDocument docLocal;
   QNetworkAccessManager* networkAccessManager;

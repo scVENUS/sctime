@@ -45,6 +45,7 @@ ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManage
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
+    explanationTemplate = explanation->text();
     updateRemoteDocument(docRemote);
 }
 
@@ -56,6 +57,7 @@ ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManage
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
+    explanationTemplate = explanation->text();
     updateRemoteDocument(docRemote);
 }
 
@@ -94,8 +96,11 @@ void ConflictDialog::extractDocInfos() {
         int billabletimeRemote;
         remoteAbtList->getGesamtZeit(workedtimeRemote, billabletimeRemote);
         otherDataTab->loadDate(remoteAbtList, &remotePunchClockList, remoteSettings);
+        auto lastModified = remoteSettings->remoteSaveDateTime();
         delete remoteAbtList;
         delete remoteSettings;
+        explanation->setText(explanationTemplate.arg(lastModified.toString(Qt::ISODate)));
+        trace(QString("modified time is %1").arg(lastModified.toString(Qt::ISODate)));
   } else {
 
   }

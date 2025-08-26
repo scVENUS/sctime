@@ -101,6 +101,8 @@ public:
 
       m_lastSave = QDateTime();
 
+      m_remoteSaveDateTime = QDateTime();
+
 #ifdef ATOS_ETV_2018
       m_overtimeRegulatedSR = "sc_angeordnete_regulierte_mehrarbeit";
       m_overtimeOtherSR = "sc_angeordnete_sonstige_mehrarbeit";
@@ -163,7 +165,8 @@ public:
         m_publicHolidayModeActive(o.m_publicHolidayModeActive),
         m_writeConsolidatedIntervals(o.m_writeConsolidatedIntervals),
         defaultdatabaseserver(o.defaultdatabaseserver),
-        defaultdatabase(o.defaultdatabase)
+        defaultdatabase(o.defaultdatabase),
+        m_remoteSaveDateTime(o.m_remoteSaveDateTime)
     {}
 
     /*void readSettings();
@@ -524,6 +527,14 @@ public:
         m_writeConsolidatedIntervals=b;
     }
 
+    // this is meta data from loading a file. If the file has not been loaded, this will be invalid or wrong.
+    QDateTime remoteSaveDateTime() {
+        return m_remoteSaveDateTime;
+    }
+
+    void setRemoteSaveDateTime(const QDateTime& dt) {
+        m_remoteSaveDateTime = dt;
+    }
 
     QString backends;
 
@@ -600,6 +611,8 @@ public:
 
     QString m_currentPCCdata;
     QString m_prevPCCdata;
+
+    QDateTime m_remoteSaveDateTime;
 
     private slots:
 

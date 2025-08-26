@@ -172,6 +172,7 @@ void XMLReader::parse(QIODevice *input)
     QString remoteDateStr=rootElemRemote.attribute("date");
     remoteID=rootElemRemote.attribute("identifier");
     remoteSaveTime=QDateTime::fromString(remoteDateStr, Qt::ISODate);
+    settings->setRemoteSaveDateTime(remoteSaveTime);
 
     bool readsuccess=false;
     QDomDocument doc;
