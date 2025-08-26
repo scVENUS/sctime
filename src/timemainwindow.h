@@ -317,7 +317,7 @@ public:
     DSM* m_dsm;
     QQueue<QueuedMethod*>* m_afterCommitMethodQueue;
     QNetworkAccessManager *networkAccessManager;
-    QSet<QDate> m_conflictDialogOpenForDates;
+    QHash<QDate, QDialog*> m_conflictDialogOpenForDates;
     QSet<QDate> m_lastUncleanDates;
 };
 
