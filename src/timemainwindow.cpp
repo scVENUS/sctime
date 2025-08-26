@@ -2699,9 +2699,17 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
     return;
   }
   if (m_conflictDialogOpenForDates.contains(targetdate)) {
+     ConflictDialog *dialog=dynamic_cast<ConflictDialog*>(m_conflictDialogOpenForDates[targetdate]);
+     if (dialog) {
+       QDomDocument doc("settings");
+       QString errMsg;
+       QString resname;
+       int errLine, errCol;
+       doc.setContent(qUncompress(ba), &errMsg, &errLine, &errCol);
+       dialog->updateRemoteDocument(doc);
+     }
      return;
   }
-  m_conflictDialogOpenForDates+=targetdate;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {
   } else {
@@ -2710,9 +2718,10 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
             tr("sctime: unresolvable conflict"),
             tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
             QMessageBox::Ok, this);
+    m_conflictDialogOpenForDates[targetdate]=msgbox;
     connect(msgbox, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       msgbox->deleteLater();
     });
     msgbox->open();
@@ -2728,9 +2737,10 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
         QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
                               QObject::tr("sctime: reading configuration file"),
                               QObject::tr("error in %1, line %2, column %3: %4.").arg(resname).arg(errLine).arg(errCol).arg(errMsg), QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
+        m_conflictDialogOpenForDates[targetdate]=msgbox;
         connect(msgbox, &QMessageBox::finished,
         [=](){
-          m_conflictDialogOpenForDates-=targetdate;
+          m_conflictDialogOpenForDates.remove(targetdate);
           msgbox->deleteLater();
         });
         msgbox->open();
@@ -2740,9 +2750,10 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
   QString remoteID=doc.documentElement().attribute("identifier");
   if (remoteID==getMachineIdentifier()) {
     QMessageBox *msgbox=new ConflictDialogSameBrowser(this);
+    m_conflictDialogOpenForDates[targetdate]=msgbox;
     connect(msgbox, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       msgbox->deleteLater();
       SyncOfflineHelper::removeUnmergedData(targetdate);
       
@@ -2755,9 +2766,10 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
   }
 
   ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, doc, this);
+  m_conflictDialogOpenForDates[targetdate]=dialog;
   connect(dialog, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       dialog->deleteLater();
       SyncOfflineHelper::removeUnmergedData(targetdate);
       
@@ -2777,9 +2789,12 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
     return;
   }
   if (m_conflictDialogOpenForDates.contains(targetdate)) {
+     ConflictDialog *dialog=dynamic_cast<ConflictDialog*>(m_conflictDialogOpenForDates[targetdate]);
+     if (dialog) {
+       dialog->updateRemoteDocument(remotesettings);
+     }
      return;
   }
-  m_conflictDialogOpenForDates+=targetdate;
   bool istoday=false;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {
@@ -2790,9 +2805,10 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
             tr("sctime: unresolvable conflict"),
             tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
             QMessageBox::Ok,this);
+    m_conflictDialogOpenForDates[targetdate]=msgbox;
     connect(msgbox, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       msgbox->deleteLater();
     });
     msgbox->open();
@@ -2802,9 +2818,10 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
   QString remoteID=remotesettings.documentElement().attribute("identifier");
   if (remoteID==getMachineIdentifier()) {
     QMessageBox *msgbox=new ConflictDialogSameBrowser(this);
+    m_conflictDialogOpenForDates[targetdate]=msgbox;
     connect(msgbox, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       msgbox->deleteLater();
       SyncOfflineHelper::removeUnmergedData(targetdate);
       if (reader!=NULL) {
@@ -2827,6 +2844,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
   }
 
   ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, remotesettings, this);
+  m_conflictDialogOpenForDates[targetdate]=dialog;
   connect(dialog, &QMessageBox::finished,
     [=](){
       if (reader!=NULL) {
@@ -2837,7 +2855,7 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
         }
       }
       dialog->deleteLater();
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       SyncOfflineHelper::removeUnmergedData(targetdate);
       saveWithTimeout(0);
       
@@ -2854,10 +2872,41 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
     reader->ignoreConflict();
     return;
   }
+  // This dialog needs to refresh data manually, because local data was not loaded, and without it we do not trigger a autmatic save, which in turn would trigger this dialog
+  std::function<void()> refreshHandler;
+  refreshHandler= [=](){
+     if (m_conflictDialogOpenForDates.contains(targetdate)) {
+       auto remoteAbtList=new AbteilungsListe(targetdate, abtList);
+       auto remoteSettings=new SCTimeXMLSettings(*settings);
+       PunchClockList* remotePunchClockList=new PunchClockList();
+       XMLReader *reader=new XMLReader(settings, networkAccessManager,false, false, false, remoteAbtList, remotePunchClockList);
+       auto updater=[=](){
+         if (m_conflictDialogOpenForDates.contains(targetdate)) {
+           auto dialog=dynamic_cast<ConflictDialog*>(m_conflictDialogOpenForDates[targetdate]);
+           if (dialog) {
+             dialog->updateRemoteDocument(remotesettings);
+             QTimer::singleShot(60000, refreshHandler);
+           }
+         }
+         delete reader;
+         delete remoteAbtList;
+         delete remoteSettings;
+         delete remotePunchClockList;
+       };
+       connect(reader, &XMLReader::settingsRead, updater);
+       connect(reader, &XMLReader::conflictingClientRunning, this, &TimeMainWindow::readConflictDialog);
+       connect(reader, &XMLReader::conflictedWithLocal, this, &TimeMainWindow::readConflictWithLocalDialog);
+       reader->open();
+     }
+  };
+  QTimer::singleShot(60000, refreshHandler);
   if (m_conflictDialogOpenForDates.contains(targetdate)) {
+     ConflictDialog *dialog=dynamic_cast<ConflictDialog*>(m_conflictDialogOpenForDates[targetdate]);
+     if (dialog) {
+       dialog->updateRemoteDocument(remotesettings);
+     }
      return;
   }
-  m_conflictDialogOpenForDates+=targetdate;
   bool istoday=false;
   if (abtList->getDatum()==targetdate) {
   } else if (abtListToday->getDatum()==targetdate) {
@@ -2868,9 +2917,10 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
             tr("sctime: unresolvable conflict"),
             tr("There seems to be a conflict with another session that could not be resolved. Please check your entries."),
             QMessageBox::Ok,this);
+    m_conflictDialogOpenForDates[targetdate]=msgbox;
     connect(msgbox, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       msgbox->deleteLater();
     });
     msgbox->open();
@@ -2880,9 +2930,10 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
   QString remoteID=remotesettings.documentElement().attribute("identifier");
   if (remoteID==getMachineIdentifier()) {
     QMessageBox *msgbox=new ConflictDialogSameBrowser(this);
+    m_conflictDialogOpenForDates[targetdate]=msgbox;
     connect(msgbox, &QMessageBox::finished,
     [=](){
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       msgbox->deleteLater();
       SyncOfflineHelper::removeUnmergedData(targetdate);
       if (reader!=NULL) {
@@ -2904,6 +2955,7 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
     return;
   }
   ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, remotesettings, this, localsettings);
+  m_conflictDialogOpenForDates[targetdate]=dialog;
   connect(dialog, &QMessageBox::finished,
     [=](){
       if (reader!=NULL) {
@@ -2914,7 +2966,7 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
         }
       }
       dialog->deleteLater();
-      m_conflictDialogOpenForDates-=targetdate;
+      m_conflictDialogOpenForDates.remove(targetdate);
       SyncOfflineHelper::removeUnmergedData(targetdate);
       saveWithTimeout(0);
       

@@ -45,22 +45,25 @@ ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManage
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
-    extractDocInfos();
-    buttonReplace->setText(tr("Replace data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeRemote*1000).toString("HH:mm")));
-    buttonKeep->setText(tr("Keep data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeLocal*1000).toString("HH:mm")));
+    updateRemoteDocument(docRemote);
 }
 
 ConflictDialog::ConflictDialog(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAccessManager, QDate targetdate, bool global, QDomDocument docRemote, TimeMainWindow* tmw, QDomDocument docLocal): 
-    QDialog(tmw), tmw(tmw), settings(settings), global(global), docRemote(docRemote), targetdate(targetdate), docLocal(docLocal), networkAccessManager(networkAccessManager), workedtimeLocal(0), workedtimeRemote(0) {
+    QDialog(tmw), tmw(tmw), settings(settings), global(global), targetdate(targetdate), docLocal(docLocal), networkAccessManager(networkAccessManager), workedtimeLocal(0), workedtimeRemote(0) {
     setupUi(this);
     setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
     connect(buttonReplace,&QPushButton::pressed, this, &ConflictDialog::performReplace);
     connect(buttonMerge,&QPushButton::pressed, this, &ConflictDialog::performMerge);
     connect(buttonClose,&QPushButton::pressed, this, &ConflictDialog::performClose);
     connect(buttonKeep,&QPushButton::pressed, this, &ConflictDialog::performKeep);
-    extractDocInfos();
-    buttonReplace->setText(tr("Replace data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeRemote*1000).toString("HH:mm")));
-    buttonKeep->setText(tr("Keep data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeLocal*1000).toString("HH:mm")));
+    updateRemoteDocument(docRemote);
+}
+
+void ConflictDialog::updateRemoteDocument(const QDomDocument& doc) {
+  docRemote = doc;
+  extractDocInfos();
+  buttonReplace->setText(tr("Replace data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeRemote*1000).toString("HH:mm")));
+  buttonKeep->setText(tr("Keep data\n(%1)").arg(QTime::fromMSecsSinceStartOfDay(workedtimeLocal*1000).toString("HH:mm")));
 }
 
 void ConflictDialog::extractDocInfos() {
