@@ -164,7 +164,19 @@ bool openLinkInExistingInstance(QString accountlink) {
 void stopAppHard() {
   qApp->exit();
   #ifdef __EMSCRIPTEN__
-      emscripten_run_script(QString(" document.documentElement.innerHTML = \"<html><head><title>sctime - session closed</title></head><body>This session has been closed.</body></html>\"").toUtf8().data());
+      emscripten_run_script(R"(
+          // Clear all timers
+          var highestTimeoutId = setTimeout(";", 0);
+          for (var i = 0; i < highestTimeoutId; i++) {
+              clearTimeout(i);
+          }
+          var highestIntervalId = setInterval(";", 9999);
+          for (var i = 0; i < highestIntervalId; i++) {
+              clearInterval(i);
+          }
+          // Set custom content
+          document.documentElement.innerHTML = "<html><head><title>sctime - session closed</title></head><body><h1>Session Closed</h1><p>This sctime session has been closed.</p><button onclick='window.location.reload()'>Restart</button></body></html>";
+      )");
   #else
       exit(0);
   #endif
