@@ -2683,15 +2683,24 @@ void TimeMainWindow::sessionInvalid() {
    dialogopen = true;
    QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
             tr("sctime: invalid session"),
-            tr("Your session seems to be invalid. Please confirm to open a new window to refresh it. Please provide your credentials there if your browser asks for them."),
+            tr("Your session seems to be invalid. Press OK to open a new window to refresh it. Please provide your credentials there if your browser asks for them. Alternativly you can go permanently offline."),
             QMessageBox::Ok, this);
-    connect(msgbox, &QMessageBox::finished,
-    [=](){
+   msgbox->addButton(tr("Go Offline"), QMessageBox::NoRole);
+   connect(msgbox, &QMessageBox::finished,
+   [=](){
+      if (msgbox->result()!=QMessageBox::Ok) {
+        bool offline=settings->restSaveOffline();
+        if (offline==false) {
+          toggleOnlineStatus();
+        }
+      } else {
+        emscripten_run_script(QString("window.open('%1', '%2');").arg(getStaticUrl()+REFRESH_URL_PART).arg(tr("Refresh Session")).toUtf8().data());
+      }
       dialogopen=false;
-      emscripten_run_script(QString("window.open('%1', '%2');").arg(getStaticUrl()+REFRESH_URL_PART).arg(tr("Refresh Session")).toUtf8().data());
-    });
-    msgbox->open();
-    msgbox->raise();
+      msgbox->deleteLater();
+   });
+   msgbox->open();
+   msgbox->raise();
 #endif
 }
 
