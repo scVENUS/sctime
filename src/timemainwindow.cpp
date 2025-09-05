@@ -482,12 +482,20 @@ void TimeMainWindow::readInitialSetting() {
       reader->open();
     };
 #ifdef __EMSCRIPTEN__
+    static int retryCount = 0;
     int initdone = EM_ASM_INT({
         return sctimefsinitdone;
     });
     if (!initdone) {
-      // try again later
-      QTimer::singleShot(200, this, SLOT(readInitialSetting()));
+      if (retryCount<100) {
+        retryCount++;
+        // try again later
+        QTimer::singleShot(200, this, SLOT(readInitialSetting()));
+      } else {
+        // Filesystem wont come up, give up
+        stopAppHard();
+      }
+      
       return;
     }
     // in wasm we have the permanent offline mode. We try to load a local file first, to have information initialized if we have to stay offline

@@ -32,6 +32,7 @@ void logError(const QString& msg);
 void trace(const QString& msg);
 QString absolutePath(QString);
 QString getMachineIdentifier();
+void stopAppHard();
 
 #define REST_SETTINGS_ENDPOINT "sctimegui/v1/settingsdata"
 #define REST_LIST_SETTINGS_ENDPOINT "sctimegui/v1/listsettingsdata"

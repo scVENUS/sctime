@@ -161,6 +161,15 @@ bool openLinkInExistingInstance(QString accountlink) {
   return true;
 }
 
+void stopAppHard() {
+  qApp->exit();
+  #ifdef __EMSCRIPTEN__
+      emscripten_run_script(QString(" document.documentElement.innerHTML = \"<html><head><title>sctime - session closed</title></head><body>This session has been closed.</body></html>\"").toUtf8().data());
+  #else
+      exit(0);
+  #endif
+}
+
 /** main: hier wird ueberprueft, ob die Applikation ueberhaupt starten soll
  * (Lockfiles,...), und falls ja, wird SCTimeApp initialisiert und
  ausgefuehrt */

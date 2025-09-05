@@ -119,10 +119,5 @@ void DeleteSettingsDialog::performDelete() {
 }
 
 void DeleteSettingsDialog::stopApp() {
-  qApp->exit();
-  #ifdef __EMSCRIPTEN__
-      emscripten_run_script(QString(" document.documentElement.innerHTML = \"<html><head><title>sctime - session closed</title></head><body>This session has been closed.</body></html>\"").toUtf8().data());
-  #else
-      exit(0);
-  #endif
+   stopAppHard();
 }
