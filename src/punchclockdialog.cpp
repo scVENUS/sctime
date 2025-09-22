@@ -24,6 +24,7 @@
 #include <QStringList>
 #include <QTextCharFormat>
 #include <QDateTimeEdit>
+#include <QWheelEvent>
 #include "globals.h"
 #include "punchclockchecker.h"
 
@@ -114,12 +115,16 @@ void PunchClockDialog::insertEntry(int row, QTime begin, QTime end)
   dateTime->setDisplayFormat("H:mm");
   dateTime->setFrame(false);
   dateTime->setTime(begin);
+  dateTime->setFocusPolicy(Qt::StrongFocus);
+  dateTime->installEventFilter(this);
   punchClockTable->setCellWidget(row, 0, dateTime);
   connect(dateTime, SIGNAL(timeChanged(const QTime&)), this, SLOT(updatePreview()));
   dateTime = new QDateTimeEdit(this);
   dateTime->setDisplayFormat("H:mm");
   dateTime->setFrame(false);
   dateTime->setTime(end);
+  dateTime->setFocusPolicy(Qt::StrongFocus);
+  dateTime->installEventFilter(this);
   punchClockTable->setCellWidget(row, 1, dateTime);
   connect(dateTime, SIGNAL(timeChanged(const QTime&)), this, SLOT(updatePreview()));
   auto label =new QLabel(this);
@@ -139,4 +144,15 @@ void PunchClockDialog::updatePreview()
     QString consolidated = m_pcs->getConsolidatedIntervalString(&pcl);
     previewBrowser->setText(consolidated);
   }
+}
+
+bool PunchClockDialog::eventFilter(QObject *object, QEvent *event)
+{
+  if (event->type() == QEvent::Wheel) {
+    QDateTimeEdit *dateTimeEdit = qobject_cast<QDateTimeEdit*>(object);
+    if (dateTimeEdit && !dateTimeEdit->hasFocus()) {
+      return true; // Block wheel events when widget doesn't have focus
+    }
+  }
+  return QDialog::eventFilter(object, event);
 }

@@ -49,6 +49,7 @@ public slots:
 
 protected:
   /*$PROTECTED_FUNCTIONS$*/
+  bool eventFilter(QObject *object, QEvent *event) override;
 
 protected slots:
   /*$PROTECTED_SLOTS$*/
