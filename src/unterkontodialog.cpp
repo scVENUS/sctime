@@ -112,12 +112,11 @@ UnterKontoDialog::UnterKontoDialog(const QString& abt,const QString& ko, const  
 
   layout->addWidget(new QLabel(tr("Comment"),this));
   if (commentedit) {
-    layout->addWidget(commentedit);
-    commentedit->setFocus();
+    commentwidget=commentedit;
   } else {
-    layout->addWidget(commentcombo);
-    commentcombo->setFocus();
+    commentwidget=commentcombo;
   }
+  layout->addWidget(commentwidget);
   layout->addSpacing(5);
   layout->addStretch(2);
   if ((taglist) && (!taglist->isEmpty())) {
@@ -215,6 +214,29 @@ UnterKontoDialog::UnterKontoDialog(const QString& abt,const QString& ko, const  
     connect (zeitBox, SIGNAL(minuteChangedBy(int)), zeitAbzurBox, SLOT(doStepMin(int)));
     connect (zeitBox, SIGNAL(hourChangedBy(int)), zeitAbzurBox, SLOT(doStepHour(int)));
   }
+
+  if (tagcombo) {
+    setTabOrder(commentwidget, tagcombo);
+    setTabOrder(tagcombo, zeitBox);
+  } else {
+    setTabOrder(commentwidget, zeitBox);
+  }
+  setTabOrder(zeitBox, zeitAbzurBox);
+  if (srListWidget) {
+    setTabOrder(zeitAbzurBox, srListWidget);
+    setTabOrder(srListWidget, projektAktivieren);
+  } else {
+    setTabOrder(zeitAbzurBox, projektAktivieren);
+  }
+  setTabOrder(projektAktivieren, persoenlichesKonto);
+  if (!readOnly) {
+    setTabOrder(persoenlichesKonto, okbutton);
+    setTabOrder(okbutton, cancelbutton);
+  } else {
+    setTabOrder(persoenlichesKonto, cancelbutton);
+  }
+
+  commentwidget->setFocus();
 };
 
 QString UnterKontoDialog::getComment()

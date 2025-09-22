@@ -49,6 +49,7 @@ class UnterKontoDialog: public QDialog
     ZeitBox* getZeitAbzurBox();
     ZeitBox* getZeitBox();
     QString getComment();
+    QWidget* commentwidget;
   public slots:
     virtual void accept();
     virtual void checkInput();

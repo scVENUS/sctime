@@ -1875,6 +1875,7 @@ void TimeMainWindow::callUnterKontoDialog(QTreeWidgetItem * item)
   connect(m_unterKontoDialog, SIGNAL(finished(int)), this, SLOT(cleanupUnterKontoDialog(int)));
   m_unterKontoDialog->open();
   m_unterKontoDialog->raise();
+  m_unterKontoDialog->commentwidget->setFocus();
 }
 
 void TimeMainWindow::cleanupUnterKontoDialog(int result)
