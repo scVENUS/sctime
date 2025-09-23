@@ -101,6 +101,7 @@
 #endif
 #include "deletesettingsdialog.h"
 #include "syncofflinehelper.h"
+#include "datechangedialog.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -2113,7 +2114,7 @@ void TimeMainWindow::callDateDialog()
   ddparent=this;
   unclean=SyncOfflineHelper::findAllUnmergedDates();
   #endif
-  DateDialog * dateDialog=new DateDialog(abtList->getDatum(), ddparent, unclean);
+  DateChangeDialog * dateDialog=new DateChangeDialog(abtList->getDatum(), ddparent, unclean);
   connect(dateDialog, SIGNAL(dateChanged(const QDate&)), this, SLOT(changeVisibleDate(const QDate&)));
   dateDialog->setAttribute(Qt::WA_DeleteOnClose);
   dateDialog->open();

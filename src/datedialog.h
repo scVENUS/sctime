@@ -28,12 +28,12 @@
  /**
   * Dialog to read a date
   */
-class DateDialog : public QDialog, private Ui::DateDialogBase
+class DateDialog : public QDialog, protected Ui::DateDialogBase
 {
   Q_OBJECT
 
 public:
-  DateDialog(const QDate& datum, QWidget* parent = 0, QSet<QDate> conflictDates= QSet<QDate>());
+  DateDialog(const QDate& datum, QWidget* parent = 0, bool showApplyButton = false);
   ~DateDialog();
   /*$PUBLIC_FUNCTIONS$*/
 
@@ -41,7 +41,7 @@ public slots:
   /*$PUBLIC_SLOTS$*/
 
 protected:
-  /*$PROTECTED_FUNCTIONS$*/
+  QDate selectedDate;
 
 protected slots:
   /*$PROTECTED_SLOTS$*/
@@ -56,7 +56,6 @@ signals:
   void dateChanged(const QDate& date);
 
 private:
-  QDate selectedDate;
 };
 
 #endif

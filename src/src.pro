@@ -11,7 +11,7 @@ CODECFORTR= UTF-8
 TRANSLATIONS = sctime_de.ts
 SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp bereitschaftsmodel.cpp bereitschaftsview.cpp\
           conflictdialog.cpp conflictcalendarwidget.cpp \
-          datasource.cpp datechanger.cpp datedialog.cpp dateoverviewwidget.cpp deletesettingsdialog.cpp \
+          datasource.cpp datechanger.cpp datedialog.cpp datechangedialog.cpp dateoverviewwidget.cpp deletesettingsdialog.cpp \
           defaultcomment.cpp defaultcommentreader.cpp defaulttagreader.cpp\
           descdata.cpp findkontodialog.cpp kontotreeitem.cpp kontotreeview.cpp lock.cpp oncalldialog.cpp preferencedialog.cpp\
           pausedialog.cpp punchclockchecker.cpp sctime.cpp sctimexmlsettings.cpp syncofflinehelper.cpp \
@@ -19,7 +19,7 @@ SOURCES = abteilungsliste.cpp accountlistcommiter.cpp bereitschaftsliste.cpp ber
           specialremunentryhelper.cpp specialremunerationsdialog.cpp specialremuntypemap.cpp statusbar.cpp JSONReader.cpp\
           textviewerdialog.cpp resthelper.cpp sctimeapp.cpp xmlreader.cpp xmlwriter.cpp
 HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitschaftsmodel.h bereitschaftsview.h datasource.h\
-          conflictdialog.h conflictcalendarwidget.h dateoverviewwidget.h \
+          conflictdialog.h conflictcalendarwidget.h dateoverviewwidget.h datechangedialog.h \
           datechanger.h datedialog.h deletesettingsdialog.h defaultcomment.h defaultcommentreader.h defaulttagreader.h descdata.h  eintragsliste.h\
           findkontodialog.h globals.h kontodateninfo.h kontoliste.h kontotreeitem.h kontotreeview.h lock.h\
           oncalldialog.h punchclock.h pausedialog.h preferencedialog.h punchclockchecker.h sctimexmlsettings.h\

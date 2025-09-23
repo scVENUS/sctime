@@ -23,7 +23,7 @@
 #include <QTextCharFormat>
 #include "globals.h"
 
-DateDialog::DateDialog(const QDate& date, QWidget *parent, QSet<QDate> conflictDates)
+DateDialog::DateDialog(const QDate& date, QWidget *parent, bool showApplyButton)
 : QDialog(parent)
 {
   setupUi(this);
@@ -39,7 +39,7 @@ DateDialog::DateDialog(const QDate& date, QWidget *parent, QSet<QDate> conflictD
   weekSelector->setEditable(false);
   setSelectedDate(date);
   connect(weekSelector,SIGNAL(currentIndexChanged(int)), this, SLOT(weekSelected(int)));
-  datePicker->setConflictDates(conflictDates);
+  applyButton->setVisible(showApplyButton);
 }
 
 DateDialog::~DateDialog()
@@ -48,24 +48,6 @@ DateDialog::~DateDialog()
 
 void DateDialog::setSelectedDate(const QDate& date)
 {
-  //int prevweek=datePicker->selectedDate().weekNumber();
-  if ((date.month()!=selectedDate.month())||(date.year()!=selectedDate.year())) {
-    QDir qd(configDir.filePath("checkedin"));
-    QStringList dateList;
-    dateList << "zeit-" << date.toString("yyyy-MM") << "-*.xml";
-    QStringList files=qd.entryList(dateList);
-    for ( QStringList::Iterator it = files.begin(); it != files.end(); ++it ) {
-      bool ok;
-      QDate filedate;
-      int day=QString(*it).section('-',3,3).section('.',0,0).toInt(&ok);
-      if ((ok)&&filedate.setDate(date.year(),date.month(),day)) {
-        QTextCharFormat dtf=datePicker->dateTextFormat(filedate);
-        dtf.setForeground(QBrush(Qt::red));
-        dtf.setBackground(QBrush(Qt::red));
-        datePicker->setDateTextFormat(filedate, dtf);
-      }
-    }
-  }
   /* avoid triggering the weekSelected slot, as this might cause endless loops. There might be a
      more elegant solution for this, but for now it works fine this way */
   disconnect(weekSelector,SIGNAL(currentIndexChanged(int)), this, SLOT(weekSelected(int)));
