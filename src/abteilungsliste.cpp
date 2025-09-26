@@ -452,7 +452,30 @@ bool AbteilungsListe::setSekundenAbzur(const QString& abteilung, const QString& 
 }
 
 
-/** Changes the times on the given account
+/**
+ * @brief Changes the time values for a specific account entry
+ * 
+ * This method modifies the time values (worked time and/or billable time) for a given
+ * account entry identified by department, account, sub-account, and entry index.
+ * The method provides flexible control over which time values are modified and how
+ * the global time difference is tracked.
+ * 
+ * @param Abteilung The department name containing the account
+ * @param Konto The account name within the department
+ * @param Unterkonto The sub-account name within the account
+ * @param Eintrag The entry index within the sub-account
+ * @param delta The time change in seconds (can be positive or negative)
+ * @param abzurOnly If true, only modify billable time (sekundenAbzur), leave worked time unchanged
+ * @param regular If true, don't update the global time difference tracker (zeitDifferenz)
+ * @param workedOnly If true, only modify worked time (sekunden), leave billable time unchanged
+ * 
+ * @note Time values are clamped to zero minimum - negative times are not allowed
+ * @note If both abzurOnly and workedOnly are false, both time values are modified
+ * @note The zeitDifferenz is only updated for worked time changes when regular is false
+ * @note If the specified entry is not found, the method returns without making changes
+ * 
+ * @see findEintrag() for entry lookup mechanism
+ * @see minuteVergangen() for automatic time increment functionality
  */
 void AbteilungsListe::changeZeit(const QString& Abteilung,const QString& Konto,const QString& Unterkonto,int Eintrag, int delta, bool abzurOnly, bool regular, bool workedOnly )
 {

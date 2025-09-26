@@ -789,11 +789,21 @@ void TimeMainWindow::resume() {
    msgbox->raise();
 }
 
-void TimeMainWindow::zeitKorrektur(int delta) {
+/**
+ * @brief Adjusts the time for the currently active entry in today's list.
+ *
+ * This function retrieves the currently active entry from `abtListToday` and applies a time correction
+ * by the specified delta. The correction can be either regular or manual, as indicated by the `regular` flag.
+ * After updating the time, the corresponding item in `kontoTree` is refreshed and a notification of the time change is triggered.
+ *
+ * @param delta The amount of time to adjust (in seconds or appropriate units).
+ * @param regular Indicates whether the time correction is regular (true) or manual (false).
+ */
+void TimeMainWindow::zeitKorrektur(int delta, bool regular) {
   QString abt,ko,uko;
   int idx;
   abtListToday->getAktiv(abt,ko,uko,idx);
-  abtListToday->changeZeit(abt, ko, uko, idx, delta, false, pausedAbzur);
+  abtListToday->changeZeit(abt, ko, uko, idx, delta, regular, pausedAbzur);
   kontoTree->refreshItem(abt,ko,uko,idx);
   zeitChanged();
 }
@@ -833,7 +843,7 @@ void TimeMainWindow::driftKorrektur() {
   connect(msgbox, &QMessageBox::finished,
   [=](){
     if (msgbox->result() == QMessageBox::Yes) {
-       zeitKorrektur(drift);
+       zeitKorrektur(drift, true);
        saveLater();
     }
     msgbox->deleteLater();

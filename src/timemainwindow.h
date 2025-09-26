@@ -299,7 +299,7 @@ public:
     QTimer *autosavetimer;
     QTimer *saveLaterTimer;
     void tageswechsel();
-    void zeitKorrektur(int delta);
+    void zeitKorrektur(int delta, bool regular = false);
     bool paused;
     QDialog* cantSaveDialog;
     int stopTimers(const QString& grund); // rv: Sekunden seit letztem Tick
