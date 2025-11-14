@@ -235,6 +235,7 @@ public:
     void syncAll();
     void updateBreakTime();
     void keepAlive();
+    void readTimeTrackerTasks();
     
   protected:
     virtual void moveEvent( QMoveEvent *event);

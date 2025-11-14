@@ -683,6 +683,9 @@ void KontoTreeView::refreshItem(const QString& abt, const QString& ko,const QStr
 
   bool itemFound=(sucheItem(ALLE_KONTEN_STRING,abt,ko,uko,idx,topi,abti,koi,ukoi,eti));
 
+  if ((topi)&&(!abti)) abti=new KontoTreeItem(topi,displaymode, sortByCommentText, abt);
+  if ((abti)&&(!koi)) koi=new KontoTreeItem(abti, displaymode, sortByCommentText, ko);
+
   if ((koi)&&(!ukoi)) {
     ukoi=new KontoTreeItem(koi, displaymode, sortByCommentText, uko);
     itemFound=true;

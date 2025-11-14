@@ -102,6 +102,7 @@
 #include "deletesettingsdialog.h"
 #include "syncofflinehelper.h"
 #include "datechangedialog.h"
+#include "timetrackertasksreader.h"
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -302,6 +303,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QAction* readSettingsFromFileAction = new QAction(tr("Import"), this);
   connect(readSettingsFromFileAction, SIGNAL(triggered()), this, SLOT(readSettingsFromFile()));
 
+  QAction* readTimeTrackerTasksAction = new QAction(tr("Import time tracker tasks"), this);
+  connect(readTimeTrackerTasksAction, SIGNAL(triggered()), this, SLOT(readTimeTrackerTasks()));
+
   QAction* deleteSettingsAction = new QAction(tr("Delete settings files"), this);
   connect(deleteSettingsAction, SIGNAL(triggered()), this, SLOT(callDeleteSettingsDialog()));
 
@@ -404,6 +408,7 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   kontomenu->addAction(copyLinkAction);
   kontomenu->addAction(pasteLinkAction);
   kontomenu->addAction(refreshAction);
+  kontomenu->addAction(readTimeTrackerTasksAction);
   settingsmenu->addAction(preferenceAction);
 #ifdef DOWNLOADDIALOG
   kontomenu->addAction(downloadSHAction);
@@ -3092,4 +3097,54 @@ void TimeMainWindow::toggleOnlineStatus() {
        settings->setRestSaveOffline(false);
        switchRestCurrentlyOffline(false);
     }
+}
+
+void TimeMainWindow::readTimeTrackerTasks() {
+    QDate dateFrom = abtList->getDatum();
+    QDate dateTo = dateFrom;
+
+    auto reader = new TimeTrackerTasksReader(networkAccessManager, dateFrom, dateTo, this);
+
+    connect(reader, &TimeTrackerTasksReader::tasksReceived, this, [=](const QList<TimeTrackerTask>& tasks) {
+        trace(tr("Received %1 sctimeTracker tasks").arg(tasks.size()));
+
+        QString abteilungstr = "_SctimeTracker_";;
+        QString kontostr = "Tasks";
+
+        // Process the tasks
+        for (const auto& task : tasks) {
+            QString unterkontostr = task.label;
+
+            int idx=abtList->insertEintrag(abteilungstr, kontostr, unterkontostr);
+
+            UnterKontoEintrag entry;
+            entry.kommentar = task.comment;
+            entry.sekunden = task.durationSeconds;
+            entry.sekundenAbzur = task.durationSeconds;
+            entry.flags=0;
+
+            abtList->setEintrag(abteilungstr, kontostr, unterkontostr, idx, entry);
+
+        }
+
+        kontoTree->refreshAllItemsInKonto(abteilungstr, kontostr);
+
+        saveLater();
+
+        reader->deleteLater();
+    });
+
+    connect(reader, &TimeTrackerTasksReader::failed, this, [=](const QString& errorMessage) {
+        trace(tr("Failed to fetch sctimeTracker tasks: %1").arg(errorMessage));
+        QMessageBox *msgbox=new QMessageBox(QMessageBox::Critical,
+            tr("sctime: Could not get tasks"),
+            errorMessage,
+            QMessageBox::Ok, this);
+        connect(msgbox, &QMessageBox::finished, &QMessageBox::deleteLater);
+        msgbox->open();
+        msgbox->raise();
+        reader->deleteLater();
+    });
+
+    reader->fetchTasks(false);
 }
