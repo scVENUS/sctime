@@ -3108,23 +3108,34 @@ void TimeMainWindow::readTimeTrackerTasks() {
     connect(reader, &TimeTrackerTasksReader::tasksReceived, this, [=](const QList<TimeTrackerTask>& tasks) {
         trace(tr("Received %1 sctimeTracker tasks").arg(tasks.size()));
 
-        QString abteilungstr = "_SctimeTracker_";;
+        QString abteilungstr = "_SctimeTracker_";
         QString kontostr = "Tasks";
+
+        bool kontopers = abtList->getKontoFlags(abteilungstr, kontostr) & UK_PERSOENLICH;;
 
         // Process the tasks
         for (const auto& task : tasks) {
             QString unterkontostr = task.label;
+            if (task.durationSeconds>=60) {
 
-            int idx=abtList->insertEintrag(abteilungstr, kontostr, unterkontostr);
+              int idx=abtList->insertEintrag(abteilungstr, kontostr, unterkontostr);
 
-            UnterKontoEintrag entry;
-            entry.kommentar = task.comment;
-            entry.sekunden = task.durationSeconds;
-            entry.sekundenAbzur = task.durationSeconds;
-            entry.flags=0;
+              UnterKontoEintrag entry;
+              entry.kommentar = task.comment;
+              entry.sekunden = task.durationSeconds;
+              entry.sekundenAbzur = task.durationSeconds;
+              if (kontopers) {
+                entry.flags = UK_PERSOENLICH;
+              } else {
+                entry.flags=0;
+              }
 
-            abtList->setEintrag(abteilungstr, kontostr, unterkontostr, idx, entry);
-
+              abtList->setEintrag(abteilungstr, kontostr, unterkontostr, idx, entry);
+              abtList->setUnterKontoFlags(abteilungstr, kontostr, unterkontostr,IS_DISABLED, FLAG_MODE_NAND);
+              if (kontopers) {
+                abtList->setUnterKontoFlags(abteilungstr, kontostr, unterkontostr, UK_PERSOENLICH, FLAG_MODE_OR);
+              }
+            }
         }
 
         kontoTree->refreshAllItemsInKonto(abteilungstr, kontostr);
