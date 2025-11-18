@@ -3111,30 +3111,45 @@ void TimeMainWindow::readTimeTrackerTasks() {
         QString abteilungstr = "_SctimeTracker_";
         QString kontostr = "Tasks";
 
-        bool kontopers = abtList->getKontoFlags(abteilungstr, kontostr) & UK_PERSOENLICH;;
+        bool kontopers = abtList->getKontoFlags(abteilungstr, kontostr) & UK_PERSOENLICH;
+
+        QMap<QString,QMap<QString,int>> taskgroups;
 
         // Process the tasks
         for (const auto& task : tasks) {
-            QString unterkontostr = task.label;
-            if (task.durationSeconds>=60) {
+          taskgroups[task.label][task.comment]+=task.durationSeconds;
 
-              int idx=abtList->insertEintrag(abteilungstr, kontostr, unterkontostr);
+          // Add time intervals to punch clock
+          int startSeconds = task.startTime.msecsSinceStartOfDay() / 1000;
+          int endSeconds = task.endTime.msecsSinceStartOfDay() / 1000;
+          m_punchClockList->push_back(PunchClockEntry(startSeconds, endSeconds));
+        }
+        for (auto labelIt = taskgroups.constBegin(); labelIt != taskgroups.constEnd(); ++labelIt) {
+            QString unterkontostr = labelIt.key();
 
-              UnterKontoEintrag entry;
-              entry.kommentar = task.comment;
-              entry.sekunden = task.durationSeconds;
-              entry.sekundenAbzur = task.durationSeconds;
-              if (kontopers) {
-                entry.flags = UK_PERSOENLICH;
-              } else {
-                entry.flags=0;
-              }
+            for (auto commentIt = labelIt.value().constBegin(); commentIt != labelIt.value().constEnd(); ++commentIt) {
+                QString comment = commentIt.key();
+                int durationSeconds = commentIt.value();
 
-              abtList->setEintrag(abteilungstr, kontostr, unterkontostr, idx, entry);
-              abtList->setUnterKontoFlags(abteilungstr, kontostr, unterkontostr,IS_DISABLED, FLAG_MODE_NAND);
-              if (kontopers) {
-                abtList->setUnterKontoFlags(abteilungstr, kontostr, unterkontostr, UK_PERSOENLICH, FLAG_MODE_OR);
-              }
+                if (durationSeconds >= 60) {
+                    int idx = abtList->insertEintrag(abteilungstr, kontostr, unterkontostr);
+
+                    UnterKontoEintrag entry;
+                    entry.kommentar = comment;
+                    entry.sekunden = durationSeconds;
+                    entry.sekundenAbzur = durationSeconds;
+                    if (kontopers) {
+                        entry.flags = UK_PERSOENLICH;
+                    } else {
+                        entry.flags = 0;
+                    }
+
+                    abtList->setEintrag(abteilungstr, kontostr, unterkontostr, idx, entry);
+                    abtList->setUnterKontoFlags(abteilungstr, kontostr, unterkontostr, IS_DISABLED, FLAG_MODE_NAND);
+                    if (kontopers) {
+                        abtList->setUnterKontoFlags(abteilungstr, kontostr, unterkontostr, UK_PERSOENLICH, FLAG_MODE_OR);
+                    }
+                }
             }
         }
 

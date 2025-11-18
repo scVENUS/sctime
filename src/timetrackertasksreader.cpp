@@ -24,6 +24,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QRegularExpression>
 
 TimeTrackerTasksReader::TimeTrackerTasksReader(QNetworkAccessManager* networkAccessManager,
                                                const QDate& dateFrom,
@@ -44,23 +45,23 @@ QString TimeTrackerTasksReader::buildUrl(bool fetchAll) const
 {
     QString baseUrl = getRestBaseUrl();
     QString endpoint = baseUrl + "/sctimegui/v1/sctt_tasks";
-    
+
     QUrl url(endpoint);
     QUrlQuery query;
-    
+
     // dateFrom is required
     query.addQueryItem("dateFrom", dateFrom.toString(Qt::ISODate));
-    
+
     // dateTo is optional
     if (dateTo.isValid()) {
         query.addQueryItem("dateTo", dateTo.toString(Qt::ISODate));
     }
-    
+
     // all parameter is optional
     if (fetchAll) {
         query.addQueryItem("all", "true");
     }
-    
+
     url.setQuery(query);
     return url.toString();
 }
@@ -175,11 +176,24 @@ QList<TimeTrackerTask> TimeTrackerTasksReader::parseTasksFromJson(const QJsonDoc
         // Extract label and comment from task_data
         QString label = taskData.value("label").toString();
         QString comment = taskData.value("comment").toString();
-        int seconds= (endDateTime.toSecsSinceEpoch() - startDateTime.toSecsSinceEpoch());
-        
+
+        // Parse net_duration (ISO 8601 duration format like PT20S)
+        QString netDuration = taskObj.value("net_duration").toString();
+        int seconds = 0;
+
+        // Parse simplified ISO 8601 duration using regex to extract seconds
+        QRegularExpression durationRegex(R"(PT(\d+)S)");
+        QRegularExpressionMatch match = durationRegex.match(netDuration);
+
+        if (match.hasMatch()) {
+            seconds = match.captured(1).toInt();
+        } else if (!netDuration.isEmpty()) {
+            trace(tr("Invalid net_duration format: %1").arg(netDuration));
+        }
+
         // Create task object using date from start time
         TimeTrackerTask task(startDateTime.date(), startDateTime.time(), endDateTime.time(), label, comment, seconds);
-        
+
         tasks.append(task);
     }
     
