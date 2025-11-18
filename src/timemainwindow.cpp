@@ -303,8 +303,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QAction* readSettingsFromFileAction = new QAction(tr("Import"), this);
   connect(readSettingsFromFileAction, SIGNAL(triggered()), this, SLOT(readSettingsFromFile()));
 
+#ifdef TIMETRACKERTASKS
   QAction* readTimeTrackerTasksAction = new QAction(tr("Import time tracker tasks"), this);
   connect(readTimeTrackerTasksAction, SIGNAL(triggered()), this, SLOT(readTimeTrackerTasks()));
+#endif
 
   QAction* deleteSettingsAction = new QAction(tr("Delete settings files"), this);
   connect(deleteSettingsAction, SIGNAL(triggered()), this, SLOT(callDeleteSettingsDialog()));
@@ -408,7 +410,9 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   kontomenu->addAction(copyLinkAction);
   kontomenu->addAction(pasteLinkAction);
   kontomenu->addAction(refreshAction);
+#ifdef TIMETRACKERTASKS
   kontomenu->addAction(readTimeTrackerTasksAction);
+#endif
   settingsmenu->addAction(preferenceAction);
 #ifdef DOWNLOADDIALOG
   kontomenu->addAction(downloadSHAction);
