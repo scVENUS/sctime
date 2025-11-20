@@ -248,7 +248,7 @@ bool JSONOnCallSource::convertData(DSResult* const result) {
   if (oncalltimesval.isNull()||oncalltimesval.isUndefined()) {
       return true;
   }
-  if (oncalltimesval.type()!=QJsonValue::Object) {
+  if (oncalltimesval.type()!=QJsonValue::Array) {
       return false;
   }
   auto oncalltimes=oncalltimesval.toArray();
