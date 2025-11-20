@@ -812,7 +812,7 @@ void TimeMainWindow::zeitKorrektur(int delta, bool regular) {
   QString abt,ko,uko;
   int idx;
   abtListToday->getAktiv(abt,ko,uko,idx);
-  abtListToday->changeZeit(abt, ko, uko, idx, delta, regular, pausedAbzur);
+  abtListToday->changeZeit(abt, ko, uko, idx, delta, false, regular, pausedAbzur);
   kontoTree->refreshItem(abt,ko,uko,idx);
   zeitChanged();
 }
