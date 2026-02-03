@@ -459,6 +459,16 @@ QDomDocument XMLWriter::settings2Doc(bool global) {
     root.appendChild(punchclocktag);
   }
 #endif
+#ifdef __EMSCRIPTEN__
+  if (!global) {
+    QString shview;
+    QTextStream stream(&shview);
+    settings->writeShellSkriptToStream(stream, abtList, pcl);
+    QDomElement scriptTag = doc.createElement("shview");
+    scriptTag.setAttribute("text", shview);
+    root.appendChild(scriptTag);
+  }
+#endif
   return doc;
 }
 
