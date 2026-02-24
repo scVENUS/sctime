@@ -61,7 +61,7 @@ void XMLWriter::gotReply() {
 }
 
 void XMLWriter::onErr(QNetworkReply* input) {
-    logError(tr("Communication error on writing to server, going offline"));
+    logError(tr("Communication error on writing to server, going offline: %1").arg(input->url().toString()));
     if (!settings->restCurrentlyOffline()) {
        emit offlineSwitched(true);
     }
@@ -71,7 +71,11 @@ void XMLWriter::onErr(QNetworkReply* input) {
     auto sctimerestresponse=getRestHeader(input, "sctime-rest-response");
     isrestresponse=(sctimerestresponse=="true");
     #endif
-    if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)||(!isrestresponse)) {
+    if ((input->attribute(QNetworkRequest::HttpStatusCodeAttribute)==401)) {
+      logError(tr("Unauthorized access on writing to server: %1").arg(input->url().toString()));
+      emit unauthorized();
+    } else if (!isrestresponse) {
+      logError(tr("Missing sctime-rest-response header: %1").arg(input->url().toString()));
       emit unauthorized();
     }
     // we have already saved them locally, so should be able to continue anyway
@@ -461,6 +465,14 @@ QDomDocument XMLWriter::settings2Doc(bool global) {
 #endif
 #ifdef __EMSCRIPTEN__
   if (!global) {
+    // make it easier for a simple client to get the total time
+    int sec, billableSec;
+    abtList->getGesamtZeit(sec,billableSec);
+    QDomElement timesum = doc.createElement("totaltime");
+    timesum.setAttribute("seconds", sec);
+    timesum.setAttribute("billable_seconds", billableSec);
+    root.appendChild(timesum);
+    // also write the shell script for the current day to the xml, so that it can be proceesssed by simple clients without fully parsing the xml
     QString shview;
     QTextStream stream(&shview);
     settings->writeShellSkriptToStream(stream, abtList, pcl);

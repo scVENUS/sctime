@@ -115,10 +115,11 @@ void trace(const QString &msg) {
 }
 
 void logError(const QString &msg) {
-  logText.append(msg).append("\n");
+  QString timestampedMsg = QDateTime::currentDateTime().toString(Qt::ISODate) + " - " + msg;
+  logText.append(timestampedMsg).append("\n");
   logTextLastLine = msg;
   if (logStream!=NULL) {
-    (*logStream)<<msg<<Qt::endl;
+    (*logStream)<<timestampedMsg<<Qt::endl;
   }
 }
 
