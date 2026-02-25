@@ -2707,7 +2707,29 @@ void TimeMainWindow::sessionInvalid() {
           toggleOnlineStatus();
         }
       } else {
-        emscripten_run_script(QString("window.open('%1', '%2');").arg(getStaticUrl()+REFRESH_URL_PART).arg(tr("Refresh Session")).toUtf8().data());
+        QString baseurl = getRestBaseUrl();
+        // try to send a dummy request to check if the session still needs to be refreshed
+        auto request = QNetworkRequest(QUrl(baseurl + "/" + REST_LIST_SETTINGS_ENDPOINT +
+        "?modifiedFrom=" + QUrl::toPercentEncoding(QDateTime::currentDateTime().addDays(2).toString(Qt::ISODate)) +
+        "&dateFrom=" + QUrl::toPercentEncoding(QDate::currentDate().toString("yyyy-MM-dd"))));
+        request.setTransferTimeout(1000); 
+        QNetworkReply *reply = networkAccessManager->get(request);
+        connect(reply, &QNetworkReply::finished, [=](){
+          bool isrestresponse=true;
+          #ifdef ENSURE_REST_HEADER
+          auto sctimerestresponse=getRestHeader(reply,"sctime-rest-response");
+          isrestresponse=(sctimerestresponse=="true");
+          #endif
+          if ((reply->error()!=QNetworkReply::NoError)||(!isrestresponse)) {
+             emscripten_run_script(QString("window.open('%1', '%2');").arg(getStaticUrl()+REFRESH_URL_PART).arg(tr("Refresh Session")).toUtf8().data());
+          } else {
+              // update status to online, if the session refresh was successful in the background
+              if (settings->restSaveOffline()==true) {
+                toggleOnlineStatus();
+              }
+          }
+          reply->deleteLater();
+        });
       }
       dialogopen=false;
       msgbox->deleteLater();
@@ -2716,6 +2738,7 @@ void TimeMainWindow::sessionInvalid() {
    msgbox->raise();
 #endif
 }
+
 
 void TimeMainWindow::saveLater() {
    if (saveLaterTimer) {
