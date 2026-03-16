@@ -2811,7 +2811,9 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
       SyncOfflineHelper::removeUnmergedData(targetdate);
       
       refreshKontoListe();
-      saveWithTimeout(0);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
     });
     msgbox->open();
     msgbox->raise();
@@ -2888,8 +2890,9 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
            emit reader->settingsPartRead(global, abtList, m_punchClockList, true, "");
         }
       }
-      
-      saveWithTimeout(0);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
     });
     msgbox->open();
     msgbox->raise();
@@ -3001,7 +3004,9 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
         }
       }
       
-      saveWithTimeout(0);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
     });
     msgbox->open();
     msgbox->raise();
