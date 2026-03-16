@@ -279,6 +279,8 @@ public:
     QFont qtDefaultFont;
     AbteilungsListe* abtList;
     AbteilungsListe* abtListToday;
+    bool abtListTodayLocked;
+    bool abtListLocked;
     StatusBar* statusBar;
     //QMimeSourceFactory* mimeSourceFactory;
     DefaultCommentReader defaultCommentReader;

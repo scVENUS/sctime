@@ -146,6 +146,8 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QDate heute;
   abtListToday=new AbteilungsListe(heute.currentDate(), zk);
   abtList=abtListToday;
+  abtListLocked=false;
+  abtListTodayLocked=false;
   m_punchClockListToday=new PunchClockList();
   m_punchClockList=m_punchClockListToday;
   m_PCSToday=newPunchClockState();
@@ -1179,6 +1181,18 @@ void TimeMainWindow::pauseAbzur(bool on)
  */
 void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 {
+  // avoid potential races e.g. between date changer and autosave. We do not use a mutex here, because we do not want to block the GUI thread. 
+  // Instead we skip the save if we are currently locked, which should be a rare case, and try again at the next autosave.
+  // if we skip too often we save anyways, to avoid never saving in case of a permanent lock (e.g. due to a bug).
+  static int skipcounter=0;
+  if ((abtListLocked || abtListTodayLocked)&&skipcounter<5) {
+    skipcounter++;
+    trace(tr("saveWithTimeout: locked, skipping save: %1").arg(skipcounter));
+    return;
+  }
+  skipcounter=0;
+  abtListLocked=true;
+  abtListTodayLocked=true;
   if (kontoTree!=NULL) {
     kontoTree->flagClosedPersoenlicheItems();
     std::vector<int> columnwidthlist;
@@ -1193,9 +1207,15 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
   settings->setMainWindowGeometry(pos(),size());
   if (checkConfigDir()) {
     checkLock();
+    auto freeLock=[this](){
+      abtListLocked=false;
+      abtListTodayLocked=false;
+    };
     XMLWriter* writer=new XMLWriter(settings, networkAccessManager, abtListToday, m_punchClockListToday, conflicttimeout);
     connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
     connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+    connect(writer, &XMLWriter::settingsWritten, freeLock);
+    connect(writer, &XMLWriter::settingsWriteFailed, freeLock);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
     connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
     connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::writeConflictDialog, Qt::QueuedConnection);
@@ -1206,6 +1226,8 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
+      connect(writer, &XMLWriter::settingsWritten, freeLock);
+      connect(writer, &XMLWriter::settingsWriteFailed, freeLock);
       connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
       connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::writeConflictDialog, Qt::QueuedConnection);
       settings->writeShellSkript(abtList, m_punchClockList);
@@ -1485,7 +1507,7 @@ void TimeMainWindow::loadPCCData(const QString& pccdata) {
  */
 void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToday)
 {
-  if (checkConfigDir()||m_dateChanger!=NULL)
+  if (!abtListLocked&&!abtListTodayLocked&&(checkConfigDir()||m_dateChanger!=NULL))
   {
     checkLock();
 
@@ -1496,6 +1518,9 @@ void TimeMainWindow::changeDate(QDate datum, bool changeVisible, bool changeToda
     m_dateChanger = new DateChanger(this, networkAccessManager, datum, changeVisible, changeToday);
     connect(m_dateChanger, &DateChanger::finished, this, &TimeMainWindow::changeDateFinished);
     connect(m_dateChanger, &DateChanger::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+    abtListLocked=true;
+    abtListTodayLocked=true;
+
     m_dateChanger->start();
   }
   else
@@ -1543,6 +1568,8 @@ void TimeMainWindow::changeDateFinished(const QDate &date, bool changeVisible, b
   }
   m_dateChanger->deleteLater();
   m_dateChanger=NULL;
+  abtListLocked=false;
+  abtListTodayLocked=false;
 }
 
 // changes the visible date and updates todays date if we are not on the current date
@@ -2891,6 +2918,8 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
         }
       }
       QTimer::singleShot(100, this, [this](){
+        abtListLocked=false;
+        abtListTodayLocked=false;
         saveWithTimeout(0);
       });
     });
@@ -2913,6 +2942,8 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
       dialog->deleteLater();
       m_conflictDialogOpenForDates.remove(targetdate);
       SyncOfflineHelper::removeUnmergedData(targetdate);
+      abtListLocked=false;
+      abtListTodayLocked=false;
       saveWithTimeout(0);
       
   });
@@ -3005,6 +3036,8 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
       }
       
       QTimer::singleShot(100, this, [this](){
+        abtListLocked=false;
+        abtListTodayLocked=false;
         saveWithTimeout(0);
       });
     });
@@ -3026,6 +3059,8 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
       dialog->deleteLater();
       m_conflictDialogOpenForDates.remove(targetdate);
       SyncOfflineHelper::removeUnmergedData(targetdate);
+      abtListLocked=false;
+      abtListTodayLocked=false;
       saveWithTimeout(0);
       
   });
