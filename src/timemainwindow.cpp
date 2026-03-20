@@ -2856,7 +2856,9 @@ void TimeMainWindow::writeConflictDialog(QDate targetdate, bool global, const QB
       SyncOfflineHelper::removeUnmergedData(targetdate);
       
       refreshKontoListe();
-      saveWithTimeout(0);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
   });
   dialog->open();
   dialog->adjustSize();
@@ -2944,7 +2946,9 @@ void TimeMainWindow::readConflictDialog(QDate targetdate, bool global, QDomDocum
       SyncOfflineHelper::removeUnmergedData(targetdate);
       abtListLocked=false;
       abtListTodayLocked=false;
-      saveWithTimeout(0);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
       
   });
   dialog->open();
@@ -3061,7 +3065,9 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
       SyncOfflineHelper::removeUnmergedData(targetdate);
       abtListLocked=false;
       abtListTodayLocked=false;
-      saveWithTimeout(0);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
       
   });
   dialog->open();
