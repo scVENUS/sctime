@@ -52,6 +52,10 @@
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
 #include <emscripten.h>
+// set a threshold for the drift warning, because the browser can freeze for a period of time due to power saving or other reasons. The threshold is in seconds.
+#define DRIFT_WARN_THRESHOLD 600
+#else
+#define DRIFT_WARN_THRESHOLD 60
 #endif
 
 #include "globals.h"
@@ -819,7 +823,16 @@ void TimeMainWindow::copyNameToClipboard()
 
 void TimeMainWindow::driftKorrektur() {
   int drift = startTime.secsTo(lastMinuteTick) - sekunden;
+  // ignore small drifts completely
   if (abs(drift) < 60) return;
+  // auto-correct if the drift is small enough (e.g. due to powersaving), otherwise ask the user
+  if ((drift>0) && (drift<DRIFT_WARN_THRESHOLD)) {
+      sekunden += drift;
+      zeitKorrektur(drift, true);
+      saveLater();
+      logError(tr("Drift of %1s auto-corrected").arg(drift));
+      return;
+  }
   QString msg = tr("Drift is %2s (%1)").arg(lastMinuteTick.toString()).arg(drift);
   logError(msg);
   sekunden += drift;
