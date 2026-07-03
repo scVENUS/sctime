@@ -1480,7 +1480,7 @@ void TimeMainWindow::eintragEntfernen()
   if (kontoTree->sucheItem(top,abt,ko,uko,idx,topi,abti,koi,ukoi,eti)) {
       for (eti=(KontoTreeItem*)(ukoi->child(0));
            (eti!=NULL)&&(eti->text(KontoTreeItem::COL_ACCOUNTS).toInt()<=idx);
-           eti=(KontoTreeItem*)(eti->child(etiCurrent+=1))) ;
+           eti=(KontoTreeItem*)(ukoi->child(++etiCurrent))) ;
       if (eti!=NULL)
           kontoTree->setCurrentItem(eti);
       else
