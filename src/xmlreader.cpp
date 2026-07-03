@@ -54,13 +54,18 @@ QFile* XMLReader::openFile(bool handleerr) {
     if (!f->open(QIODevice::ReadOnly)&&handleerr)
     {
         logError(f->fileName() + ": " + f->errorString());
-        if (global || f->exists())
+        if (global || f->exists()) // keine Fehlerausgabe, wenn "zeit-HEUTE.xml" fehlt
         {
             if (global)
                 settings->backupSettingsXml = false;
-            // keine Fehlerausgabe, wenn "zeit-HEUTE.xml" fehlt
+
+            #ifdef __EMSCRIPTEN__ // avoid bothering the user with details about the virtual wasm file system
+            auto msgbox=new QMessageBox(QMessageBox::Warning, tr("sctime: opening configuration"),
+                           tr("sctime could not open the configuration. sctime will use default settings. If you have an existing configuration from a local sctime installation, you can upload it by using settings->import."),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
+            #else
             auto msgbox=new QMessageBox(QMessageBox::Warning, tr("sctime: opening configuration file"),
                            tr("%1 : %2").arg(f->fileName(), f->errorString()),QMessageBox::NoButton, dynamic_cast<QWidget*>(this->parent()));
+            #endif
             connect(msgbox, &QMessageBox::finished,[=](){
                msgbox->deleteLater();
             });
