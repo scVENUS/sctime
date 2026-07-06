@@ -2358,7 +2358,9 @@ void TimeMainWindow::checkComment(const QString& abt, const QString& ko , const 
   UnterKontoEintrag eintrag;
   if ((settings->warnISO8859())&&(abtList->getEintrag(eintrag, abt, ko, uko, idx))) {
     QStringEncoder encoder(QStringConverter::Latin1);
-    encoder(eintrag.kommentar);
+    // we need to explictly assign the result to a variable, to trigger lazy encoding and thus the error detection. Otherwise, the encoder will not check for errors.
+    QByteArray encoded = encoder(eintrag.kommentar);
+    Q_UNUSED(encoded)
     if (encoder.hasError()) {
       QMessageBox *msgbox=new QMessageBox(QMessageBox::Warning,
             tr("Warning"),
