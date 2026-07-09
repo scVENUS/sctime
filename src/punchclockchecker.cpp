@@ -131,7 +131,8 @@ void PunchClockStateDE23::check(PunchClockList * pcl, int currentTime, const Pun
       warnId=PW_TOO_SHORT_BREAK_9H;
     }
     if (worktimeworkday>10*HOUR) {
-      currentWarning=QObject::tr("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.");
+      currentWarning=QObject::tr("You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now. \n\n\
+Note: This warning may also trigger, if you did not take a continuous break of at least 11 hours between the end of yesterday's work and the beginning of today's work.");
       warnId=PW_OVER_10H;
     }
     
