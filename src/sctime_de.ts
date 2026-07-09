@@ -1187,23 +1187,23 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
         <translation type="vanished">%1 : %2</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2831"/>
+        <location filename="timemainwindow.cpp" line="2833"/>
         <source>sctime: reading configuration file</source>
         <translation>sctime: Konfigurationsdatei lesen</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2832"/>
+        <location filename="timemainwindow.cpp" line="2834"/>
         <location filename="xmlreader.cpp" line="294"/>
         <source>error in %1, line %2, column %3: %4.</source>
         <translation>Fehler in %1, Zeile %2, Spalte %3: %4.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3161"/>
+        <location filename="timemainwindow.cpp" line="3163"/>
         <source>sctime: going permanently offline</source>
         <translation>sctime: schalte auf dauerhaft offline</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3162"/>
+        <location filename="timemainwindow.cpp" line="3164"/>
         <source>Do you really want to go permanently offline? Your data will not be synced to the cloud while you are permanently offline.</source>
         <translation>Möchtest Du wirklich dauerhaft offline gehen? Deine Daten werden nicht in die Cloud gesynct während Du dauerhaft offline bist.</translation>
     </message>
@@ -1331,8 +1331,14 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
     </message>
     <message>
         <location filename="punchclockchecker.cpp" line="134"/>
+        <source>You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now. 
+
+Note: This warning may also trigger, if you did not take a continuous break of at least 11 hours between the end of yesterday&apos;s work and the beginning of today&apos;s work.</source>
+        <translation>Du arbeitest mehr als 10 Stunden an diesem Arbeitstag. Du solltest die Arbeit jetzt für mindestens 11 Stunden unterbrechen.\n\nHinweis: Diese Warnung wird auch ausgelöst, wenn Du seit dem Arbeitsende gestern bis zum Arbeitsanfang heute keine ununterbrochene Pause von 11 Stunden eingelegt hast.</translation>
+    </message>
+    <message>
         <source>You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.</source>
-        <translation>Du arbeitest mehr als 10 Stunden an diesem Arbeitstag. Du solltest die Arbeit jetzt für mindestens 11 Stunden unterbrechen.</translation>
+        <translation type="vanished">Du arbeitest mehr als 10 Stunden an diesem Arbeitstag. Du solltest die Arbeit jetzt für mindestens 11 Stunden unterbrechen.</translation>
     </message>
     <message>
         <location filename="punchclockdialog.cpp" line="42"/>
@@ -1801,7 +1807,7 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
     <message>
         <location filename="timemainwindow.cpp" line="833"/>
         <source>Drift of %1s auto-corrected</source>
-        <translation type="unfinished"></translation>
+        <translation>Abweichung von %1s autokorrigiert</translation>
     </message>
     <message>
         <location filename="timemainwindow.cpp" line="836"/>
@@ -1841,7 +1847,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
     <message>
         <location filename="timemainwindow.cpp" line="1096"/>
         <location filename="timemainwindow.cpp" line="1460"/>
-        <location filename="timemainwindow.cpp" line="2364"/>
+        <location filename="timemainwindow.cpp" line="2366"/>
         <source>Warning</source>
         <translation>Warnung</translation>
     </message>
@@ -1856,32 +1862,32 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <translation></translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2710"/>
+        <location filename="timemainwindow.cpp" line="2712"/>
         <source>permanently offline</source>
         <translation>dauerhaft offline</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2713"/>
+        <location filename="timemainwindow.cpp" line="2715"/>
         <source>offline</source>
         <translation>offline</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2715"/>
+        <location filename="timemainwindow.cpp" line="2717"/>
         <source>online</source>
         <translation>online</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2738"/>
+        <location filename="timemainwindow.cpp" line="2740"/>
         <source>sctime: invalid session</source>
         <translation>sctime: ungültige Session</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2739"/>
+        <location filename="timemainwindow.cpp" line="2741"/>
         <source>Your session seems to be invalid. Press OK to open a new window to refresh it. Please provide your credentials there if your browser asks for them. Alternativly you can go permanently offline.</source>
         <translation>Deine Session scheint ungültig zu sein. Bitte drücke OK, um ein neues Fenster zu öffnen in dem sie erneuert werden kann. Bitte gib dort Deine Login-Daten an, falls der Browser sie benötigt. Alternativ kannst Du auch dauerhaft offline gehen.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2741"/>
+        <location filename="timemainwindow.cpp" line="2743"/>
         <source>Go Offline</source>
         <translation>Gehe Offline</translation>
     </message>
@@ -1890,26 +1896,26 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <translation type="vanished">Deine Session scheint ungültig zu sein. Bitte bestätige, um ein neues Fenster zu öffnen in dem sie erneuert werden kann. Bitte gib dort Deine Login-Daten an, falls der Browser sie benötigt.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2764"/>
+        <location filename="timemainwindow.cpp" line="2766"/>
         <source>Refresh Session</source>
         <translation>Session erneuern</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2811"/>
-        <location filename="timemainwindow.cpp" line="2902"/>
-        <location filename="timemainwindow.cpp" line="3021"/>
+        <location filename="timemainwindow.cpp" line="2813"/>
+        <location filename="timemainwindow.cpp" line="2904"/>
+        <location filename="timemainwindow.cpp" line="3023"/>
         <source>sctime: unresolvable conflict</source>
         <translation>sctime: unlösbarer Konflikt</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2812"/>
-        <location filename="timemainwindow.cpp" line="2903"/>
-        <location filename="timemainwindow.cpp" line="3022"/>
+        <location filename="timemainwindow.cpp" line="2814"/>
+        <location filename="timemainwindow.cpp" line="2905"/>
+        <location filename="timemainwindow.cpp" line="3024"/>
         <source>There seems to be a conflict with another session that could not be resolved. Please check your entries.</source>
         <translation>Es scheint ein Konflikt mit einer anderen Session zu bestehen, der nicht aufgelöst werden konnte, Bitte prüfe Deine Zeiteinträge.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3123"/>
+        <location filename="timemainwindow.cpp" line="3125"/>
         <source>There were some conflicts during sync. Please check and save the data for the following dates:
 
   %1</source>
@@ -1918,12 +1924,12 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
   %1</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3129"/>
+        <location filename="timemainwindow.cpp" line="3131"/>
         <source>sctime: Conflicts during sync</source>
         <translation>sctime: Konflikte während der Synchronisation</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3140"/>
+        <location filename="timemainwindow.cpp" line="3142"/>
         <source>Sync finished successfully</source>
         <translation>Synchronisation erfolgreich abgeschlossen</translation>
     </message>
@@ -2017,12 +2023,12 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <translation>Bitte nur einen Eintrag für Konten des Typs „%1”!</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2420"/>
+        <location filename="timemainwindow.cpp" line="2422"/>
         <source>sctime: Additional Information about Licensing</source>
         <translation>sctime: Weitere Lizenz Information</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2420"/>
+        <location filename="timemainwindow.cpp" line="2422"/>
         <source>sctime licensing</source>
         <translation>sctime Lizenz</translation>
     </message>
@@ -2035,66 +2041,66 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <translation type="vanished">Es gibt einen anderen Zeiteintrag mit dem gleichen Kommentar und den korrekten Sonderzeitmarkierungen. Soll zu diesem Zeiteintrag gewechselt werden? Andernfalls wird ein neuer Zeiteintrag erzeugt.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2472"/>
-        <location filename="timemainwindow.cpp" line="2487"/>
+        <location filename="timemainwindow.cpp" line="2474"/>
+        <location filename="timemainwindow.cpp" line="2489"/>
         <source>Unregulated OT</source>
         <translation>Sonstige MA</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2474"/>
-        <location filename="timemainwindow.cpp" line="2485"/>
+        <location filename="timemainwindow.cpp" line="2476"/>
+        <location filename="timemainwindow.cpp" line="2487"/>
         <source>Regulated OT</source>
         <translation>Regulierte MA</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2495"/>
+        <location filename="timemainwindow.cpp" line="2497"/>
         <source>Holiday</source>
         <translation>Feiertag</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2503"/>
+        <location filename="timemainwindow.cpp" line="2505"/>
         <source>Night</source>
         <translation>Nacht</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2526"/>
+        <location filename="timemainwindow.cpp" line="2528"/>
         <source>sctime: switch nightmode on?</source>
         <translation>sctime: Nachtmodus einschalten?</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2527"/>
+        <location filename="timemainwindow.cpp" line="2529"/>
         <source>It is %1. Should I switch to night mode, so you get special remuneration for working late? Please also check your companies regulations before enabling nightmode.</source>
         <oldsource>It is late. Should I switch to night mode, so you get special remuneration for working late? Please also check your companies regulations before enabling nightmode</oldsource>
         <translation>Es ist %1. Soll ich den Nachtmodus einschalten, und damit Vergütung für Sonderzeit beantragen? Bitte prüfen Sie auch die gültigen Regelungen des Unternehmens, bevor Sie den Nachtmodus aktiveren.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2533"/>
+        <location filename="timemainwindow.cpp" line="2535"/>
         <source>sctime: switch nightmode off?</source>
         <translation>sctime: Nachtmodus ausschalten?</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2534"/>
+        <location filename="timemainwindow.cpp" line="2536"/>
         <source>It is %1. Should I switch night mode off? Otherwise you apply for further special remuneration. Please also check your companies regulations when keeping nightmode enabled.</source>
         <oldsource>Night has passed. Should I switch night mode off? Otherwise you apply for further special remuneration. Please also check your companies regulations when keeping nightmode enabled.</oldsource>
         <translation>Es ist %1. Soll der Nachtmodus abgeschaltet werden? Andernfalls wird weiterhin Vergütung für Sonderzeit beantragt. Bitte prüfen Sie auch die gültigen Regelungen des Unternehmens, wenn Sie den Nachtmodus aktiv lassen.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2560"/>
+        <location filename="timemainwindow.cpp" line="2562"/>
         <source>sctime: move worked time to new entry</source>
         <translation>sctime: geleistete Zeit zu neuem Eintrag verschieben</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2561"/>
+        <location filename="timemainwindow.cpp" line="2563"/>
         <source>Should %1 minutes be moved to the new selected entry?</source>
         <translation>Sollen %1 Minuten zum neu ausgewählten Zeitrag verschoben werden?</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2594"/>
+        <location filename="timemainwindow.cpp" line="2596"/>
         <source>sctime: could not move worked time to new entry</source>
         <translation>sctime: kann geleistete Zeit nicht zu neuem Eintrag verschieben</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2595"/>
+        <location filename="timemainwindow.cpp" line="2597"/>
         <source>A date change has occurrred - therefore %1 minutes of work time won&apos;t be moved automatically to the new entry. Please check your entries manually.</source>
         <translation>Ein Datumswechsel ist aufgetreten - deshalb können die %1 Minuten an geleisteter Zeit nicht automatisch auf den neuen Zeiteintrag verschoben werden. Bitte korrigieren Sie Ihre Zeiteinträge manuell.</translation>
     </message>
@@ -2237,7 +2243,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <translation type="vanished">Bitte wählen Sie die geleisteten Bereitschaften für dieses Unterkonto aus.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="2365"/>
+        <location filename="timemainwindow.cpp" line="2367"/>
         <source>Warning: The entered comment contains a character that is not part of ISO-8859-1 and might not render correctly on some platforms. This may cause problems with custom reporting scripts.</source>
         <translation>Warnung: In dem von Ihnen eingegebenen Kommentar kommt ein Zeichen vor, das mit ISO-8859-1 und somit auf manchen Plattformen nicht darstellbar ist. Dies führt eventuell zu Problemen mit Auswerteskripten.</translation>
     </message>
