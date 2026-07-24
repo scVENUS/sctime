@@ -37,6 +37,7 @@ class DownloadBrowser: public QTextBrowser {
 public:
     DownloadBrowser(QWidget* parent=nullptr): QTextBrowser(parent) {};
     virtual void doSetSource(const QUrl &url, QTextDocument::ResourceType type = QTextDocument::UnknownResource) override;
+    virtual QVariant loadResource(int type, const QUrl &url) override;
 };
 
 #endif

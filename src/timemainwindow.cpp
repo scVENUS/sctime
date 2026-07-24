@@ -2184,7 +2184,7 @@ void TimeMainWindow::callHelpDialog() {
   TextViewerDialog* dialog;
   infoDialog(dialog, tr("sctime: Help"), tr("sctime help"), 600, 450);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->browser()->setSource(QUrl("qrc:/help"));
+  dialog->browser()->setSource(QUrl("qrc:/help.md"));
 }
 
 
