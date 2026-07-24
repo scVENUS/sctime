@@ -21,6 +21,8 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QFileDialog>
+#include <QRegularExpression>
+#include <QTextDocument>
 
 TextViewerDialog::TextViewerDialog(QWidget* parent, const QString& title, const QString& name, bool plaintext_links): QDialog(parent) {
   setObjectName(name);
@@ -58,6 +60,29 @@ void TextViewerDialog::sourceChanged(const QUrl &src) {
     m_browser->setHtml("");
     m_browser->document()->clear();
     m_browser->setPlainText(reply->readAll());
+}
+
+// Qt's HTML importer only creates a navigable anchor fragment when there is an actual
+// character to attach the QTextCharFormat to. Empty spans (<span id="x"></span>) produce
+// no character, so scrollToAnchor() can never find them. Inserting a zero-width space
+// gives the anchor format a character to bind to without affecting visual output.
+QVariant DownloadBrowser::loadResource(int type, const QUrl &url)
+{
+    QVariant data = QTextBrowser::loadResource(type, url);
+    if (type == QTextDocument::MarkdownResource) {
+        QString md;
+        if (data.userType() == QMetaType::QString)
+            md = data.toString();
+        else if (data.userType() == QMetaType::QByteArray)
+            md = QString::fromUtf8(data.toByteArray());
+        if (!md.isEmpty()) {
+            static const QRegularExpression emptyAnchor(
+                QStringLiteral("<(a|span)\\s+id=\"([^\"]+)\"\\s*></\\1>"));
+            md.replace(emptyAnchor, QStringLiteral("<\\1 id=\"\\2\">&#8203;</\\1>"));
+            return md;
+        }
+    }
+    return data;
 }
 
 void DownloadBrowser::doSetSource(const QUrl &url, QTextDocument::ResourceType type) {
