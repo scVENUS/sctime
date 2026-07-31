@@ -8,3 +8,4 @@ Makefile
 src/sctime
 src/sctime.gch/
 src/sctime_*.qm
+tenant.pri

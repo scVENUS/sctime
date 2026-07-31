@@ -1,8 +1,20 @@
 <RCC>
     <qresource prefix="/">
-        <file alias="help.md">help_en.md</file>
+        <file alias="intro.md">intro_en.md</file>
     </qresource>
     <qresource prefix="/" lang="de">
-        <file alias="help.md">help_de.md</file>
+        <file alias="intro.md">intro_de.md</file>
+    </qresource>
+    <qresource prefix="/">
+        <file alias="standalone.md">standalone_en.md</file>
+    </qresource>
+    <qresource prefix="/" lang="de">
+        <file alias="standalone.md">standalone_de.md</file>
+    </qresource>
+     <qresource prefix="/">
+        <file alias="web.md">web_en.md</file>
+    </qresource>
+    <qresource prefix="/" lang="de">
+        <file alias="web.md">web_de.md</file>
     </qresource>
 </RCC>

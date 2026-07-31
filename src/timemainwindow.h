@@ -121,6 +121,7 @@ public:
     void callFindKontoDialog();
     void finishFindKontoDialog();
     void callHelpDialog();
+    void openTenantHelpUrl();
     void callPreferenceDialog();
     void finishPreferenceDialog(int oldshowtypecolumn, int oldshowpspcolumn, int olddisplaymode);
     void callBereitschaftsDialog(QTreeWidgetItem *item);

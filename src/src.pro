@@ -5,6 +5,10 @@ CONFIG += c++11
 VERSION = $$system(git describe --always||echo UNDEFINED)
 DEFINES += APP_VERSION=$$VERSION
 
+exists($$PWD/../tenant.pri) {
+    include($$PWD/../tenant.pri)
+}
+
 QT += xml gui core network widgets
 TARGET = sctime
 CODECFORTR= UTF-8
@@ -28,6 +32,11 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h resthelper.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
+
+# make qrc_help.cpp depend on the .md files so 'make' picks up help changes without 'make clean'
+qrc_help_cpp.target = qrc_help.cpp
+qrc_help_cpp.depends = $$files(../help/*.md)
+QMAKE_EXTRA_TARGETS += qrc_help_cpp
 FORMS = conflictdialogbase.ui datedialogbase.ui dateoverviewwidgetbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
         pausedialogbase.ui deletesettingsdialogbase.ui
 
