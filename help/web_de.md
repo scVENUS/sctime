@@ -14,18 +14,18 @@
 `Einstellungen - Einstellungen - Allgemein - Offline bleiben nach Initialisierung` setzt dauerhaft den Offline Modus. 
   - Alle Daten (Einstellungen und Zeiten) werden im Offline Modus nur im Browser gespeichert. 
   - Wenn der Anwender seine Browserdaten löscht, sind auch die sctime Daten weg!
-  - Sobald man den Modus deaktivert, synchronisiert die sctime Web GUI die Daten und meldet dies auch in der Statuszeile.
+  - Sobald man den Modus deaktivert, synchronisiert die sctime Web GUI die Daten und meldet dies in der Statuszeile.
 
 <span id="dataexp"></span>
 
 ### Offline Zeiten exportieren
-Wer seine Zeiten ausschliesslich offline erfasst, muss sie zur Weiterverarbeitung exportieren:
+Wer seine Zeiten ausschliesslich offline erfasst, kann sie zur Weiterverarbeitung exportieren:
 
 - `Konto - SH Dateien herunterladen` 
 - Zeitraum auswählen
 - Speicherort auswählen und bestätigen
 
 Die sctime Web GUI exportiert eine `.zip`-Datei:
-- `.zip`-Datei auspacken
-- enthaltene `zeit-YYYY-MM-DD.sh`-Dateien weiterverarbeiten
+- `.zip`-Datei auspacken.
+- enthaltene `zeit-YYYY-MM-DD.sh`-Dateien weiterverarbeiten.
 

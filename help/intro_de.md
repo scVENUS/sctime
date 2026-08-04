@@ -7,11 +7,11 @@
 1. [Aktives Konto](#active)
 1. [Zeiten in der GUI bearbeiten](#edit)
 1. [Zeiten speichern](#save)
-1. [Standard-Kommentare, Mikrokonten, vordefinierte Kommentare](#comments)
+1. [Standardkommentare, Mikrokonten, vordefinierte Kommentare](#comments)
 1. [Anwesenheitszeiterfassung](#fromto)
 1. [Bereitschaftszeiten](#bereit)
 1. [Sonderzeiten](#sonder)
-1. [Typ und PSP](psp#)
+1. [Typ und PSP](#psp)
 1. [Tipps & Tricks](#tipps)
 
 
@@ -29,7 +29,7 @@ Die Zeiten können während der Erfassung in der GUI mit Kommentaren erweitert w
 um zu beschreiben, was in dieser Zeit getan wurde.
 - Für jedes Unterkonto können mehrere Zeiten (in der GUI: Zeilen) mit jeweils unterschiedlichen Kommentaren erfaßt werden, in der Zeitdatei stehen dann entsprechend viele unterschiedliche Einträge.
 - Jede dieser Unterkonto-Kommentarzeilen hat ein eigenes Unterkonto-Bearbeitungsfenster.
-- Wie unter [Standard-Kommentare](#comments) erläutert, können für alle Unterkonten Standard-Kommentare zentral vorgegeben werden, die der Anwender dann nur noch aus der Drop-Down-Liste des Kommentars (Doppelklick) aktivieren muss.
+- Wie unter [Standardkommentare](#comments) erläutert, können für alle Unterkonten Standardkommentare zentral vorgegeben werden, die der Anwender dann nur noch aus der Drop-Down-Liste des Kommentars (Doppelklick) aktivieren muss.
 
 Der Anwender behält die Kontrolle über die erfassten Zeiten und kann seine Zeitdateien `zeit-YYYY-MM-DD.sh` im Nachgang bearbeiten.
 
@@ -42,16 +42,16 @@ Der Anwender behält die Kontrolle über die erfassten Zeiten und kann seine Zei
 |Kommentare für den nächsten Tag übernehmen|-|speichert alle Kommentare für den nächsten Tag.|
 |Poweruser Ansicht|-| bietet in der GUI zusätzliche Komfortoptionen für abrechenbare Zeiten an. |
 |Konto durch Singleclick aktivieren|-|Default: Doppelklick notwendig|
-|Kontotyp anzeigen|-|Zeigt Kontotyp an|
-|PSP Element anzeigen|-|Zeigt PSP Element an|
-|Default Kommentar automatisch verwenden, wenn eindeutig|-| wenn die sctime GUI nur einen Kommentar findet, verwendet sie diesen automatisch|
-|Drag 'n' drop aktivieren|X|aktiviert Drag 'n' drop für Zeiten|
-|Summe in persönliche Konten|-|zeigt Summen für Konten und für Unterkonten mit mehreren Kommentaren |
-|Sonderzeitauswahl anzeigen|-|zeigt die Auswahl der Sonderzeiten im Unterkonto-Dialog mit an|
-|Warnen wenn Kommentar nicht in ISO8859 darstellbar|X|bei Eingabe von ungewöhnlichen Zeichen, um spätere Probleme bei der Auswertung zu verhindern|
-|Nach Kommentartext sortieren (statt numerisch)|-|sortiert bei mehreren Kommentarzeilen von Unterkonten nach Anfrangbuchstaben|
-|Offline bleiben nach Initialisierung|-| **nur Web GUI:** speichert Zeitdateien immer im Browser |
-|Schreibe keine konsolidierten Arbeitszeiten in die SH-Datei |-| schreibt keine Anfangs- und Endzeiten in die Zeitdateien |
+|Kontotyp anzeigen|-|zeigt den Kontotyp an.|
+|PSP Element anzeigen|-|zeigt das PSP Element an.|
+|Default Kommentar automatisch verwenden, wenn eindeutig|-| Wenn die sctime GUI nur einen Kommentar findet, verwendet sie diesen automatisch.|
+|Drag 'n' drop aktivieren|X|aktiviert Drag 'n' drop für Zeiten.|
+|Summe in persönliche Konten|-|zeigt Summen für Konten und für Unterkonten mit mehreren Kommentaren an. |
+|Sonderzeitauswahl anzeigen|-|zeigt die Auswahl der Sonderzeiten im Unterkonto-Dialog mit an.|
+|Warnen wenn Kommentar nicht in ISO8859 darstellbar|X|bei Eingabe von ungewöhnlichen Zeichen, um spätere Probleme bei der Auswertung zu verhindern.|
+|Nach Kommentartext sortieren (statt numerisch)|-|sortiert bei mehreren Kommentarzeilen von Unterkonten nach Anfangsbuchstaben.|
+|Offline bleiben nach Initialisierung|-| **nur Web GUI:** speichert Zeitdateien immer im Browser. |
+|Schreibe keine konsolidierten Arbeitszeiten in die SH-Datei |-| schreibt keine Anfangs- und Endzeiten in die Zeitdateien. |
 
 <span id="tree"></span>
 ## Kontenbaum
@@ -71,7 +71,7 @@ Unter `Konten` gibt es zwei Einstiegspunkte:
 Unterkonten in den Bereich `Persönliche Konten` übernehmen und Unterkonto-Bearbeitungsfenster:
 - Ein Rechtsklick (oder ein Doppel-Klick bei Single Klick-Aktivierung) auf eine Unterkonto-Zeile öffnet das Bearbeitungs-Fenster des Unterkontos. 
 - `In die persönlichen Konten übernehmen` anhaken.
-- Kommentar eintragen oder auswählen. Wenn in `Einstellungen - Einstellungen - Allgemein` die Option `Kommentare für nächsten Tag übernehmen` aktiviert ist, speichert die sctime GUI alle Kommentare, so daß man diese nicht neu eingeben muss.
+- Kommentar eintragen oder auswählen: Wenn in `Einstellungen - Einstellungen - Allgemein` die Option `Kommentare für nächsten Tag übernehmen` aktiviert ist, speichert die sctime GUI alle Kommentare, so daß man diese nicht neu eingeben muss.
 - (Abzurechnende) Zeiten bearbeiten.
 - Wenn eine Beschreibung und ein Verantwortlicher für das Unterkonto zentral definiert sind, wird diese Information hier angezeigt. 
 
@@ -93,8 +93,8 @@ Je nach Setting aktiviert ein einzelner oder ein Doppel-Klick (Default) das gew�
 
 ## Zeiten in der GUI bearbeiten
 Der aktuelle Tag oder ein vergangener Tag (`Zeit - Datum wählen...`) können geändert werden:
-- in der GUI direkt (Icons für Zeit erhöhen/verringern) 
-- im Bearbeitungs-Fenster des jew. Unterkontos
+- in der GUI direkt (Icons für Zeit erhöhen/verringern). 
+- im Bearbeitungs-Fenster des jew. Unterkontos.
 
 Die `Gesamtzeit` ganz rechts unten zeigt, wieviele Minuten + oder - die Zeiten in Summe geändert wurden.
 - Dies erleichtert die Umbuchung von Aufwänden zwischen verschiedenen Unterkonten. 
@@ -109,25 +109,25 @@ Im Betrieb speichert die sctime GUI automatisch alle fünf Minuten.
 
 Die aktuellen Zeiten und die
 Einstellungen werden sofort gespeichert:
-- bei Programmende
-- wenn der Anwender aktiv speichert (via Button, Ctrl+S, `Konto - Speichern`)
+- bei Programmende.
+- wenn der Anwender aktiv speichert (via Button, Ctrl+S, `Konto - Speichern`).
 
 
 
 <span id="comments"></span>
 
-## Standard-Kommentare/ Mikrokonten/ vordefinierte Kommentare
+## Standardkommentare/ Mikrokonten/ vordefinierte Kommentare
 
-Es gibt gute Gründe dafür, Standard-Kommentare vorzugeben: 
+Es gibt gute Gründe dafür, Standardkommentare vorzugeben: 
 - Komfort: der Anwender muss nur noch aus einer Liste auswählen. 
-- Einheitlichkeit: erleichtert die Auswertung
+- Einheitlichkeit: erleichtert die Auswertung.
 
 Die drei oben genannten Begriffe bedeuten das Gleiche: 
 - Für alle Unterkonten können Kommentare zur Auswahl im Unterkonto-Bearbeitungsfenster der GUI zentral vordefiniert werden. 
 - Standardkommentare kann der Administrator vorgeben, oder alle Anwender dürfen dies mittels eines entsprechenden Kommandozeilentools.  
 - Die Anwender müssen die Kontenliste neu laden, um neue Standardkommentare zu erhalten.
 
-Mikrokonten geben der Kontenbaumstruktur noch eine weitere Ebene:
+Standardkommentare geben der Kontenbaumstruktur noch eine weitere Ebene, daher werden sie auch Mikrokonten genannt:
 - z.B. kann ein Standardkommentar `Bugfix:` vorgegeben werden. 
 - Der Anwender kann nach dem Doppelpunkt weitere Details eintragen.
 - Mittels `Bugfix:` können alle Zeiten für das Thema zusammen ausgewertet werden.
@@ -151,9 +151,7 @@ läuft und nicht pausiert ist.
 - Die erfassten Zeiten können über `Zeit - Anwesenheitszeiten` 
 eingesehen und bei Bedarf korrigiert werden.
 
-Wenn die auf Konten gebuchte Gesamtzeit geändert wurde (z.B. einige
-Minuten einem Konto hinzugefügt wurden, da man vergessen hat die Pause
-rechtzeitig heraus zu nehmen), bekommt man als Unterstützung beim Aufruf
+Wenn die auf Konten gebuchte Gesamtzeit geändert wurde (z.B. vergessen Pause zu (de-)aktivieren oder sctime zu starten), bekommt man als Unterstützung beim Aufruf
 von `Zeit - Differenz auf Null` angeboten, den Beginn des aktuellen
 Arbeitsintervalls in den Anwesenheitszeiten ebenfalls entsprechend zu
 korrigieren.
@@ -165,11 +163,11 @@ korrigieren.
 
 Bereitschaften gibt der Administrator zentral vor.
 
-Um Bereitschaftszeiten zu erfassen
+Um Bereitschaftszeiten zu erfassen:
 - Zeiteintrag wählen,  zu dem die Bereitschaft gehört. 
-- `Vergütung - Bereitschaftszeiten setzen... Ctrl+B` auswählen
+- `Vergütung - Bereitschaftszeiten setzen... Ctrl+B` auswählen.
 
-Stempel in der Menüleiste klicken. 
+Stempel in der Menüleiste klicken: 
 - in der Auswahl möglicher
 Bereitschaftskategorien eine oder mehrere
 Kategorien auswählen. 
@@ -199,7 +197,7 @@ eine oder mehrere Kategorien auswählen.
 Zum Löschen klickt man wieder auf den Mond, wählt angewählte Kategorien
 ab, und bestätigt mit `Ok`.
 
-Wenn zentral Konten mit dem Typ 'x' und 'o' markiert sind, können keine Sonderzeiten gesetzt werden.
+Wenn zentral Konten mit dem Typ 'x' oder dem Typ 'o' markiert sind, können keine Sonderzeiten gesetzt werden.
 
 ### Sonderzeit-Modus
 Ein Sonderzeit-Modus verknüpft eine Sonderzeit-Kategorie mit dem automatischen Setzen dieser Kategorie für alle danach erfassten Zeiten bis der Sonderzeit-Modus deaktiviert wird, z.B. Nachtarbeit:
@@ -208,11 +206,11 @@ Ein Sonderzeit-Modus verknüpft eine Sonderzeit-Kategorie mit dem automatischen 
 - Wenn man einen schon vorhandenen
 Zeiteintrag aktivieren möchte, bei dem die Kategorie nicht gesetzt ist,
 wird stattdessen ein neuer Eintrag erzeugt mit entsprechend gesetzter
-Kategorie, damit die Sonderzeit getrennt vorn der normalen Zeiterfassung bleibt.
+Kategorie, damit die Sonderzeit getrennt von der normalen Zeiterfassung bleibt.
 
 **Wichtig:** Sonderzeit-Modi sind nur eine Komfortfunktion.
 Sie prüfen nicht, ob der Anwender in der jeweiligen
-Situation anspruchsberichtigt ist. Dafür muss der Mitarbeiter 
+Situation anspruchsberechtigt ist. Dafür muss der Mitarbeiter 
 selbst die im Unternehmen aktuell geltenden Regelungen kennen und
 beachten.
 
@@ -221,14 +219,15 @@ beachten.
 ## Typ und PSP
 Beides kann zur differenzierten Auswertung/Gruppierung von Konten für jedes Unterkonto zentral vorgegeben werden. 
 - Der Anwender kann die Werte nicht ändern. 
-- Per Default sind sie in der GUI ausgeblendet, s. [Einstellungen](#usage)
+- Per Default sind sie in der GUI ausgeblendet, s. [Einstellungen](#usage).
 
 <span id="tipps"></span>
 
 ## Tipps & Tricks
+
 ### Drag'n'Drop
 
-Mittels Drag 'n' Drop lassen sich die Zeiten zwischen Unterkonten und
+Mittels Drag'n'Drop lassen sich Zeiten zwischen Unterkonten und
 Einträgen verschieben. 
 
 Wird dabei die „Shift“-Taste gedrückt, werden
