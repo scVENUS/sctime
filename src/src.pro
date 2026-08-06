@@ -5,6 +5,10 @@ CONFIG += c++11
 VERSION = $$system(git describe --always||echo UNDEFINED)
 DEFINES += APP_VERSION=$$VERSION
 
+exists($$PWD/../tenant.pri) {
+    include($$PWD/../tenant.pri)
+}
+
 QT += xml gui core network widgets
 TARGET = sctime
 CODECFORTR= UTF-8
@@ -28,6 +32,11 @@ HEADERS = abteilungsliste.h accountlistcommiter.h bereitschaftsliste.h bereitsch
           specialremuntypemap.h JSONReader.h util.h textviewerdialog.h resthelper.h sctimeapp.h xmlreader.h xmlwriter.h
 RESOURCES = ../pics/sctimeImages.qrc ../help/help.qrc
 GENERATED_RESOURCES = translations.qrc
+
+# $$PWD makes the glob resolve relative to the .pro file, not the shadow build dir
+qrc_help_cpp.target = qrc_help.cpp
+qrc_help_cpp.depends = $$files($$PWD/../help/*.md)
+QMAKE_EXTRA_TARGETS += qrc_help_cpp
 FORMS = conflictdialogbase.ui datedialogbase.ui dateoverviewwidgetbase.ui preferencedialogbase.ui specialremunerationdialogbase.ui \
         pausedialogbase.ui deletesettingsdialogbase.ui
 

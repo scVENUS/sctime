@@ -208,7 +208,7 @@ Proceed?</source>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="32"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please select the settings you wish to delete.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNING:&lt;/span&gt; deleting daily settings also deletes all data that you recorded for this day (including time entries).&lt;/p&gt;&lt;p&gt;It is recommended to choose to stop the app - otherwise current settings remain in memory and will be written regulary, possibly recreating some of the deleted files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte wähle die Einstellungen und Daten, die Du löschen möchtest.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNUNG:&lt;/span&gt; Löschen der Tageseinstellungen löscht auch alle aufgezeichneteten Zeiten für diesen Tag (inklusive Zeiteinträge).&lt;/p&gt;&lt;p&gt;Es ist empfehlenswert die Anwendung zu beenden - andernfalls verbleiben die Einstellungen im Speicher der Applikation und werden weiterhin regelmässig abgespeichert, was möglicherweise gelöschte Dateien neu erzeugt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte wähle die Einstellungen und Daten, die Du löschen möchtest.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNUNG:&lt;/span&gt; Löschen der Tageseinstellungen löscht alle aufgezeichneteten Zeiten aller lokal in der Applikation geführten Tage (inklusive Zeiteinträge).&lt;/p&gt;&lt;p&gt;Die Anwendung muss nach dem löschen beendet werden (siehe entsprechende Option) - andernfalls verbleiben die Einstellungen im Speicher der Applikation und werden weiterhin regelmässig abgespeichert, was möglicherweise gelöschte Dateien neu erzeugt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="55"/>
@@ -233,7 +233,7 @@ Proceed?</source>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="82"/>
         <source>Stop App after deleting (recommended)</source>
-        <translation>Anwendung beenden nach dem löschen (empfohlen)</translation>
+        <translation type="unfinished">Anwendung nach Löschvorgang beenden (empfohlen)</translation>
     </message>
 </context>
 <context>

@@ -48,6 +48,9 @@
 #include <QScreen>
 #include <QStringEncoder>
 #include <QFileDialog>
+#include <QTabWidget>
+#include <QDialogButtonBox>
+#include <QVBoxLayout>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/val.h>
@@ -106,6 +109,9 @@
 #include "deletesettingsdialog.h"
 #include "syncofflinehelper.h"
 #include "datechangedialog.h"
+#ifndef __EMSCRIPTEN__
+#include <QDesktopServices>
+#endif
 
 
 QTreeWidget* TimeMainWindow::getKontoTree() { return kontoTree; }
@@ -446,6 +452,11 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
     }
   }
 
+#if defined(TENANT_HELP_ITEM_NAME) && defined(TENANT_HELP_ITEM_URL)
+  QAction* tenantHelpAction = new QAction(QUrl::fromPercentEncoding(QByteArray(TENANT_HELP_ITEM_NAME)), this);
+  connect(tenantHelpAction, &QAction::triggered, this, &TimeMainWindow::openTenantHelpUrl);
+  hilfemenu->addAction(tenantHelpAction);
+#endif
   hilfemenu->addSeparator();
   hilfemenu->addAction(logAction);
 
@@ -2181,10 +2192,53 @@ void TimeMainWindow::infoDialog(TextViewerDialog *&dialog, const QString& title,
 }
 
 void TimeMainWindow::callHelpDialog() {
-  TextViewerDialog* dialog;
-  infoDialog(dialog, tr("sctime: Help"), tr("sctime help"), 600, 450);
+  QDialog* dialog = new QDialog(this);
+  dialog->setWindowTitle(tr("sctime: Help"));
+  dialog->resize(600, 450);
   dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->browser()->setSource(QUrl("qrc:/help.md"));
+
+  QVBoxLayout *layout = new QVBoxLayout(dialog);
+  QTabWidget *tabWidget = new QTabWidget(dialog);
+
+  DownloadBrowser *introBrowser = new DownloadBrowser(tabWidget);
+  introBrowser->setOpenExternalLinks(true);
+  introBrowser->setSource(QUrl("qrc:/intro.md"));
+  tabWidget->addTab(introBrowser, tr("Intro"));
+
+  DownloadBrowser *detailsBrowser = new DownloadBrowser(tabWidget);
+  detailsBrowser->setOpenExternalLinks(true);
+#ifdef __EMSCRIPTEN__
+  detailsBrowser->setSource(QUrl("qrc:/web.md"));
+#else
+  detailsBrowser->setSource(QUrl("qrc:/standalone.md"));
+#endif
+  tabWidget->addTab(detailsBrowser, tr("Details"));
+
+  layout->addWidget(tabWidget);
+  QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok, dialog);
+  QObject::connect(buttons, &QDialogButtonBox::accepted, dialog, &QDialog::close);
+  layout->addWidget(buttons);
+
+  dialog->open();
+  dialog->raise();
+}
+
+void TimeMainWindow::openTenantHelpUrl() {
+#if defined(TENANT_HELP_ITEM_NAME) && defined(TENANT_HELP_ITEM_URL)
+#  ifdef __EMSCRIPTEN__
+  emscripten_run_script(("window.open('" TENANT_HELP_ITEM_URL "', '_blank');"));
+#  else
+  QDesktopServices::openUrl(QUrl(TENANT_HELP_ITEM_URL));
+  QMessageBox* msgbox = new QMessageBox(QMessageBox::Information,
+      tr("Opening help"),
+      tr("Opened URL in browser automatically. If that did not work, you can try to open it manually:\n\n%1")
+          .arg(QLatin1String(TENANT_HELP_ITEM_URL)),
+      QMessageBox::Ok, this);
+  msgbox->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  connect(msgbox, &QMessageBox::finished, msgbox, &QMessageBox::deleteLater);
+  msgbox->open();
+#  endif
+#endif
 }
 
 
