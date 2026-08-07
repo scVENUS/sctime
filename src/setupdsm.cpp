@@ -45,7 +45,7 @@
 QString DSM::kontenQuery(
   "Select  "
   "   gb.name, " // 0
-  "   team.kostenstelle, "
+  "   coalesce(team.kostenstelle,''), "
   "   konto.name,  "
   "   f_username(konto.verantwortlich), " // 3
   "   f_username(coalesce(konto.stellvertreter, konto.verantwortlich)), "
@@ -60,9 +60,9 @@ QString DSM::kontenQuery(
   "   (select coalesce(string_list(sz.kategorie),'') from t_sonderzeiten_unterkonto szu join t_sonderzeiten sz on (szu.id_sonderzeiten=sz.id) where szu.id_unterkonto=u.unterkonto_id), "
   "   coalesce(uk.kommentar, '') " // 15
   "From "
-  "  gb "
+  "  (gb "
   "  join konto on (gb.gb_id = konto.gb_id) "
-  "  join team on (team.team_id = konto.team_id)  "
+  "  left outer join team on (team.team_id = konto.team_id))"
   "  join unterkonto u on (u.konto_id = konto.konto_id) "
   "  join unterkonto_art on (u.art = unterkonto_art.art) "
   "  left join unterkonto_kommentar uk on (u.unterkonto_id = uk.unterkonto_id) "
