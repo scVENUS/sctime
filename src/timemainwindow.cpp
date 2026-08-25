@@ -271,6 +271,11 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   QAction* qtAction = new QAction(tr("About &Qt..."), this);
   qtAction->setMenuRole(QAction::AboutQtRole);
   connect(qtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+
+#ifdef __EMSCRIPTEN__
+  QAction* updateAction = new QAction(tr("&Update..."), this);
+  connect(updateAction, SIGNAL(triggered()), this, SLOT(updateApp()));
+#endif
   
   QAction* addlicAction = new QAction(tr("Additional &License Information..."), this);
   connect(addlicAction, SIGNAL(triggered()), this, SLOT(callAdditionalLicenseDialog()));
@@ -459,6 +464,10 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
 #endif
   hilfemenu->addSeparator();
   hilfemenu->addAction(logAction);
+#ifdef __EMSCRIPTEN__
+  hilfemenu->addSeparator();
+  hilfemenu->addAction(updateAction);
+#endif
 
   addToolBar(toolBar);
 
@@ -3157,6 +3166,18 @@ void TimeMainWindow::callDeleteSettingsDialog() {
 
 AbteilungsListe* TimeMainWindow::getEmptyAbtList(QDate date) {
   return new AbteilungsListe(date, abtListToday);
+}
+
+void TimeMainWindow::updateApp() {
+#ifdef __EMSCRIPTEN__
+    emscripten_run_script(
+        "fetch(window.location.href, { cache: 'reload' }).then(() => {"
+        "    window.location.reload();"
+        "}).catch(() => {"
+        "    if (navigator.onLine) { window.location.reload(); }" // only reload if network is up; offline reload would serve stale cache or show error
+        "});"
+    );
+#endif
 }
 
 void TimeMainWindow::syncAll() {
