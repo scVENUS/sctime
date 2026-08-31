@@ -43,9 +43,7 @@ private:
    QString specialremunPath;
    QString jsonPath;
 
-   static QString kontenQuery;
-   static const QString bereitQuery;
-   static const QString specialRemunQuery;
+   static const QString jsonMetaQuery;
    static QString username();
    static QString password();
 };

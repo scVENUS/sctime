@@ -24,8 +24,11 @@
 #include <QNetworkReply>
 #include "datasource.h"
 
+class JSONReaderCache;
+
 class JSONReaderBase: public QObject
 {
+  friend class JSONReaderCache;
   Q_OBJECT
 public:
   const static int INVALIDDATA=-1;
@@ -34,15 +37,18 @@ public:
   virtual void requestData()=0;
   virtual QJsonDocument& getData();
   virtual void processByteArray(QByteArray byteData);
-  virtual void setCacheTarget(const QString& target);
-  virtual QString getCacheTarget() const;
+  virtual void setCacheTargetFile(const QString& target);
+  virtual QString getCacheTargetFile() const;
+  virtual void setCacheTargetJSONReaderCache(JSONReaderCache *target);
+  virtual JSONReaderCache* getCacheTargetJSONReaderCache() const;
 signals:
   void aborted();
   void finished();
 private:
   QJsonDocument data;
   int currentversion;
-  QString cacheTarget;
+  QString cacheTargetFile;
+  JSONReaderCache *cacheTargetJSONReaderCache;
 protected:
   JSONReaderBase();
 };
@@ -74,6 +80,29 @@ private:
   const QString command;
   QObject* parent;
 };
+
+#ifdef WIN32
+class JSONReaderSQL: public JSONReaderBase
+{
+public:
+  JSONReaderSQL(QSqlDatabase db, const QString& command);
+  virtual void requestData();
+  virtual ~JSONReaderSQL() {};
+private:
+  QSqlDatabase db;
+  const QString command;
+};
+#endif // WIN32
+
+class JSONReaderCache: public JSONReaderBase
+{
+public:
+  JSONReaderCache() {};
+  virtual void requestData();
+  virtual ~JSONReaderCache() {};
+  virtual void setData(QJsonDocument doc) {data=doc;};
+};
+
 #endif //RESTONLY
 
 class JSONSource: public Datasource

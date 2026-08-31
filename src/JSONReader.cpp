@@ -33,6 +33,9 @@
 #include <QThread>
 #include <QEventLoop>
 #include <QApplication>
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QSqlRecord>
 
 
 JSONSource::JSONSource(JSONReaderBase *jsonreader)
@@ -61,13 +64,16 @@ void JSONSource::jsonreceived() {
    DSResult result;
    if (convertData(&result)) {
       // if we are in RESTONLY mode, we cache the data in a file if we have in from a http(s) uri
-      if (!jsonreader->getCacheTarget().isEmpty()) {
+      if (!jsonreader->getCacheTargetFile().isEmpty()) {
         QJsonDocument doc=jsonreader->getData();
-        QFile file(jsonreader->getCacheTarget());
+        QFile file(jsonreader->getCacheTargetFile());
         if (file.open(QIODevice::WriteOnly)) {
           file.write(doc.toJson());
           file.close();
         }
+      }
+      if (jsonreader->getCacheTargetJSONReaderCache()!=NULL) {
+        jsonreader->getCacheTargetJSONReaderCache()->setData(jsonreader->getData());
       }
       emit finished(result);
    } else {
@@ -200,17 +206,27 @@ bool JSONAccountSource::convertData(DSResult* const result) {
 }
 
 JSONReaderBase::JSONReaderBase()
-  : currentversion(INVALIDDATA), cacheTarget("") {
+  : currentversion(INVALIDDATA), cacheTargetFile(""), cacheTargetJSONReaderCache(NULL) {
 }
 
-QString JSONReaderBase::getCacheTarget() const
+QString JSONReaderBase::getCacheTargetFile() const
 {
-  return cacheTarget;
+  return cacheTargetFile;
 }
 
-void JSONReaderBase::setCacheTarget(const QString& target)
+void JSONReaderBase::setCacheTargetFile(const QString& target)
 {
-  cacheTarget=target;
+  cacheTargetFile=target;
+}
+
+JSONReaderCache* JSONReaderBase::getCacheTargetJSONReaderCache() const
+{
+  return cacheTargetJSONReaderCache;
+}
+
+void JSONReaderBase::setCacheTargetJSONReaderCache(JSONReaderCache *target)
+{
+  cacheTargetJSONReaderCache=target;
 }
   
 QJsonDocument &JSONReaderBase::getData()
@@ -361,4 +377,59 @@ void JSONReaderCommand::requestData()
 }
 
 JSONReaderCommand::JSONReaderCommand(const QString& _command, QObject* _parent): JSONReaderBase(), command(_command), parent(_parent) {};
-#endif
+#ifdef WIN32
+
+JSONReaderSQL::JSONReaderSQL(QSqlDatabase db, const QString& command): JSONReaderBase(), db(db), command(command) {
+};
+
+
+void JSONReaderSQL::requestData()
+{
+  QByteArray byteData;
+
+  logError(QObject::tr("Connecting to database %1 on %2 with driver %3 as user %4")
+           .arg(db.databaseName(), db.hostName(), db.driverName(), db.userName()));
+  if (!db.open()) {
+    logError(QObject::tr("connection failed: ") + db.lastError().databaseText());
+    emit aborted();
+    return;
+  }
+  QSqlQuery query(command, db);
+  if (!query.isActive()) {
+    logError(QObject::tr("Error ('%1') when executing query: %2").arg(db.lastError().databaseText()).arg(command));
+    db.close();
+    emit aborted();
+    return;
+  }
+  bool success=false;
+  int cols = query.record().count();
+  if (cols!=1) {
+    logError(QObject::tr("Query returned %1 columns, expected 1").arg(cols));
+  }
+  if (query.next()) {
+    byteData = query.value(0).toString().toUtf8();
+    processByteArray(byteData);
+    if (query.next()) {
+      logError(QObject::tr("Query returned more than one row, only the first row is processed"));
+    }
+    success=true;
+  }
+  db.close();
+  if (!success) {
+    emit aborted();
+  } else {
+    emit finished();
+  }
+}
+
+#endif // WIN32
+#endif // RESTONLY
+
+void JSONReaderCache::requestData()
+{
+  if (data.isNull()==false) {
+    emit finished();
+  } else {
+    emit aborted();
+  }
+}
