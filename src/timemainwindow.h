@@ -236,6 +236,7 @@ public:
     void syncAll();
     void updateBreakTime();
     void keepAlive();
+    void updateApp(); // WASM only
     
   protected:
     virtual void moveEvent( QMoveEvent *event);
