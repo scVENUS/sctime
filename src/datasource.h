@@ -89,24 +89,6 @@ private:
   bool read(DSResult* const result);
   };
 
-#ifdef WIN32
-class SqlReader : public Datasource
-{
-  Q_OBJECT
-public:
-  SqlReader(QSqlDatabase db, const QString &cmd);
-  virtual ~SqlReader() {};
-  const QString cmd;
-  QSqlDatabase db;
-  virtual QString toString() {return "SqlReader_"+cmd;};
-public slots:
-  virtual void start();
-private:
-  bool read(DSResult* const result);
-};
-#endif
-
-
 #ifndef WIN32
 class CommandReader : public Datasource
 {

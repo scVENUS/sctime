@@ -128,44 +128,6 @@ static bool readFile(DSResult* const result, QTextStream &ts, const QString& sep
   return true;
 }
 
-#ifdef WIN32
-SqlReader::SqlReader(QSqlDatabase db, const QString &cmd):cmd(cmd),db(db) {}
-
-bool  SqlReader::read(DSResult* const result) {
-  logError(QObject::tr("Connecting to database %1 on %2 with driver %3 as user %4")
-           .arg(db.databaseName(), db.hostName(), db.driverName(), db.userName()));
-  if (!db.open()) {
-    logError(QObject::tr("connection failed: ") + db.lastError().databaseText());
-    return false;
-  }
-  QSqlQuery query(cmd, db);
-  if (!query.isActive()) {
-    logError(QObject::tr("Error ('%1') when executing query: %2").arg(db.lastError().databaseText()).arg(cmd));
-    broken = true;
-    db.close();
-    return false;
-  }
-  int cols = query.record().count();
-  while (query.next()) {
-    QStringList row;
-    for (int i = 0; i < cols; i++)
-      row.append(query.value(i).toString());
-    result->append(row);
-  }
-  db.close();
-  return true;
-}
-
-void SqlReader::start() {
-   DSResult result;
-   if (read(&result)) {
-      emit finished(result);
-   } else {
-      emit failed();
-   }
-}
-#endif
-
 #ifndef WIN32
 #include <stdlib.h>
 #include <errno.h>

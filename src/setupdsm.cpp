@@ -42,44 +42,7 @@
 #include "globals.h"
 
 
-QString DSM::kontenQuery(
-  "Select  "
-  "   gb.name, " // 0
-  "   coalesce(team.kostenstelle,''), "
-  "   konto.name,  "
-  "   f_username(konto.verantwortlich), " // 3
-  "   f_username(coalesce(konto.stellvertreter, konto.verantwortlich)), "
-  "   konto.abgerechnet_bis, "
-  "   konto.zeitlimit, "  // 6
-  "   u.name, "
-  "   f_username(coalesce(u.verantwortlich, konto.verantwortlich)), "
-  "   f_username(coalesce(u.stellvertreter, u.verantwortlich, konto.verantwortlich)), " // 9
-  "   coalesce(unterkonto_art.name || ' (' || u.art || ')', u.art), "
-  "   coalesce(u.beschreibung, '') || coalesce('; noch nicht abgerechnet: ' || (get_budget_saldo(u.unterkonto_id)::numeric(8,2)), ''), "
-  "   coalesce(u.intercompany_id, '(keine PSP)'), "
-  "   (select coalesce(string_list(sz.kategorie),'') from t_sonderzeiten_unterkonto szu join t_sonderzeiten sz on (szu.id_sonderzeiten=sz.id) where szu.id_unterkonto=u.unterkonto_id), "
-  "   coalesce(uk.kommentar, '') " // 15
-  "From "
-  "  (gb "
-  "  join konto on (gb.gb_id = konto.gb_id) "
-  "  left outer join team on (team.team_id = konto.team_id))"
-  "  join unterkonto u on (u.konto_id = konto.konto_id) "
-  "  join unterkonto_art on (u.art = unterkonto_art.art) "
-  "  left join unterkonto_kommentar uk on (u.unterkonto_id = uk.unterkonto_id) "
-  "Where "
-  " u.eintragbar "
-  "Order By gb.name, konto.name, u.name, uk.kommentar ");
-
-const QString DSM::bereitQuery("SELECT kategorie, beschreibung FROM v_bereitschaft_sctime");
-
-const QString DSM::specialRemunQuery(
-  "Select "
-  "    sz.kategorie, "
-  "    sz.beschreibung, "
-  "    sz.isglobal "
-  "From "
-  "    v_sonderzeiten_sctime sz "
-  "    order by sz.kategorie");
+const QString DSM::jsonMetaQuery("select convert_to(f_sctime_master_data_jsonb()::text, 'UTF8')");
 
 QString DSM::username() {
   static QString result;
@@ -220,9 +183,12 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
 	pw = password();
       db.setPassword(pw);
 
-      kontensources->append(new SqlReader(db, kontenQuery));
-      bereitsources->append(new SqlReader(db, bereitQuery));
-      specialremunsources->append(new SqlReader(db, specialRemunQuery));
+      jsonreader=new JSONReaderSQL(db, DSM::jsonMetaQuery);
+      JSONReaderCache* cache=new JSONReaderCache();
+      jsonreader->setCacheTargetJSONReaderCache(cache);
+      kontensources->append(new JSONAccountSource(jsonreader));
+      bereitsources->append(new JSONOnCallSource(cache));
+      specialremunsources->append(new JSONSpecialRemunSource(cache));
 #endif
     }
   }
@@ -231,7 +197,7 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
     QString baseurl=getRestBaseUrl();
     jsonreader=new JSONReaderUrl(networkAccessManager, baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
 #ifdef RESTONLY
-    jsonreader->setCacheTarget(configDir.filePath("sctime-offline.json"));
+    jsonreader->setCacheTargetFile(configDir.filePath("sctime-offline.json"));
     kontensources->append(new JSONAccountSource(jsonreader));
     // fallback in case network was not working
     QUrl jsonUrl=QUrl::fromLocalFile(configDir.filePath("sctime-offline.json"));

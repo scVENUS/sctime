@@ -44,9 +44,8 @@ flowchart TB
     subgraph DataSources["Pluggable Data Sources"]
         DS["Datasource (abstract)"]
         FR["FileReader"]
-        SQL["SqlReader (Windows/SQL)"]
-        CR["CommandReader (Unix, zeitkonten)"]
-        JS["JSONSource / JSONReaderUrl\n(REST)"]
+        JS["JSONSource\n(JSONAccountSource / JSONOnCallSource / JSONSpecialRemunSource)"]
+        JR["JSONReaderBase impls: JSONReaderUrl (REST/local file),\nJSONReaderCommand (external tool), JSONReaderSQL (Windows SQL)"]
     end
 
     subgraph Sync["Offline Sync"]
@@ -73,9 +72,8 @@ flowchart TB
     XMLS --> XW
     TMW --> DS
     DS --> FR
-    DS --> SQL
-    DS --> CR
     DS --> JS
+    JS --> JR
     TMW --> SOH
     SOH --> ALC
     SOH --> CD
@@ -109,8 +107,8 @@ flowchart LR
     UI["UI Layer\nTimeMainWindow, KontoTreeView,\nQDialog subclasses"]
     Domain["Domain Layer\nAbteilungsListe, KontoListe, UnterKontoListe,\nEintragsListe, PunchClockChecker, BereitschaftsModel"]
     Persistence["Persistence Layer\nSCTimeXMLSettings, XMLReader, XMLWriter,\nDefaultCommentReader, DefaultTagReader"]
-    DataAccess["Data Access Layer\nDatasource, FileReader, SqlReader,\nCommandReader, JSONSource, RestHelper"]
-    External[("External World\nLocal files · SQL server ·\nzeitkonten/zeitbereitls · REST API")]
+    DataAccess["Data Access Layer\nDatasource, FileReader, JSONSource,\nJSONReaderUrl/Command/SQL/Cache, RestHelper"]
+    External[("External World\nLocal files · PostgreSQL (via JSONReaderSQL) ·\nzeit-sctime-offline command · REST API")]
 
     UI --> Domain
     UI --> Persistence
@@ -127,9 +125,15 @@ Notes on the layering:
 - `Datasource` implementations are interchangeable at runtime; which ones are
   active is controlled by the `backends` setting (`"QPSQL QODBC command json file"`
   by default) or the `--datasource=` CLI flag.
-- The WASM build compiles out `SqlReader`/`CommandReader`/`FileReader` support for
+- The WASM build compiles out the `"file"`/`"command"`/SQL datasources for
   live account data (`RESTONLY` define) and instead relies entirely on
   `JSONSource`/REST.
+- The old tabular, DSResult-returning `SqlReader` class has been removed from
+  the codebase entirely (SQL access now goes exclusively through
+  `JSONReaderSQL`); the pipe-separated `CommandReader` is still present but is
+  dead code unless `DEPRECATED_CMDS` is defined — see
+  [Data Sources & Backends](03-data-sources-backends.md) for how SQL and
+  `"command"` actually work now (both go through JSON-shaped readers).
 
 ## 5. Startup sequence
 
