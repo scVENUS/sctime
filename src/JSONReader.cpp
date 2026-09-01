@@ -33,9 +33,11 @@
 #include <QThread>
 #include <QEventLoop>
 #include <QApplication>
+#ifdef WIN32
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
+#endif
 
 
 JSONSource::JSONSource(JSONReaderBase *jsonreader)
