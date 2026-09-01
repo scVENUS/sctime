@@ -94,6 +94,8 @@ private:
 };
 #endif // WIN32
 
+#endif //RESTONLY
+
 class JSONReaderCache: public JSONReaderBase
 {
 public:
@@ -102,8 +104,6 @@ public:
   virtual ~JSONReaderCache() {};
   virtual void setData(QJsonDocument doc) {data=doc;};
 };
-
-#endif //RESTONLY
 
 class JSONSource: public Datasource
 {
