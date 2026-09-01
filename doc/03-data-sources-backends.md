@@ -29,11 +29,8 @@ classDiagram
         +QString sep
         +int columns
     }
-    class SqlReader {
-        +QString cmd
-        +QSqlDatabase db
-    }
     class CommandReader {
+        <<dead code unless DEPRECATED_CMDS>>
         +QString command
         +QString sep
         +int columns
@@ -49,15 +46,28 @@ classDiagram
         <<abstract>>
         +requestData() void
         +getData() QJsonDocument
-        +setCacheTarget(QString)
+        +setCacheTargetFile(QString)
+        +getCacheTargetFile() QString
+        +setCacheTargetJSONReaderCache(JSONReaderCache)
+        +getCacheTargetJSONReaderCache() JSONReaderCache
     }
     class JSONReaderUrl {
         +requestData()
     }
     class JSONReaderCommand
+    class JSONReaderSQL {
+        <<Windows only>>
+        -QSqlDatabase db
+        -QString command
+        +requestData()
+    }
+    class JSONReaderCache {
+        -QJsonDocument data
+        +setData(QJsonDocument)
+        +requestData()
+    }
 
     Datasource <|-- FileReader
-    Datasource <|-- SqlReader
     Datasource <|-- CommandReader
     Datasource <|-- JSONSource
     JSONSource <|-- JSONAccountSource
@@ -65,9 +75,19 @@ classDiagram
     JSONSource <|-- JSONSpecialRemunSource
     JSONReaderBase <|-- JSONReaderUrl
     JSONReaderBase <|-- JSONReaderCommand
+    JSONReaderBase <|-- JSONReaderSQL
+    JSONReaderBase <|-- JSONReaderCache
     JSONSource o-- JSONReaderBase : uses
+    JSONReaderBase o-- JSONReaderCache : optional fan-out target
     DatasourceManager o-- Datasource : tries in order
 ```
+
+`JSONReaderSQL` and `JSONReaderCache` are the pieces added to let a single SQL
+query feed all three `DatasourceManager`s (accounts, on-call, special
+remunerations) instead of running three separate queries. The tabular,
+DSResult-returning `SqlReader` class it replaced has been removed from
+[datasource.h](../src/datasource.h)/[.cpp](../src/datasource.cpp) entirely —
+SQL access on Windows now goes exclusively through `JSONReaderSQL` (see below).
 
 `DatasourceManager` tries each configured `Datasource` **in order** until one
 succeeds (`finished`) or all fail (`aborted`). The default backend list is
@@ -86,18 +106,17 @@ succeeds (`finished`) or all fail (`aborted`). The default backend list is
 Each manager is populated with concrete `Datasource` instances depending on:
 
 - the `backends` setting in `settings.xml` (or `--datasource=` CLI override),
-- compile-time flags: `SqlReader`/`CommandReader`/`FileReader` are compiled out
+- compile-time flags: `CommandReader`/`FileReader` are compiled out
   entirely on the **WASM build** (`RESTONLY` define, see
   [08-build-targets.md](08-build-targets.md)), leaving only the JSON/REST source,
-- platform: `SqlReader` doesn't even exist without `WIN32` (see
-  [datasource.h](../src/datasource.h)), and the `"command"` backend is
-  explicitly rejected on Windows (`setupdsm.cpp` logs an error and skips it).
+- platform: the `"command"` backend is explicitly rejected on Windows
+  (`setupdsm.cpp` logs an error and skips it).
 
 This makes the two platforms diverge sharply from the shared default backend
 list `"QPSQL QODBC command json file"`:
 
-- **Windows**: `QPSQL`/`QODBC` resolve to a real `SqlReader` against an ODBC/
-  PostgreSQL driver; `"command"` is unavailable.
+- **Windows**: `QPSQL`/`QODBC` resolve to a `QSqlDatabase` connection, and the
+  actual data fetch goes through `JSONReaderSQL`; `"command"` is unavailable.
 - **Unix/Linux**: `QPSQL`/`QODBC` are not used here. That leaves
   only `"command"`, `"json"`, and `"file"` producing a `Datasource` on 
   Unix, tried in that order. In practice this means **Unix
@@ -121,12 +140,60 @@ sources, and feeds it into `JSONAccountSource`/`JSONOnCallSource`/
 protocol has been fully superseded by a JSON-over-stdout contract with the
 same external-tool integration point but a different wire format.
 
-The SQL query embedded in `setupdsm.cpp` (`DSM::kontenQuery`) shows the
-authoritative shape of one account row: department, cost center, account name,
-responsible/deputy usernames, invoiced-until date, time limit, sub-account name,
-its responsible/deputy, type, description + remaining budget, PSP element,
-special-remuneration categories, and a comment — this is the canonical column
-order that `KontoDatenInfo` implementations expect in a `DSResult` row.
+### SQL (Windows): one query feeds all three managers via `JSONReaderCache`
+
+The `"command"` backend's JSON-over-stdout approach was later mirrored for
+SQL. There used to be three separate hand-written queries
+(`DSM::kontenQuery`/`bereitQuery`/`specialRemunQuery`, one per account/on-call/
+special-remuneration table). These have been replaced by a single query,
+`DSM::jsonMetaQuery` ([setupdsm.cpp](../src/setupdsm.cpp)):
+
+```sql
+select convert_to(f_sctime_master_data_jsonb()::text, 'UTF8')
+```
+
+This calls a single Postgres function that returns the *entire* master data
+set — accounts, on-call categories, and special remunerations — as one JSONB
+blob shaped like the [offline data JSON schema](#5-offline-data-json-schema),
+serialized to a single-row, single-column text result.
+
+`JSONReaderSQL` ([JSONReader.h](../src/JSONReader.h)/[.cpp](../src/JSONReader.cpp))
+is the `JSONReaderBase` implementation that runs this query synchronously via
+`QSqlQuery`, expecting exactly one row/column back, and feeds the result
+through the normal `processByteArray()` → `QJsonDocument` path. Since one query
+now answers for all three `DatasourceManager`s, `setupdsm.cpp` fetches it only
+**once** and fans the parsed document out via `JSONReaderCache`:
+
+```mermaid
+sequenceDiagram
+    participant KontenDSM as kontenDSM
+    participant JRS as JSONReaderSQL
+    participant DB as PostgreSQL
+    participant Cache as JSONReaderCache
+    participant BereitDSM as bereitDSM
+    participant RemunDSM as specialRemunDSM
+
+    KontenDSM->>JRS: start() (via JSONAccountSource)
+    JRS->>DB: QSqlQuery(jsonMetaQuery)
+    DB-->>JRS: single row/column: full JSON blob
+    JRS->>JRS: processByteArray() -> QJsonDocument
+    JRS-->>Cache: setData(doc) (via setCacheTargetJSONReaderCache)
+    JRS-->>KontenDSM: finished(DSResult) [JSONAccountSource::convertData()]
+
+    BereitDSM->>Cache: start() (via JSONOnCallSource)
+    Cache-->>BereitDSM: finished(DSResult) [data already set, no new query]
+
+    RemunDSM->>Cache: start() (via JSONSpecialRemunSource)
+    Cache-->>RemunDSM: finished(DSResult) [data already set, no new query]
+```
+
+`JSONReaderCache::requestData()` simply checks whether `setData()` has already
+been called: if so it emits `finished()` immediately, otherwise `aborted()`.
+This only works reliably because `kontenDSM` is started (and finishes) before
+`bereitDSM`/`specialRemunDSM` try to read from the shared cache — if the query
+fails, the cache is never populated and the on-call/special-remuneration
+managers fail over to whatever comes after `"command"`/`"json"`/`"file"`/`"rest"`
+in their own backend lists, same as any other failed datasource.
 
 ## 3. REST/JSON backend
 

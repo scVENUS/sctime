@@ -197,7 +197,7 @@ void DSM::setup(SCTimeXMLSettings* settings, QNetworkAccessManager* networkAcces
     QString baseurl=getRestBaseUrl();
     jsonreader=new JSONReaderUrl(networkAccessManager, baseurl+"/"+REST_ACCOUNTINGMETA_ENDPOINT);
 #ifdef RESTONLY
-    jsonreader->setCacheTarget(configDir.filePath("sctime-offline.json"));
+    jsonreader->setCacheTargetFile(configDir.filePath("sctime-offline.json"));
     kontensources->append(new JSONAccountSource(jsonreader));
     // fallback in case network was not working
     QUrl jsonUrl=QUrl::fromLocalFile(configDir.filePath("sctime-offline.json"));
