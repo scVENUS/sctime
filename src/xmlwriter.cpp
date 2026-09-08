@@ -242,6 +242,22 @@ QDomDocument XMLWriter::settings2Doc(bool global) {
     sortByCommentTextTag.setAttribute("on",on);
     generaltag.appendChild(sortByCommentTextTag);
 
+    QDomElement shortcutsenabledtag = doc.createElement("shortcutsenabled");
+    on="no";
+    if (settings->shortcutsEnabled()) on="yes";
+    shortcutsenabledtag.setAttribute("on",on);
+    generaltag.appendChild(shortcutsenabledtag);
+
+    QDomElement shortcutmodifiertag = doc.createElement("shortcutmodifier");
+    QString shortcutModifier;
+    switch(settings->shortcutModifier()) {
+      case SCTimeXMLSettings::SM_CTRLSHIFT: shortcutModifier="CtrlShift"; break;
+      case SCTimeXMLSettings::SM_ALT: shortcutModifier="Alt"; break;
+      default: shortcutModifier="Ctrl"; break;
+    }
+    shortcutmodifiertag.setAttribute("modifier",shortcutModifier);
+    generaltag.appendChild(shortcutmodifiertag);
+
     QDomElement dragndroptag = doc.createElement("dragndrop");
     on="no";
     if (settings->dragNDrop()) on="yes";

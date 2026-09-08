@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QMainWindow>
 #include <QDateTime>
+#include <QMap>
 class QAction;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -255,6 +256,8 @@ public:
     void changeDate(QDate datum, bool changeVisible, bool changeToday);
     void loadPCCData(const QString& pccdata);
     void toggleOnlineStatus();
+    void registerShortcutWithModifierAction(QAction* action, Qt::Key key);
+    void applyShortcutSettings();
     KontoTreeView* kontoTree;
     Lock *m_lock;
     QAction* editUnterKontoAction;
@@ -276,6 +279,8 @@ public:
     QAction* copyAction;
     QAction* copyLinkAction;
     QAction* onCallAction;
+    // actions whose shortcut modifier is user-configurable (base key without modifier, see applyShortcutSettings())
+    QMap<QAction*,int> m_ctrlShortcutActions;
     QDateTime startTime;
     QDateTime lastMinuteTick;
     QFont qtDefaultFont;

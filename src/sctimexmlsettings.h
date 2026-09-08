@@ -44,6 +44,7 @@ class SCTimeXMLSettings: public QObject
    friend class XMLWriter;
 public:
     enum DefCommentDisplayModeEnum{DM_BOLD,DM_NOTUSEDBOLD,DM_NOTBOLD};
+    enum ShortcutModifierEnum{SM_CTRL,SM_CTRLSHIFT,SM_ALT};
 
     SCTimeXMLSettings():backupSettingsXml(true)
     {
@@ -102,6 +103,14 @@ public:
       m_lastSave = QDateTime();
 
       m_remoteSaveDateTime = QDateTime();
+
+#ifdef __EMSCRIPTEN__
+      // browsers intercept most modifier shortcuts, so keep this off by default on WASM
+      m_shortcutsEnabled = false;
+#else
+      m_shortcutsEnabled = true;
+#endif
+      m_shortcutModifier = SM_CTRL;
 
 #ifdef ATOS_ETV_2018
       m_overtimeRegulatedSR = "sc_angeordnete_regulierte_mehrarbeit";
@@ -166,7 +175,9 @@ public:
         m_writeConsolidatedIntervals(o.m_writeConsolidatedIntervals),
         defaultdatabaseserver(o.defaultdatabaseserver),
         defaultdatabase(o.defaultdatabase),
-        m_remoteSaveDateTime(o.m_remoteSaveDateTime)
+        m_remoteSaveDateTime(o.m_remoteSaveDateTime),
+        m_shortcutsEnabled(o.m_shortcutsEnabled),
+        m_shortcutModifier(o.m_shortcutModifier)
     {}
 
     /*void readSettings();
@@ -527,6 +538,22 @@ public:
         m_writeConsolidatedIntervals=b;
     }
 
+    bool shortcutsEnabled() {
+        return m_shortcutsEnabled;
+    }
+
+    void setShortcutsEnabled(bool b)  {
+        m_shortcutsEnabled=b;
+    }
+
+    ShortcutModifierEnum shortcutModifier() {
+        return m_shortcutModifier;
+    }
+
+    void setShortcutModifier(ShortcutModifierEnum modifier)  {
+        m_shortcutModifier=modifier;
+    }
+
     // this is meta data from loading a file. If the file has not been loaded, this will be invalid or wrong.
     QDateTime remoteSaveDateTime() {
         return m_remoteSaveDateTime;
@@ -613,6 +640,9 @@ public:
     QString m_prevPCCdata;
 
     QDateTime m_remoteSaveDateTime;
+
+    bool m_shortcutsEnabled;
+    ShortcutModifierEnum m_shortcutModifier;
 
     private slots:
 

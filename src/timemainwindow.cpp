@@ -192,47 +192,47 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   m_punchClockListToday->setCurrentEntry(std::prev(m_punchClockListToday->end()));
 
   QAction* pauseAction = new QAction( QIcon(":/hi22_action_player_pause"), tr("&Pause"), this);
-  pauseAction->setShortcut(Qt::CTRL|Qt::Key_P);
+  registerShortcutWithModifierAction(pauseAction, Qt::Key_P);
   connect(pauseAction, SIGNAL(triggered()), this, SLOT(pause()));
 
   QAction* pauseAbzurAction = new QAction( QIcon(":/hi22_action_player_pause_half"),
                                            tr("Pause &accountable time"), this);
-  pauseAbzurAction->setShortcut(Qt::CTRL|Qt::Key_A);
+  registerShortcutWithModifierAction(pauseAbzurAction, Qt::Key_A);
   pauseAbzurAction->setCheckable(true);
   connect(pauseAbzurAction, SIGNAL(toggled(bool)), this, SLOT(pauseAbzur(bool)));
 
   QAction* saveAction = new QAction( QIcon(":/hi22_action_filesave" ), tr("&Save"), this);
-  saveAction->setShortcut(Qt::CTRL|Qt::Key_S);
+  registerShortcutWithModifierAction(saveAction, Qt::Key_S);
   connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
 
   copyAction = new QAction(tr("&Copy as text"), this);
-  copyAction->setShortcut(Qt::CTRL|Qt::Key_C);
+  registerShortcutWithModifierAction(copyAction, Qt::Key_C);
   connect(copyAction, SIGNAL(triggered()), this, SLOT(copyEntryAsText()));
 
   copyLinkAction = new QAction(tr("Copy as &link"), this);
-  copyLinkAction->setShortcut(Qt::CTRL|Qt::Key_L);
+  registerShortcutWithModifierAction(copyLinkAction, Qt::Key_L);
   connect(copyLinkAction, SIGNAL(triggered()), this, SLOT(copyEntryAsLink()));
 
   QAction* pasteLinkAction = new QAction(tr("Paste link"), this);
-  pasteLinkAction->setShortcut(Qt::CTRL|Qt::Key_V);
+  registerShortcutWithModifierAction(pasteLinkAction, Qt::Key_V);
   connect(pasteLinkAction, SIGNAL(triggered()), this, SLOT(pasteEntryAsLink()));
 
   QAction* changeDateAction = new QAction(tr("C&hoose Date..."), this);
-  changeDateAction->setShortcut(Qt::CTRL|Qt::Key_D);
+  registerShortcutWithModifierAction(changeDateAction, Qt::Key_D);
   connect(changeDateAction, SIGNAL(triggered()), this, SLOT(callDateDialog()));
 
 #ifndef DISABLE_PUNCHCLOCK
   QAction* punchClockAction = new QAction(tr("Punch Clock"), this);
-  punchClockAction->setShortcut(Qt::CTRL|Qt::Key_O);
+  registerShortcutWithModifierAction(punchClockAction, Qt::Key_O);
   connect(punchClockAction, SIGNAL(triggered()), this, SLOT(callPunchClockDialog()));
 #endif
 
   QAction* resetAction = new QAction( tr("Re&set difference"), this);
-  resetAction->setShortcut(Qt::CTRL|Qt::Key_N);
+  registerShortcutWithModifierAction(resetAction, Qt::Key_N);
   connect(resetAction, SIGNAL(triggered()), this, SLOT(resetDiff()));
 
   inPersKontAction = new QAction( QIcon(":/hi22_action_attach"), tr("Select as personal &account"), this);
-  inPersKontAction->setShortcut(Qt::CTRL|Qt::Key_K);
+  registerShortcutWithModifierAction(inPersKontAction, Qt::Key_K);
   inPersKontAction->setCheckable(true);
   connect(inPersKontAction, SIGNAL(toggled(bool)), this, SLOT(inPersoenlicheKonten(bool)));
 
@@ -244,16 +244,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   // not seem to work as this time. The menu tetxts always end up English after
   // being merged into the application menu.
   quitAction->setMenuRole(QAction::QuitRole);
-  quitAction->setShortcut(Qt::CTRL|Qt::Key_Q);
+  registerShortcutWithModifierAction(quitAction, Qt::Key_Q);
   connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
 
   QAction* findKontoAction = new QAction(tr("&Search account..."), this);
-  findKontoAction->setShortcut(Qt::CTRL|Qt::Key_F);
+  registerShortcutWithModifierAction(findKontoAction, Qt::Key_F);
   //findKontoAction->setStatusTip(tr("Konto suchen"));
   connect(findKontoAction, SIGNAL(triggered()), this, SLOT(callFindKontoDialog()));
 
   QAction* refreshAction = new QAction(tr("&Reread account list"), this);
-  refreshAction->setShortcut(Qt::CTRL|Qt::Key_R);
+  registerShortcutWithModifierAction(refreshAction, Qt::Key_R);
   connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshKontoListe()));
 
   QAction* preferenceAction = new QAction(tr("&Settings..."),this);
@@ -288,12 +288,12 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
   connect(editUnterKontoAction, SIGNAL(triggered()), this, SLOT(editUnterKontoPressed()));
 
   QAction* eintragActivateAction = new QAction(tr("&Activate entry"), this);
-  eintragActivateAction->setShortcut(Qt::CTRL|Qt::Key_X);
+  registerShortcutWithModifierAction(eintragActivateAction, Qt::Key_X);
   connect(eintragActivateAction, SIGNAL(triggered()), this, SLOT(eintragAktivieren()));
 
   QAction* eintragAddAction = new QAction(QIcon(":/hi22_action_queue" ),
                                              tr("Add &entry"), this);
-  eintragAddAction->setShortcut(Qt::CTRL|Qt::Key_Plus);
+  registerShortcutWithModifierAction(eintragAddAction, Qt::Key_Plus);
   connect(eintragAddAction, SIGNAL(triggered()), this, SLOT(eintragHinzufuegen()));
 
   eintragRemoveAction = new QAction(tr("&Delete entry"), this);
@@ -302,16 +302,16 @@ TimeMainWindow::TimeMainWindow(Lock* lock, QNetworkAccessManager *networkAccessM
 
   onCallAction = new QAction(QIcon(":/hi16_action_stamp" ),
                                             tr("Set &on-call times..."), this);
-  onCallAction->setShortcut(Qt::CTRL|Qt::Key_B);
+  registerShortcutWithModifierAction(onCallAction, Qt::Key_B);
   connect(onCallAction, SIGNAL(triggered()), this, SLOT(editBereitschaftPressed()));
   
   specialRemunAction = new QAction(QIcon(":/hi16_moon" ),
                                             tr("Set special remuneration &times..."), this);
-  specialRemunAction->setShortcut(Qt::CTRL|Qt::Key_T);
+  registerShortcutWithModifierAction(specialRemunAction, Qt::Key_T);
   connect(specialRemunAction, SIGNAL(triggered()), this, SLOT(specialRemunPressed()));
 
   bgColorChooseAction = new QAction(tr("Choose &background colour..."), this);
-  bgColorChooseAction->setShortcut(Qt::CTRL|Qt::Key_G);
+  registerShortcutWithModifierAction(bgColorChooseAction, Qt::Key_G);
   bgColorRemoveAction = new QAction(tr("&Remove background colour"), this);
 
   QAction* downloadSHAction = new QAction(tr("Download sh files"), this);
@@ -546,7 +546,7 @@ void TimeMainWindow::initialSettingsRead() {
   
 
   QAction* min1MinusAction = new QAction(tr("Minimal decrease time"), this);
-  min1MinusAction->setShortcut(Qt::CTRL|Qt::Key_Comma);
+  registerShortcutWithModifierAction(min1MinusAction, Qt::Key_Comma);
   connect(min1MinusAction, SIGNAL(triggered()), this, SLOT(subMinimalTimeInc()));
 
   kontoTree=new KontoTreeView(this, abtList, columnwidthlist, settings->defCommentDisplayMode(), settings->sortByCommentText());
@@ -634,6 +634,27 @@ void TimeMainWindow::initialSettingsRead() {
 #endif
 }
 
+void TimeMainWindow::registerShortcutWithModifierAction(QAction* action, Qt::Key key) {
+  action->setShortcut(Qt::CTRL|key); // sensible default before settings are loaded
+  m_ctrlShortcutActions.insert(action, key);
+}
+
+void TimeMainWindow::applyShortcutSettings() {
+  for (auto it = m_ctrlShortcutActions.constBegin(); it != m_ctrlShortcutActions.constEnd(); ++it) {
+    QAction* action = it.key();
+    Qt::Key key = static_cast<Qt::Key>(it.value());
+    if (!settings->shortcutsEnabled()) {
+      action->setShortcut(QKeySequence());
+      continue;
+    }
+    switch (settings->shortcutModifier()) {
+      case SCTimeXMLSettings::SM_CTRLSHIFT: action->setShortcut(Qt::SHIFT|Qt::CTRL|key); break;
+      case SCTimeXMLSettings::SM_ALT: action->setShortcut(Qt::ALT|key); break;
+      default: action->setShortcut(Qt::CTRL|key); break;
+    }
+  }
+}
+
 void TimeMainWindow::applySettings() {
   kontoTree->setAcceptDrops(settings->dragNDrop());
   kontoTree->showAktivesProjekt();
@@ -642,6 +663,7 @@ void TimeMainWindow::applySettings() {
   //selected
   kontoTree->closeFlaggedPersoenlicheItems();
   showAdditionalButtons(settings->powerUserView());
+  applyShortcutSettings();
   std::vector<QString> xmlfilelist;
   settings->getDefaultCommentFiles(xmlfilelist);
   qtDefaultFont=QApplication::font();
@@ -2059,6 +2081,7 @@ void TimeMainWindow::finishPreferenceDialog(int oldshowtypecolumn, int oldshowps
   configClickMode(settings->singleClickActivation());
   switchRestCurrentlyOffline(settings->restCurrentlyOffline());
   kontoTree->setAcceptDrops(settings->dragNDrop());
+  applyShortcutSettings();
   if (settings->useCustomFont()) {
     QApplication::setFont(QFont(settings->customFont(),settings->customFontSize()));
   }

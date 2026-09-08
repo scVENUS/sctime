@@ -697,6 +697,18 @@ void XMLReader::fillSettingsFromDocument(const QDomDocument& doc, SCTimeXMLSetti
                             {
                                 settings->setSortByCommentText((elem2.attribute("on") == "yes"));
                             }
+                            if (elem2.tagName() == "shortcutsenabled")
+                            {
+                                settings->setShortcutsEnabled((elem2.attribute("on") == "yes"));
+                            }
+                            if (elem2.tagName() == "shortcutmodifier")
+                            {
+                                QString modifier = elem2.attribute("modifier");
+                                SCTimeXMLSettings::ShortcutModifierEnum sm = SCTimeXMLSettings::SM_CTRL;
+                                if (modifier == "CtrlShift") sm = SCTimeXMLSettings::SM_CTRLSHIFT;
+                                else if (modifier == "Alt") sm = SCTimeXMLSettings::SM_ALT;
+                                settings->setShortcutModifier(sm);
+                            }
                             if (elem2.tagName() == "stayoffline")
                             {
                                 settings->setRestSaveOffline((elem2.attribute("on") == "yes"));

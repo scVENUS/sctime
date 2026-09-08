@@ -64,6 +64,14 @@ PreferenceDialog::PreferenceDialog(SCTimeXMLSettings* _settings, int oldshowtype
 #endif
     stayOfflineCheckbox->setChecked(settings->restSaveOffline());
 
+    connect(checkBox, &QCheckBox::toggled, moreSettingsBox, &QGroupBox::setEnabled);
+    checkBox->setChecked(settings->shortcutsEnabled());
+    switch(settings->shortcutModifier()) {
+        case SCTimeXMLSettings::SM_CTRLSHIFT: radioCtrlShift->setChecked(true); break;
+        case SCTimeXMLSettings::SM_ALT: radioAlt->setChecked(true); break;
+        default: radioCtrl->setChecked(true); break;
+    }
+
     QString custFont=settings->customFont();
     int custFontSize=settings->customFontSize();
     if (custFont.isEmpty()) {
@@ -132,6 +140,15 @@ void PreferenceDialog::postprocess() {
         settings->setSortByCommentText(sortByCommentTextCheckbox->isChecked());
         settings->setRestSaveOffline(stayOfflineCheckbox->isChecked());
         settings->setWriteConsolidatedIntervals(!disableWriteConsolidatedIntervalsCheckbox->isChecked());
+        settings->setShortcutsEnabled(checkBox->isChecked());
+        SCTimeXMLSettings::ShortcutModifierEnum sm=SCTimeXMLSettings::SM_CTRL;
+        if (radioCtrlShift->isChecked()) {
+            sm = SCTimeXMLSettings::SM_CTRLSHIFT;
+        } else
+        if (radioAlt->isChecked()) {
+            sm = SCTimeXMLSettings::SM_ALT;
+        }
+        settings->setShortcutModifier(sm);
         SCTimeXMLSettings::DefCommentDisplayModeEnum dm=SCTimeXMLSettings::DM_BOLD;
         if (radioAvailabeDefCommNotSelectedBold->isChecked()) {
             dm = SCTimeXMLSettings::DM_NOTUSEDBOLD;
