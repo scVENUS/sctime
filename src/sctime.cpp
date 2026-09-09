@@ -36,6 +36,7 @@
 #include <assert.h>
 #include <locale.h>
 #endif
+#include <cstdlib>
 
 #include "lock.h"
 #include "timemainwindow.h"
@@ -335,5 +336,12 @@ int main(int argc, char **argv ) {
   delete app;
   #endif
   delete global;
+  #ifdef __linux__
+  // app was intentionally leaked above, so normal exit-time static/global destructors
+  // (in Qt's shared libs) would run against a main thread that never cleanly finished,
+  // producing bogus "QThreadStorage: entry N destroyed before end of thread" warnings.
+  // Skip them by terminating immediately; the lock was already released above.
+  std::_Exit(0);
+  #endif
   return 0;
 }
