@@ -4,6 +4,7 @@
 1. [Datenhaltung](#data) 
 1. [Lokale Sperre](#sperre)
 1. [Schriften](#font)
+1. [Shortcuts](#shortcuts)
 1. [Hinweise für Windows](#win)
 1. [Hinweise für Mac](#ios)
 1. [Datenquellen (Poweruser)](#datasources)
@@ -55,6 +56,20 @@ weitere Instanz auf einem anderen Rechner läuft und beendet sich.
 Standardmäßig werden die Einstellungen des Desktops übernommen. Im 
 Einstellungsdialog kann man jedoch auch eine andere im System verfügbare 
 Schriftart und -größe auswählen.
+
+<span id="shortcuts"></span>
+
+## Shortcuts
+
+Das Programm unterstützt grundsätzlich verschiedene Tastenkombinationen (Shortcuts) zur
+schnellen Bedienung. In der Browser-Version sind die meisten Shortcuts standardmäßig deaktiviert,
+da es Konflikte mit den Shortcuts des Browsers geben kann (abhängig vom gewählten Browser, und 
+typischerweise funktionieren die Shortcuts besser, wenn man die Standalone progressive Web-App 
+verwendet).
+In allen anderen Fällen sind Shortcuts standardmässig aktiviert und verwenden Strg (Ctrl) 
+als Modifikatortaste.
+Shortcuts können im Einstellungsdialog unter dem Reiter "Shortcuts" aktiviert oder deaktiviert 
+werden. Ausserdem kann dort die genutzte Modifikatortaste angepasst werden.
 
 <span id="win"></span>
 

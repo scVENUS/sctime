@@ -4,6 +4,7 @@
 1. [Data storage](#data)
 1. [Local lock](#sperre)
 1. [Fonts](#font)
+1. [Shortcuts](#shortcuts)
 1. [Notes for Windows](#win)
 1. [Notes for Mac](#ios)
 1. [Data sources (power users)](#datasources)
@@ -50,6 +51,18 @@ and exits.
 
 By default, desktop settings are used. However, a different font type and size
 available on the system can be selected in the settings dialog.
+
+<span id="shortcuts"></span>
+
+## Shortcuts
+
+The program generally supports various keyboard shortcuts for quick operation.
+In the browser version, most shortcuts are disabled by default, since there can
+be conflicts with the browser's own shortcuts (depending on the chosen browser,
+and shortcuts typically work better when using the standalone progressive web app).
+In all other cases, shortcuts are enabled by default and use Ctrl as the modifier key.
+Shortcuts can be enabled or disabled in the settings dialog under the "Shortcuts" tab.
+The modifier key used can also be adjusted there.
 
 <span id="win"></span>
 
