@@ -30,12 +30,14 @@ class DeleteSettingsDialog : public QDialog, private Ui::DeleteSettingsDialogBas
   Q_OBJECT
 
 signals:
-  void processingDone();
+  void deletionStarted();
+  void processingDone(bool appStopping);
 
 public:
   DeleteSettingsDialog(QWidget* parent, QNetworkAccessManager* nam);
   virtual ~DeleteSettingsDialog();
   static void stopApp();
+  void accept() override;
 public slots:
   /*$PUBLIC_SLOTS$*/
   virtual void checkInput();

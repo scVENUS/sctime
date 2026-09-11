@@ -3178,13 +3178,29 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
 
 void TimeMainWindow::callDeleteSettingsDialog() {
   DeleteSettingsDialog *dialog=new DeleteSettingsDialog(this, networkAccessManager);
+  connect(dialog, &DeleteSettingsDialog::deletionStarted, this, &TimeMainWindow::pauseAutosave);
   connect(dialog, &DeleteSettingsDialog::processingDone,
-    [=](){
+    [=](bool appStopping){
+      if (!appStopping) {
+        resumeAutosave();
+      }
       dialog->deleteLater();
   });
   dialog->open();
   dialog->adjustSize();
   dialog->raise();
+}
+
+// avoids autosave/background sync racing with DeleteSettingsDialog while it deletes settings
+void TimeMainWindow::pauseAutosave() {
+  autosavetimer->stop();
+  if (saveLaterTimer) {
+    saveLaterTimer->stop();
+  }
+}
+
+void TimeMainWindow::resumeAutosave() {
+  autosavetimer->start();
 }
 
 AbteilungsListe* TimeMainWindow::getEmptyAbtList(QDate date) {

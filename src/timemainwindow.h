@@ -258,6 +258,8 @@ public:
     void toggleOnlineStatus();
     void registerShortcutWithModifierAction(QAction* action, Qt::Key key);
     void applyShortcutSettings();
+    void pauseAutosave();
+    void resumeAutosave();
     KontoTreeView* kontoTree;
     Lock *m_lock;
     QAction* editUnterKontoAction;
