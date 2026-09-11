@@ -187,15 +187,36 @@ Hinweis: diese Meldung erscheint auch, wenn Du gerade ein laufendes Sctime in di
 <context>
     <name>DeleteSettingsDialog</name>
     <message>
-        <location filename="deletesettingsdialog.cpp" line="50"/>
-        <source>This operation deletes all your working times that you have not checked in.
-Proceed?</source>
-        <translation>Diese Funktion löscht alle Zeiteinträge, die noch nicht eingecheckt sind.\nMöchtest Du fortfahren?</translation>
+        <location filename="deletesettingsdialog.cpp" line="56"/>
+        <source>sctime: invalid date range</source>
+        <translation>sctime: ungültiger Datumsbereich</translation>
     </message>
     <message>
-        <location filename="deletesettingsdialog.cpp" line="102"/>
+        <location filename="deletesettingsdialog.cpp" line="57"/>
+        <source>The &quot;From&quot; date must not be after the &quot;To&quot; date.</source>
+        <translation>Das &quot;Von&quot;-Datum darf nicht nach dem &quot;Bis&quot;-Datum liegen.</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialog.cpp" line="71"/>
+        <source>This operation deletes all your working times that you have not checked in.
+Proceed?</source>
+        <translation>Diese Funktion löscht alle Zeiteinträge, die noch nicht eingecheckt sind.
+Möchtest Du fortfahren?</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialog.cpp" line="192"/>
         <source>The file could not be deleted on the server. Error code is %1</source>
         <translation>Die Datei konnte nicht auf dem Server gelöscht werden. Der Fehlerode lautet %1</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialog.cpp" line="214"/>
+        <source>The list of daily settings could not be retrieved from the server. Error code is %1</source>
+        <translation>Die Liste der Tageseinstellungen konnte nicht vom Server gelesen werden. Der Fehler Code ist %1</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialog.cpp" line="252"/>
+        <source>The settings for %1 could not be deleted on the server. Error code is %2</source>
+        <translation>Die Einstellungen für %1 konnen nicht vom Server gelöscht werden. Der Fehler Code ist %2</translation>
     </message>
 </context>
 <context>
@@ -207,33 +228,56 @@ Proceed?</source>
     </message>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="32"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please select the settings you wish to delete.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNING:&lt;/span&gt; deleting daily settings also deletes all data that you recorded for this day (including time entries).&lt;/p&gt;&lt;p&gt;It is recommended to choose to stop the app - otherwise current settings remain in memory and will be written regulary, possibly recreating some of the deleted files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte wähle die Einstellungen und Daten, die Du löschen möchtest.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNUNG:&lt;/span&gt; Löschen der Tageseinstellungen löscht alle aufgezeichneteten Zeiten aller lokal in der Applikation geführten Tage (inklusive Zeiteinträge).&lt;/p&gt;&lt;p&gt;Die Anwendung muss nach dem löschen beendet werden (siehe entsprechende Option) - andernfalls verbleiben die Einstellungen im Speicher der Applikation und werden weiterhin regelmässig abgespeichert, was möglicherweise gelöschte Dateien neu erzeugt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please select the settings you wish to delete.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNING:&lt;/span&gt; deleting daily settings also deletes all data that you recorded for this day (including time entries).&lt;/p&gt;&lt;p&gt;If you want to ensure that data is not automatically synced back, you should delete both the local copy and the copy on server.&lt;/p&gt;&lt;p&gt;It is also recommended to choose to stop the app - otherwise current settings remain in memory and will be written regulary, possibly recreating some of the deleted files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Please select the settings you wish to delete.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNING:&lt;/span&gt; deleting daily settings also deletes all data that you recorded for this day (including time entries).&lt;/p&gt;&lt;p&gt;It is recommended to choose to stop the app - otherwise current settings remain in memory and will be written regulary, possibly recreating some of the deleted files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitte wähle die Einstellungen und Daten, die Du löschen möchtest.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WARNUNG:&lt;/span&gt; Löschen der Tageseinstellungen löscht alle aufgezeichneteten Zeiten aller lokal in der Applikation geführten Tage (inklusive Zeiteinträge).&lt;/p&gt;&lt;p&gt;Wenn Du sicher gehen möchtest, dass die Daten nicht zurück synchronisiert werden, solltest Du sowohl die lokale Kopie als auch die auf dem Server löschen.&lt;/p&lt;p&gt;Die Anwendung sollte zudem nach dem löschen beendet werden (siehe entsprechende Option) - andernfalls verbleiben die Einstellungen im Speicher der Applikation und werden weiterhin regelmässig abgespeichert, was möglicherweise gelöschte Dateien neu erzeugt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="55"/>
-        <source>Data to delete</source>
-        <translation>Zu löschende Daten</translation>
+        <source>Global settings to delete</source>
+        <oldsource>Data to delete</oldsource>
+        <translation>Zu löschende globale Einstellungen</translation>
     </message>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="61"/>
+        <location filename="deletesettingsdialogbase.ui" line="108"/>
+        <source>local copy</source>
+        <translation>Lokale Kopie</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialogbase.ui" line="78"/>
+        <source>Daily settings and time entries to delete</source>
+        <translation>Zu löschende Tageseinstellungen und Zeiteinträge</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialogbase.ui" line="86"/>
+        <source>From:</source>
+        <translation>Von:</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialogbase.ui" line="96"/>
+        <source>To (including):</source>
+        <translation>Bis (inklusive):</translation>
+    </message>
+    <message>
         <source>Global setting (local copy)</source>
-        <translation>Globale Einstellungen (lokale Kopie)</translation>
+        <translation type="vanished">Globale Einstellungen (lokale Kopie)</translation>
     </message>
     <message>
         <location filename="deletesettingsdialogbase.ui" line="68"/>
-        <source>Global setting (copy on server)</source>
-        <translation>Globale Einstellungen (Kopie auf dem Server)</translation>
+        <location filename="deletesettingsdialogbase.ui" line="115"/>
+        <source>copy on server</source>
+        <oldsource>Global setting (copy on server)</oldsource>
+        <translation>Kopie auf dem Server</translation>
     </message>
     <message>
-        <location filename="deletesettingsdialogbase.ui" line="75"/>
         <source>All daily settings and time entries (local copy)</source>
-        <translation>Alle Tageseinstellungen und Zeiteinträge (lokale Kopie)</translation>
+        <translation type="vanished">Alle Tageseinstellungen und Zeiteinträge (lokale Kopie)</translation>
     </message>
     <message>
-        <location filename="deletesettingsdialogbase.ui" line="82"/>
+        <location filename="deletesettingsdialogbase.ui" line="138"/>
         <source>Stop App after deleting (recommended)</source>
-        <translation type="unfinished">Anwendung nach Löschvorgang beenden (empfohlen)</translation>
+        <translation>Anwendung nach Löschvorgang beenden (empfohlen)</translation>
     </message>
 </context>
 <context>
@@ -417,7 +461,9 @@ Ende der Pause mit OK.</translation>
         <source>Accounting has been stopped at %1.
 The duration of the current break is %2 minutes.
 Resume work with OK.</source>
-        <translation>Die Zeiterfassung wurde um %1 Uhr angehalten.\n Die Dauer der aktuellen Pause beträgt %2.\n Ende der Pause mit OK.</translation>
+        <translation type="unfinished">Die Zeiterfassung wurde um %1 Uhr angehalten.
+Die Dauer der aktuellen Pause beträgt %2.
+Ende der Pause mit OK.</translation>
     </message>
 </context>
 <context>
@@ -1252,12 +1298,12 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
         <translation>Fehler in %1, Zeile %2, Spalte %3: %4.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3261"/>
+        <location filename="timemainwindow.cpp" line="3277"/>
         <source>sctime: going permanently offline</source>
         <translation>sctime: schalte auf dauerhaft offline</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3262"/>
+        <location filename="timemainwindow.cpp" line="3278"/>
         <source>Do you really want to go permanently offline? Your data will not be synced to the cloud while you are permanently offline.</source>
         <translation>Möchtest Du wirklich dauerhaft offline gehen? Deine Daten werden nicht in die Cloud gesynct während Du dauerhaft offline bist.</translation>
     </message>
@@ -1388,7 +1434,9 @@ Beachten Sie bittte die Hilfefunktion für weitere Informationen (F1)!</translat
         <source>You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now. 
 
 Note: This warning may also trigger, if you did not take a continuous break of at least 11 hours between the end of yesterday&apos;s work and the beginning of today&apos;s work.</source>
-        <translation>Du arbeitest mehr als 10 Stunden an diesem Arbeitstag. Du solltest die Arbeit jetzt für mindestens 11 Stunden unterbrechen.\n\nHinweis: Diese Warnung wird auch ausgelöst, wenn Du seit dem Arbeitsende gestern bis zum Arbeitsanfang heute keine ununterbrochene Pause von 11 Stunden eingelegt hast.</translation>
+        <translation>Du arbeitest mehr als 10 Stunden an diesem Arbeitstag. Du solltest die Arbeit jetzt für mindestens 11 Stunden unterbrechen.
+
+Hinweis: Diese Warnung wird auch ausgelöst, wenn Du seit dem Arbeitsende gestern bis zum Arbeitsanfang heute keine ununterbrochene Pause von 11 Stunden eingelegt hast.</translation>
     </message>
     <message>
         <source>You are working for more than 10 hours on this workday. You should take a break of at least 11 hours now.</source>
@@ -1405,14 +1453,20 @@ Note: This warning may also trigger, if you did not take a continuous break of a
         <translation>Endzeit</translation>
     </message>
     <message>
-        <location filename="deletesettingsdialog.cpp" line="49"/>
+        <location filename="deletesettingsdialog.cpp" line="70"/>
         <source>sctime: deleting data</source>
         <translation>sctime: lösche Daten</translation>
     </message>
     <message>
-        <location filename="deletesettingsdialog.cpp" line="101"/>
+        <location filename="deletesettingsdialog.cpp" line="191"/>
+        <location filename="deletesettingsdialog.cpp" line="251"/>
         <source>sctime: error on deleting file on server</source>
         <translation>sctime: Fehler beim löschen von Server-Datei</translation>
+    </message>
+    <message>
+        <location filename="deletesettingsdialog.cpp" line="213"/>
+        <source>sctime: error on listing settings on server</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1996,7 +2050,7 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
         <translation>Es scheint ein Konflikt mit einer anderen Session zu bestehen, der nicht aufgelöst werden konnte, Bitte prüfe Deine Zeiteinträge.</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3223"/>
+        <location filename="timemainwindow.cpp" line="3239"/>
         <source>There were some conflicts during sync. Please check and save the data for the following dates:
 
   %1</source>
@@ -2005,12 +2059,12 @@ Soll die entstandene Differenz auf das aktive Unterkonto gutschrieben werden?
   %1</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3229"/>
+        <location filename="timemainwindow.cpp" line="3245"/>
         <source>sctime: Conflicts during sync</source>
         <translation>sctime: Konflikte während der Synchronisation</translation>
     </message>
     <message>
-        <location filename="timemainwindow.cpp" line="3240"/>
+        <location filename="timemainwindow.cpp" line="3256"/>
         <source>Sync finished successfully</source>
         <translation>Synchronisation erfolgreich abgeschlossen</translation>
     </message>
