@@ -163,9 +163,10 @@ void SyncOfflineHelper::nextStepLocalToRemote() {
 
 void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
     partstodo++;
-    // only worth the extra round-trip for open dates right after coming back online - otherwise
-    // the live 150s conflict window (read and write side) would already have caught a real conflict.
-    bool checkOpenDates = tmw->consumeOpenDateConflictCheckNeeded();
+    // only worth the extra round-trip for open dates if our last confirmed remote save is
+    // stale - otherwise the server's own conflicttimeout on that save would already have
+    // caught a real conflict.
+    bool checkOpenDates = tmw->openDateConflictCheckNeeded();
     for (const ServerFileStatus &fileStatus : list) {
         QString *filename = new QString("zeit-" + fileStatus.date.toString("yyyy-MM-dd") + ".xml");
         QFileInfo fileInfo(configDir.absoluteFilePath(*filename));

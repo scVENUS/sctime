@@ -120,6 +120,14 @@ static QString logTextLastLine(QObject::tr("-- Start --"));
 static QString logText(logTextLastLine + "\n");
 static QFile *logFile;
 static QTextStream *logStream=NULL;
+// how long the server honours conflicttimeout on a settingsdata write; must match the value
+// passed to saveWithTimeout() below.
+static const int CONFLICT_TIMEOUT_SECS = 150;
+#ifdef __EMSCRIPTEN__
+// timestamp of the last confirmed-successful (200/202) settingsdata write; if this is stale,
+// a remote conflict could have gone unnoticed and we should check before writing again.
+static QDateTime lastSuccessfulRemoteSave;
+#endif
 void trace(const QString &msg) {
   logError(msg);
 }
@@ -1272,6 +1280,9 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
     connect(writer, &XMLWriter::settingsWritten, freeLock);
     connect(writer, &XMLWriter::settingsWriteFailed, freeLock);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+#ifdef __EMSCRIPTEN__
+    connect(writer, &XMLWriter::offlineSwitched, this, [](bool offline){ if (!offline) lastSuccessfulRemoteSave = QDateTime::currentDateTime(); });
+#endif
     connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
     connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::writeConflictDialog, Qt::QueuedConnection);
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
@@ -1280,6 +1291,9 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
       writer=new XMLWriter(settings, networkAccessManager, abtList, m_punchClockList, conflicttimeout);
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+#ifdef __EMSCRIPTEN__
+      connect(writer, &XMLWriter::offlineSwitched, this, [](bool offline){ if (!offline) lastSuccessfulRemoteSave = QDateTime::currentDateTime(); });
+#endif
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::settingsWritten, freeLock);
       connect(writer, &XMLWriter::settingsWriteFailed, freeLock);
@@ -1294,15 +1308,13 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 void TimeMainWindow::save() {
 #ifdef __EMSCRIPTEN__
   if (!settings->restSaveOffline()&&m_conflictDialogOpenForDates.isEmpty()) {
-    if (settings->restCurrentlyOffline()||m_recheckOpenDateOnSync) {
-      // Either we still believe we're offline (so this save is the one that would first
-      // discover we're back online - the previous blind saveWithTimeout() PUT could race
-      // ahead of any conflict check) or we just came back online: check the open date(s)
-      // for a remote conflict via syncAll() before writing.
-      syncAll([this](){ saveWithTimeout(150); });
+    if (openDateConflictCheckNeeded()) {
+      // our last confirmed remote write is stale (or there never was one) - a conflict could
+      // have gone unnoticed in the meantime, so check the open date(s) via syncAll() first.
+      syncAll([this](){ saveWithTimeout(CONFLICT_TIMEOUT_SECS); });
       return;
     }
-    saveWithTimeout(150);
+    saveWithTimeout(CONFLICT_TIMEOUT_SECS);
     syncAll();
     return;
   }
@@ -2802,17 +2814,7 @@ void TimeMainWindow::finishPunchClockDialog() {
 }
 
 void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
-   // tracks restSaveOffline() across calls so leaving permanent-offline mode is also
-   // detected as an offline->online transition (it doesn't affect restCurrentlyOffline()).
-   static bool wasRestSaveOffline = false;
-   bool wasOffline = settings->restCurrentlyOffline();
    settings->setRestCurrentlyOffline(offline);
-   bool nowRestSaveOffline = settings->restSaveOffline();
-   if ((wasOffline && !offline) || (wasRestSaveOffline && !nowRestSaveOffline)) {
-     // we may have missed a conflict on the currently open date(s) while offline; check once
-     m_recheckOpenDateOnSync = true;
-   }
-   wasRestSaveOffline = nowRestSaveOffline;
    if (settings->restSaveOffline()) {
       statusBar->setOnlineStatus(tr("permanently offline"));
    } else {
@@ -3330,11 +3332,14 @@ QDate TimeMainWindow::getOpenDate()
   return abtList->getDatum();
 }
 
-bool TimeMainWindow::consumeOpenDateConflictCheckNeeded()
+bool TimeMainWindow::openDateConflictCheckNeeded()
 {
-  bool needed = m_recheckOpenDateOnSync;
-  m_recheckOpenDateOnSync = false;
-  return needed;
+#ifdef __EMSCRIPTEN__
+  return !lastSuccessfulRemoteSave.isValid()
+      || lastSuccessfulRemoteSave.secsTo(QDateTime::currentDateTime()) >= CONFLICT_TIMEOUT_SECS;
+#else
+  return false;
+#endif
 }
 
 void TimeMainWindow::toggleOnlineStatus() {
