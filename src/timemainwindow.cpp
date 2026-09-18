@@ -120,6 +120,14 @@ static QString logTextLastLine(QObject::tr("-- Start --"));
 static QString logText(logTextLastLine + "\n");
 static QFile *logFile;
 static QTextStream *logStream=NULL;
+// how long the server honours conflicttimeout on a settingsdata write; must match the value
+// passed to saveWithTimeout() below.
+static const int CONFLICT_TIMEOUT_SECS = 150;
+#ifdef __EMSCRIPTEN__
+// timestamp of the last confirmed-successful (200/202) settingsdata write; if this is stale,
+// a remote conflict could have gone unnoticed and we should check before writing again.
+static QDateTime lastSuccessfulRemoteSave;
+#endif
 void trace(const QString &msg) {
   logError(msg);
 }
@@ -1272,6 +1280,9 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
     connect(writer, &XMLWriter::settingsWritten, freeLock);
     connect(writer, &XMLWriter::settingsWriteFailed, freeLock);
     connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+#ifdef __EMSCRIPTEN__
+    connect(writer, &XMLWriter::offlineSwitched, this, [](bool offline){ if (!offline) lastSuccessfulRemoteSave = QDateTime::currentDateTime(); });
+#endif
     connect(writer, &XMLWriter::unauthorized, this, &TimeMainWindow::sessionInvalid);
     connect(writer, &XMLWriter::conflicted, this, &TimeMainWindow::writeConflictDialog, Qt::QueuedConnection);
     settings->writeShellSkript(abtListToday, m_punchClockListToday);
@@ -1280,6 +1291,9 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
       writer=new XMLWriter(settings, networkAccessManager, abtList, m_punchClockList, conflicttimeout);
       connect(writer, &XMLWriter::settingsWritten, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::offlineSwitched, this, &TimeMainWindow::switchRestCurrentlyOffline);
+#ifdef __EMSCRIPTEN__
+      connect(writer, &XMLWriter::offlineSwitched, this, [](bool offline){ if (!offline) lastSuccessfulRemoteSave = QDateTime::currentDateTime(); });
+#endif
       connect(writer, &XMLWriter::settingsWriteFailed, writer, &XMLWriter::deleteLater);
       connect(writer, &XMLWriter::settingsWritten, freeLock);
       connect(writer, &XMLWriter::settingsWriteFailed, freeLock);
@@ -1292,13 +1306,20 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 }
 
 void TimeMainWindow::save() {
-  saveWithTimeout(150);
-// for wasm also sync
 #ifdef __EMSCRIPTEN__
-  if (!settings->restCurrentlyOffline()&&!settings->restSaveOffline()&&m_conflictDialogOpenForDates.isEmpty()) {
+  if (!settings->restSaveOffline()&&m_conflictDialogOpenForDates.isEmpty()) {
+    if (openDateConflictCheckNeeded()) {
+      // our last confirmed remote write is stale (or there never was one) - a conflict could
+      // have gone unnoticed in the meantime, so check the open date(s) via syncAll() first.
+      syncAll([this](){ saveWithTimeout(CONFLICT_TIMEOUT_SECS); });
+      return;
+    }
+    saveWithTimeout(CONFLICT_TIMEOUT_SECS);
     syncAll();
+    return;
   }
 #endif
+  saveWithTimeout(150);
 }
 
 bool TimeMainWindow::checkConfigDir() {
@@ -3176,6 +3197,43 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
   dialog->raise();
 }
 
+// SyncOfflineHelper found a remote change that conflicts with a date currently open in the UI
+// (a case the periodic full sync otherwise skips entirely to avoid clobbering in-memory edits).
+void TimeMainWindow::backgroundOpenDateConflict(QDate targetdate, bool global, QDomDocument remotesettings) {
+  if (global) {
+    return;
+  }
+  if (m_conflictDialogOpenForDates.contains(targetdate)) {
+     ConflictDialog *dialog=dynamic_cast<ConflictDialog*>(m_conflictDialogOpenForDates[targetdate]);
+     if (dialog) {
+       dialog->updateRemoteDocument(remotesettings);
+     }
+     return;
+  }
+  QString remoteID=remotesettings.documentElement().attribute("identifier");
+  if (remoteID==getMachineIdentifier()) {
+    // written by this same client, e.g. an earlier session; nothing to reconcile
+    return;
+  }
+  ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, remotesettings, this);
+  m_conflictDialogOpenForDates[targetdate]=dialog;
+  connect(dialog, &QMessageBox::finished,
+    [=](){
+      dialog->deleteLater();
+      m_conflictDialogOpenForDates.remove(targetdate);
+      SyncOfflineHelper::removeUnmergedData(targetdate);
+      // Replace/Merge/Keep may have swapped abtList/abtListToday to a new object; kontoTree
+      // still points at the old one until reloaded, so refresh it (as writeConflictDialog does).
+      refreshKontoListe();
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
+  });
+  dialog->open();
+  dialog->adjustSize();
+  dialog->raise();
+}
+
 void TimeMainWindow::callDeleteSettingsDialog() {
   DeleteSettingsDialog *dialog=new DeleteSettingsDialog(this, networkAccessManager);
   connect(dialog, &DeleteSettingsDialog::deletionStarted, this, &TimeMainWindow::pauseAutosave);
@@ -3219,8 +3277,9 @@ void TimeMainWindow::updateApp() {
 #endif
 }
 
-void TimeMainWindow::syncAll() {
+void TimeMainWindow::syncAll(std::function<void()> onFinished) {
   SyncOfflineHelper *helper=new SyncOfflineHelper(settings, networkAccessManager, this);
+  connect(helper, &SyncOfflineHelper::openDateConflict, this, &TimeMainWindow::backgroundOpenDateConflict);
   connect(helper, &SyncOfflineHelper::finished, [=](){
     QList<QDate> uncleanlist;
     QSet unclean=helper->getLastUncleanDates();
@@ -3256,6 +3315,9 @@ void TimeMainWindow::syncAll() {
       statusBar->showMessage(tr("Sync finished successfully"), 5000);
     }
     helper->deleteLater();
+    if (onFinished && m_conflictDialogOpenForDates.isEmpty()) {
+      onFinished();
+    }
   });
   helper->syncAll();
 }
@@ -3268,6 +3330,16 @@ QDate TimeMainWindow::getOpenCurrentDate()
 QDate TimeMainWindow::getOpenDate()
 {
   return abtList->getDatum();
+}
+
+bool TimeMainWindow::openDateConflictCheckNeeded()
+{
+#ifdef __EMSCRIPTEN__
+  return !lastSuccessfulRemoteSave.isValid()
+      || lastSuccessfulRemoteSave.secsTo(QDateTime::currentDateTime()) >= CONFLICT_TIMEOUT_SECS;
+#else
+  return false;
+#endif
 }
 
 void TimeMainWindow::toggleOnlineStatus() {

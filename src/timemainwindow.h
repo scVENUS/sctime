@@ -164,6 +164,7 @@ public:
 
     QDate getOpenCurrentDate();
     QDate getOpenDate();
+    bool openDateConflictCheckNeeded();
 
 
   signals:        
@@ -234,7 +235,8 @@ public:
     void writeConflictDialog(QDate targetdate, bool global, const QByteArray ba);
     void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
     void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
-    void syncAll();
+    void backgroundOpenDateConflict(QDate targetdate, bool global, QDomDocument remotesettings);
+    void syncAll(std::function<void()> onFinished = nullptr);
     void updateBreakTime();
     void keepAlive();
     void updateApp(); // WASM only
