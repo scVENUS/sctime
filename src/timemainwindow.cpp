@@ -3176,6 +3176,40 @@ void TimeMainWindow::readConflictWithLocalDialog(QDate targetdate, bool global, 
   dialog->raise();
 }
 
+// SyncOfflineHelper found a remote change that conflicts with a date currently open in the UI
+// (a case the periodic full sync otherwise skips entirely to avoid clobbering in-memory edits).
+void TimeMainWindow::backgroundOpenDateConflict(QDate targetdate, bool global, QDomDocument remotesettings) {
+  if (global) {
+    return;
+  }
+  if (m_conflictDialogOpenForDates.contains(targetdate)) {
+     ConflictDialog *dialog=dynamic_cast<ConflictDialog*>(m_conflictDialogOpenForDates[targetdate]);
+     if (dialog) {
+       dialog->updateRemoteDocument(remotesettings);
+     }
+     return;
+  }
+  QString remoteID=remotesettings.documentElement().attribute("identifier");
+  if (remoteID==getMachineIdentifier()) {
+    // written by this same client, e.g. an earlier session; nothing to reconcile
+    return;
+  }
+  ConflictDialog *dialog=new ConflictDialog(settings, networkAccessManager, targetdate, global, remotesettings, this);
+  m_conflictDialogOpenForDates[targetdate]=dialog;
+  connect(dialog, &QMessageBox::finished,
+    [=](){
+      dialog->deleteLater();
+      m_conflictDialogOpenForDates.remove(targetdate);
+      SyncOfflineHelper::removeUnmergedData(targetdate);
+      QTimer::singleShot(100, this, [this](){
+        saveWithTimeout(0);
+      });
+  });
+  dialog->open();
+  dialog->adjustSize();
+  dialog->raise();
+}
+
 void TimeMainWindow::callDeleteSettingsDialog() {
   DeleteSettingsDialog *dialog=new DeleteSettingsDialog(this, networkAccessManager);
   connect(dialog, &DeleteSettingsDialog::deletionStarted, this, &TimeMainWindow::pauseAutosave);
@@ -3221,6 +3255,7 @@ void TimeMainWindow::updateApp() {
 
 void TimeMainWindow::syncAll() {
   SyncOfflineHelper *helper=new SyncOfflineHelper(settings, networkAccessManager, this);
+  connect(helper, &SyncOfflineHelper::openDateConflict, this, &TimeMainWindow::backgroundOpenDateConflict);
   connect(helper, &SyncOfflineHelper::finished, [=](){
     QList<QDate> uncleanlist;
     QSet unclean=helper->getLastUncleanDates();

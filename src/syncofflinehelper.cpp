@@ -170,10 +170,7 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
             //trace("Skipping file " + *filename + " as it is already up to date.");
             continue;
         }
-        if (fileStatus.date == tmw->getOpenDate() || fileStatus.date == tmw->getOpenCurrentDate()) {
-            //trace("Skipping file " + *filename + " as it is currently open.");
-            continue;
-        }
+        bool isOpenDate = (fileStatus.date == tmw->getOpenDate() || fileStatus.date == tmw->getOpenCurrentDate());
         AbteilungsListe *abtList=tmw->getEmptyAbtList(fileStatus.date);
         PunchClockList *pcl=new PunchClockList();
         XMLReader* xmlReader= new XMLReader(settings, networkAccessManager, false, false, true, abtList, pcl);
@@ -181,7 +178,7 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
         QDate* date = new QDate(fileStatus.date);
         trace("Syncing remote file " + *filename + " for date " + fileStatus.date.toString("yyyy-MM-dd") + " with last modified time " + fileStatus.lastModified.toString(Qt::ISODate) + " and client ID " + fileStatus.clientId);
         partstodo++;
-        connect(xmlReader, &XMLReader::settingsRead, [fileExists, filename, this, fileModified, abtList, pcl, xmlReader, date]() {
+        connect(xmlReader, &XMLReader::settingsRead, [fileExists, filename, this, fileModified, abtList, pcl, xmlReader, date, isOpenDate]() {
             QString targetFilename;
             QDateTime remoteDate=xmlReader->lastRemoteSaveTime();
             QString remoteID=xmlReader->lastRemoteID();
@@ -217,6 +214,11 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
             }
             else if (remoteID==localID && localDate>remoteDate) {
               trace("Remote file " + *filename + " is older than local file, skipping.");
+            } else if (isOpenDate) {
+              // this date is currently open in the UI - do not touch its files on disk,
+              // let the user resolve it through the normal conflict dialog instead.
+              trace("Remote file " + *filename + " conflicts with the currently open date, asking user.");
+              emit openDateConflict(*date, false, xmlReader->lastRemoteDocument());
             } else {
               trace("RemoteID is " + remoteID + " and localID is " + localID);
               if (fileExists) {

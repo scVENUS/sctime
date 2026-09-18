@@ -30,6 +30,7 @@ class XMLReader: public QObject
       virtual void ignoreConflict() { continueThisConflict=true; };
       virtual QString lastRemoteID() { return remoteID; };
       virtual QDateTime lastRemoteSaveTime() { return remoteSaveTime; };
+      virtual QDomDocument lastRemoteDocument() { return remoteDoc; };
     
     signals:
       void conflictingClientRunning(QDate targetdate, bool global, QDomDocument remotesettings);
@@ -49,6 +50,7 @@ class XMLReader: public QObject
       bool continueThisConflict;
       QString remoteID;
       QDateTime remoteSaveTime;
+      QDomDocument remoteDoc;
       AbteilungsListe* abtList;
       PunchClockList* pcl;
       QNetworkAccessManager *networkAccessManager;

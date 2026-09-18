@@ -234,6 +234,7 @@ public:
     void writeConflictDialog(QDate targetdate, bool global, const QByteArray ba);
     void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
     void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
+    void backgroundOpenDateConflict(QDate targetdate, bool global, QDomDocument remotesettings);
     void syncAll();
     void updateBreakTime();
     void keepAlive();
