@@ -164,6 +164,7 @@ public:
 
     QDate getOpenCurrentDate();
     QDate getOpenDate();
+    bool consumeOpenDateConflictCheckNeeded();
 
 
   signals:        
@@ -235,7 +236,7 @@ public:
     void readConflictDialog(QDate targetdate, bool global, QDomDocument remotesettings);
     void readConflictWithLocalDialog(QDate targetdate, bool global, QDomDocument localsettings, QDomDocument remotesettings);
     void backgroundOpenDateConflict(QDate targetdate, bool global, QDomDocument remotesettings);
-    void syncAll();
+    void syncAll(std::function<void()> onFinished = nullptr);
     void updateBreakTime();
     void keepAlive();
     void updateApp(); // WASM only
@@ -291,6 +292,9 @@ public:
     AbteilungsListe* abtListToday;
     bool abtListTodayLocked;
     bool abtListLocked;
+    // set on an offline->online transition; consumed once by the next full sync to
+    // check the currently open date(s), since that is the only way such a conflict can go unnoticed.
+    bool m_recheckOpenDateOnSync = false;
     StatusBar* statusBar;
     //QMimeSourceFactory* mimeSourceFactory;
     DefaultCommentReader defaultCommentReader;

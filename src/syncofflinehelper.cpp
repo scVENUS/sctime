@@ -138,6 +138,9 @@ void SyncOfflineHelper::syncAll()
              
         } else {
             logError("Error syncing remote data: " + reply->errorString());
+            // let the caller proceed (e.g. with a deferred write) instead of hanging forever
+            // if we turn out to still be offline.
+            emit finished();
         }
         reply->deleteLater(); });
 }
@@ -160,6 +163,9 @@ void SyncOfflineHelper::nextStepLocalToRemote() {
 
 void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
     partstodo++;
+    // only worth the extra round-trip for open dates right after coming back online - otherwise
+    // the live 150s conflict window (read and write side) would already have caught a real conflict.
+    bool checkOpenDates = tmw->consumeOpenDateConflictCheckNeeded();
     for (const ServerFileStatus &fileStatus : list) {
         QString *filename = new QString("zeit-" + fileStatus.date.toString("yyyy-MM-dd") + ".xml");
         QFileInfo fileInfo(configDir.absoluteFilePath(*filename));
@@ -171,6 +177,10 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
             continue;
         }
         bool isOpenDate = (fileStatus.date == tmw->getOpenDate() || fileStatus.date == tmw->getOpenCurrentDate());
+        if (isOpenDate && !checkOpenDates) {
+            //trace("Skipping file " + *filename + " as it is currently open.");
+            continue;
+        }
         AbteilungsListe *abtList=tmw->getEmptyAbtList(fileStatus.date);
         PunchClockList *pcl=new PunchClockList();
         XMLReader* xmlReader= new XMLReader(settings, networkAccessManager, false, false, true, abtList, pcl);

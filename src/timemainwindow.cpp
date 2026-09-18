@@ -1292,13 +1292,22 @@ void TimeMainWindow::saveWithTimeout(int conflicttimeout)
 }
 
 void TimeMainWindow::save() {
-  saveWithTimeout(150);
-// for wasm also sync
 #ifdef __EMSCRIPTEN__
-  if (!settings->restCurrentlyOffline()&&!settings->restSaveOffline()&&m_conflictDialogOpenForDates.isEmpty()) {
+  if (!settings->restSaveOffline()&&m_conflictDialogOpenForDates.isEmpty()) {
+    if (settings->restCurrentlyOffline()||m_recheckOpenDateOnSync) {
+      // Either we still believe we're offline (so this save is the one that would first
+      // discover we're back online - the previous blind saveWithTimeout() PUT could race
+      // ahead of any conflict check) or we just came back online: check the open date(s)
+      // for a remote conflict via syncAll() before writing.
+      syncAll([this](){ saveWithTimeout(150); });
+      return;
+    }
+    saveWithTimeout(150);
     syncAll();
+    return;
   }
 #endif
+  saveWithTimeout(150);
 }
 
 bool TimeMainWindow::checkConfigDir() {
@@ -2793,7 +2802,17 @@ void TimeMainWindow::finishPunchClockDialog() {
 }
 
 void TimeMainWindow::switchRestCurrentlyOffline(bool offline) {
+   // tracks restSaveOffline() across calls so leaving permanent-offline mode is also
+   // detected as an offline->online transition (it doesn't affect restCurrentlyOffline()).
+   static bool wasRestSaveOffline = false;
+   bool wasOffline = settings->restCurrentlyOffline();
    settings->setRestCurrentlyOffline(offline);
+   bool nowRestSaveOffline = settings->restSaveOffline();
+   if ((wasOffline && !offline) || (wasRestSaveOffline && !nowRestSaveOffline)) {
+     // we may have missed a conflict on the currently open date(s) while offline; check once
+     m_recheckOpenDateOnSync = true;
+   }
+   wasRestSaveOffline = nowRestSaveOffline;
    if (settings->restSaveOffline()) {
       statusBar->setOnlineStatus(tr("permanently offline"));
    } else {
@@ -3201,6 +3220,9 @@ void TimeMainWindow::backgroundOpenDateConflict(QDate targetdate, bool global, Q
       dialog->deleteLater();
       m_conflictDialogOpenForDates.remove(targetdate);
       SyncOfflineHelper::removeUnmergedData(targetdate);
+      // Replace/Merge/Keep may have swapped abtList/abtListToday to a new object; kontoTree
+      // still points at the old one until reloaded, so refresh it (as writeConflictDialog does).
+      refreshKontoListe();
       QTimer::singleShot(100, this, [this](){
         saveWithTimeout(0);
       });
@@ -3253,7 +3275,7 @@ void TimeMainWindow::updateApp() {
 #endif
 }
 
-void TimeMainWindow::syncAll() {
+void TimeMainWindow::syncAll(std::function<void()> onFinished) {
   SyncOfflineHelper *helper=new SyncOfflineHelper(settings, networkAccessManager, this);
   connect(helper, &SyncOfflineHelper::openDateConflict, this, &TimeMainWindow::backgroundOpenDateConflict);
   connect(helper, &SyncOfflineHelper::finished, [=](){
@@ -3291,6 +3313,9 @@ void TimeMainWindow::syncAll() {
       statusBar->showMessage(tr("Sync finished successfully"), 5000);
     }
     helper->deleteLater();
+    if (onFinished && m_conflictDialogOpenForDates.isEmpty()) {
+      onFinished();
+    }
   });
   helper->syncAll();
 }
@@ -3303,6 +3328,13 @@ QDate TimeMainWindow::getOpenCurrentDate()
 QDate TimeMainWindow::getOpenDate()
 {
   return abtList->getDatum();
+}
+
+bool TimeMainWindow::consumeOpenDateConflictCheckNeeded()
+{
+  bool needed = m_recheckOpenDateOnSync;
+  m_recheckOpenDateOnSync = false;
+  return needed;
 }
 
 void TimeMainWindow::toggleOnlineStatus() {
