@@ -3315,8 +3315,16 @@ void TimeMainWindow::syncAll(std::function<void()> onFinished) {
       statusBar->showMessage(tr("Sync finished successfully"), 5000);
     }
     helper->deleteLater();
-    if (onFinished && m_conflictDialogOpenForDates.isEmpty()) {
-      onFinished();
+    if (onFinished) {
+      // defer instead of calling directly, so the write starts on a fresh event-loop
+      // iteration instead of chaining onto the sync's own (Asyncify) call stack.
+      // Re-check for an open conflict dialog at execution time, not schedule time, since
+      // one could appear during the 100ms delay.
+      QTimer::singleShot(100, this, [this, onFinished](){
+        if (m_conflictDialogOpenForDates.isEmpty()) {
+          onFinished();
+        }
+      });
     }
   });
   helper->syncAll();
