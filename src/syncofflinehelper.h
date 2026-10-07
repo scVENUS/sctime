@@ -68,6 +68,9 @@ private:
        TimeMainWindow* tmw;
        int partstodo;
        QSet<QDate> uncleanDates;
+       // server timestamp of the current sync; only persisted once all changed files were fetched
+       QDateTime m_pendingSyncTime;
+       QStringList m_failedFetches;
 };
 
 #endif

@@ -185,9 +185,14 @@ class AbteilungsListe: public std::map<QString,KontoListe>
     bool overTimeModeState(const QString& srname);
     
     QSet<QString> getActiveOverTimeModes();
-    
+
+    // version (root date/identifier attributes) of the document this list was last filled from
+    const QString& loadedDocDate() const { return m_loadedDocDate; }
+    const QString& loadedDocIdentifier() const { return m_loadedDocIdentifier; }
+    void setLoadedDocVersion(const QString& date, const QString& identifier) { m_loadedDocDate=date; m_loadedDocIdentifier=identifier; }
 
   private:
+    QString m_loadedDocDate, m_loadedDocIdentifier;
     SpecialRemunTypeMap m_specialRemunTypeMap;
     QList<QString> m_globalSpecialRemunNames;
     QString aktivAbteilung, aktivKonto, aktivUnterkonto;

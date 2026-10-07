@@ -3340,6 +3340,13 @@ QDate TimeMainWindow::getOpenDate()
   return abtList->getDatum();
 }
 
+AbteilungsListe* TimeMainWindow::getOpenAbtListFor(QDate date)
+{
+  if (abtList->getDatum()==date) return abtList;
+  if (abtListToday->getDatum()==date) return abtListToday;
+  return NULL;
+}
+
 bool TimeMainWindow::openDateConflictCheckNeeded()
 {
 #ifdef __EMSCRIPTEN__

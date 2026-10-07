@@ -164,6 +164,7 @@ public:
 
     QDate getOpenCurrentDate();
     QDate getOpenDate();
+    AbteilungsListe* getOpenAbtListFor(QDate date);
     bool openDateConflictCheckNeeded();
 
 

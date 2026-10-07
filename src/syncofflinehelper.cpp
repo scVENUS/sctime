@@ -90,13 +90,12 @@ void SyncOfflineHelper::syncAll()
                     QString timestamp = timestampValue.toString();
                     QDateTime syncTime = QDateTime::fromString(timestamp, Qt::ISODate);
                     if (syncTime.isValid()) {
-                        setLastSyncTime(syncTime);
-                        //trace("Last sync time updated to: " + syncTime.toString(Qt::ISODate));
+                        m_pendingSyncTime = syncTime;
                     } else {
-                        //trace("Invalid timestamp format received: " + timestamp);
+                        logError("Invalid timestamp format received: " + timestamp);
                     }
                 } else {
-                    //trace("Timestamp not found in the response.");
+                    logError("Timestamp not found in the response.");
                 }
                 QJsonValue settingsFilesMetaValue = jsonObject.value("settingsfilesmeta");
                 if (settingsFilesMetaValue.isArray()) {
@@ -122,6 +121,14 @@ void SyncOfflineHelper::syncAll()
             }
 
             connect(this, &SyncOfflineHelper::finishedRemoteToLocal, [this, serverFileStatuses]() {
+                if (m_failedFetches.isEmpty()) {
+                    if (m_pendingSyncTime.isValid()) {
+                        setLastSyncTime(m_pendingSyncTime);
+                    }
+                } else {
+                    // keep the old sync time so the missed files are listed (and retried) by the next sync
+                    logError("Sync incomplete, no remote data received for: " + m_failedFetches.join(", ") + ". Last sync time not advanced, will retry.");
+                }
                 connect(this, &SyncOfflineHelper::finishedLocalToRemote, [this, serverFileStatuses]() {
                   delete serverFileStatuses;
 #ifdef __EMSCRIPTEN__
@@ -220,7 +227,12 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
                 targetFilename = configDir.absoluteFilePath(*filename);
             }
 
-            if (remoteDate==localDate && remoteID==localID) {
+            if (xmlReader->lastRemoteDocument().documentElement().isNull()) {
+                // remote fetch failed and the reader fell back to the local file; nothing to sync
+                logError("No remote data received for " + *filename + ", skipping.");
+                m_failedFetches.append(*filename);
+            }
+            else if (remoteDate==localDate && remoteID==localID) {
                 trace("Remote file " + *filename + " is already up to date, skipping.");
             }
             else if (remoteID==localID && localDate>remoteDate) {
@@ -228,8 +240,19 @@ void SyncOfflineHelper::syncRemoteToLocalList(QList<ServerFileStatus> &list) {
             } else if (isOpenDate) {
               // this date is currently open in the UI - do not touch its files on disk,
               // let the user resolve it through the normal conflict dialog instead.
-              trace("Remote file " + *filename + " conflicts with the currently open date, asking user.");
-              emit openDateConflict(*date, false, xmlReader->lastRemoteDocument());
+              // But if the remote version is the one this client loaded the date from, nothing
+              // changed remotely since then (local progress since loading is not a conflict).
+              AbteilungsListe* openList = tmw->getOpenAbtListFor(*date);
+              auto remoteRoot = xmlReader->lastRemoteDocument().documentElement();
+              bool unchangedSinceLoad = openList
+                  && openList->loadedDocDate()==remoteRoot.attribute("date")
+                  && openList->loadedDocIdentifier()==remoteRoot.attribute("identifier");
+              if (unchangedSinceLoad) {
+                trace("Remote file " + *filename + " is unchanged since the currently open date was loaded, no conflict.");
+              } else {
+                trace("Remote file " + *filename + " conflicts with the currently open date, asking user.");
+                emit openDateConflict(*date, false, xmlReader->lastRemoteDocument());
+              }
             } else {
               trace("RemoteID is " + remoteID + " and localID is " + localID);
               if (fileExists) {
@@ -327,7 +350,10 @@ void SyncOfflineHelper::syncLocalToRemoteList(QList<ServerFileStatus> &list) {
         QString* filePathNSPtr = new QString(filePathNS);
         partstodo++;
         connect(xmlWriter, &XMLWriter::settingsWritten, [=]() {
-            QFile::remove(*filePathNSPtr);
+            // XMLWriter clears the marker itself on success and re-creates it on failure
+            if (QFile::exists(*filePathNSPtr)) {
+                logError("Upload of " + *filePathNSPtr + " did not succeed, will retry on next sync.");
+            }
             
             xmlWriter->deleteLater();
 
